@@ -73,19 +73,18 @@ body {
   margin-bottom: -6px;
 }
 
-.usage {
-
-}
-
-.deployment {
-
-}
-
 .detailtable {
   margin-bottom: 20px;
   border: 1px solid lightgrey;
-  box-shadow: 2px 3px 2px #eee;
-  background-color: #e7f3f9;
+  border-radius: 3px;
+  box-shadow: 3px 3px 3px 1px #eee;
+  /* highlight rows are #e7f3f9, a light blue */
+  background-color: #f9f9f9;
+}
+
+.detailtable table.table {
+  /* apologies for !important; datatables makes their margin- !important, and I want to override it here. */
+  margin-top: 0 !important;
 }
 
 .detailtable tr {
@@ -101,6 +100,12 @@ body {
   margin: 0;
 }
 
+.detailtable .dataTables_filter {
+  margin-top: 4px;
+  margin-right: 4px;
+  margin-bottom: -1px;
+}
+
 
 
 #project-select h4 {
@@ -109,6 +114,7 @@ body {
 
 #project-select select {
   height: inherit;
+  margin: 0 15px 4px 15px;
 }
 
 .stat {
@@ -125,7 +131,23 @@ body {
   margin-bottom: 2px;
 }
 
+.detailtable table {
+  margin-bottom: 0;
+}
 
+.detailtable .question {
+  height: 16px;
+  width: 16px;
+  margin-left: 10px;
+}
+
+.table-striped > tbody > tr:nth-of-type(even) {
+  background-color: #e7f3f9;
+}
+
+p.spacer {
+  margin-bottom: 1em;
+}
 
 /* Supporting marketing content */
 .marketing {

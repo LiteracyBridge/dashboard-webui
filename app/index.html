@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="description" content="">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>yo2</title>
+  <title>Literacy Bridge Statistics Dashboard</title>
 
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <!-- Place favicon.ico in the root directory -->
@@ -42,22 +42,22 @@
 
 
       <h2>Usage</h2>
-      <div id='usage-container' class='usage dashtable'></div>
+      <div id='usage-container' class='usage detailtable'></div>
       <h2>Deployment</h2>
-      <div id='deployment-container' class='deployment dashtable'></div>
+      <div id='deployment-container' class='deployment detailtable'></div>
     </div>
   </div>
 
   <div id="project-details" role="tabpanel" class="tab-pane">
     <div class="container-fluid">
       <div id="project-select">
-        <h1 class="bg-primary  form-inline">Project Details <select id="project_selecter"
+        <h1 class="bg-primary  form-inline"><span>Project Details</span><select id="project_selecter"
                                                                     class="form-control form-inline bg_info"
                                                                     name="project">
           <option value="" disabled selected>Choose Project</option>
           <!-- updates added when project is selected -->
         </select>
-          Content Update
+          <span>Content Update</span>
           <select id="update_selecter" class="form-control form-inline bg_info" name="update">
 
           </select>
@@ -105,7 +105,7 @@
 
 <!-- build:js scripts/main.js -->
 <script src="scripts/datatables.min.js"></script>
-<script src="scripts/csv_to_html_table.js"></script>
+<script src="scripts/DataTable.js"></script>
 <script src="scripts/ProjectData.js"></script>
 <script src="scripts/ProjectDashboardReporter.js"></script>
 <script src="scripts/main.js"></script>

@@ -19,7 +19,8 @@ Installation:
  page for instructions on installing global node modules without
  using sudo.
 1. Sync this project from Git.
-1. Run `npm update` to pull dependencies.
+1. Run `npm update` to install dependencies.
+1. Run `bower update` to install more dependencies.
 1. Run `gulp serve` to compile and test.
 1. Run `gulp` to build for production.
 1. From the `dist` directory, run `deploy.sh` to deploy the 

@@ -1,41 +1,60 @@
 /**
  * Created by bill on 3/2/17.
  */
-/* jshint undef: true */
-/* globals console, CsvToHtmlTable, $, ProjectDashboardReporter */
+/* jshint undef: true, asi:true */
+/* globals console, CsvToHtmlTable, $, ProjectDashboardReporter, DataTable */
 
 console.log('\'Allo \'Allo!');
 
-(function() {
+(function () {
   'use strict';
   var DATA_PATH = 'data/';
 
-  function initWith(fn, elemid) {
-    CsvToHtmlTable.init({
-      csv_path: DATA_PATH + fn,
-      element: elemid,
-      allow_download: true,
-      csv_options: {separator: ',', delimiter: '"'},
-      datatables_options: {'paging': false},
-      table_classes: 'table table-striped table-condensed table-bordered table-hover'
-      //custom_formatting: [[0, format_link]]
-    });
+  // Many of the columns are in common between the summary tables. One shared set of tooltips and heading names is
+  // a simple way to improve consistency.
+  var tooltips = {
+    'deploymentnumber': 'The Update Number of the Content Update (Deployment).',
+    'num_packages': 'Number of Content Packages in the Content Update. Generally one per language, but there can be ' +
+        'more, if some communities receive customized content.',
+    'startdate': 'The date that the Content Update was published, and was available to be installed in the field',
+    'num_communities': 'The number of communities from which usage statistics have been collected, for ' +
+        'this Content Update.',
+    'num_tbs': 'The number of Talking Books from which usage statistics have been collected, for ' +
+        'this Content Update.'
+
+  };
+  var headings = {
+    project: 'Project',
+    deployment: 'Content Update',
+    deploymentnumber: 'Update #',
+    startdate: 'Start Date',
+    'num_packages': '# Packages',
+    'num_languages': '# Languages',
+    'num_communities': '# Communities Reporting',
+    'num_tbs': '# Talking Books Reporting',
+    'deployed_tbs': '# Talking Books Deployed'
   }
 
-  function onClick(link) {
-    $('#table-container').empty();
-    initWith('data/' + link.toLowerCase() + '_usage_by_message.csv')
-  }
 
-  function format_link(link) {
-    if (link) {
-      return '<span onClick="onClick(\'' + link + '\')">' + link + '</span>';
+  /**
+   * initSummaryTable - reads a .csv file, populates a summary table from it.
+   * @param fn The file name of the .csv.
+   * @param $elem The (jQuery) element that is to be the table's container.
+   */
+  function initSummaryTable(fn, $elem) {
+    var path = DATA_PATH + fn;
+    var options = {
+      headings: headings,
+      tooltips: tooltips,
+      datatable: {searching: true}
     }
-    return '';
+    DataTable.fromCsv($elem, path, options);
   }
 
-  function getReportDate()
-  {
+  /**
+   * Reads a 'reports_date.txt' file, displays the date on the summary page.
+   */
+  function getReportDate() {
     $.when($.get(DATA_PATH + 'reports_date.txt')).then(
       function resolved(data) {
         data = data.trim();
@@ -45,6 +64,7 @@ console.log('\'Allo \'Allo!');
       });
   }
 
+  // Enable bootstrap tabbing.
   $('#main-tabs a').click(function (e) {
     e.preventDefault()
     $(this).tab('show')
@@ -52,6 +72,6 @@ console.log('\'Allo \'Allo!');
 
   ProjectDashboardReporter.init();
   getReportDate();
-  initWith('usage_dashboard.csv', 'usage-container');
-  initWith('deployment_dashboard.csv', 'deployment-container');
+  initSummaryTable('usage_dashboard.csv', '#usage-container');
+  initSummaryTable('deployment_dashboard.csv', '#deployment-container');
 })();
