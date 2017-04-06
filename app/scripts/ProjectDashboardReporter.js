@@ -53,15 +53,16 @@ ProjectDashboardReporter = function () {
    */
   function messageSummary(stats) {
     var options = {
-      columns: ['language', 'title', 'duration', 'eff_completions'],
+      columns: ['language', 'title', 'num_categories', 'duration', 'eff_completions'],
       headings: {
-        language: 'Language', title: 'Message Title',
+        language: 'Language', title: 'Message Title', num_categories: '# Categories',
         duration: 'Duration of Message',
         eff_completions: 'Times Message was Played to Completion'
       },
       tooltips: {
         language: 'The language in which the message was recorded',
         duration: 'Length of the recording, in minutes',
+        num_categories: 'Number of categories (topics) in which the message appeared in this package.',
         eff_completions: 'How many times, alltogether, did the Talking Books listen to this message to completion?'
       },
       formatters: {
@@ -134,6 +135,7 @@ ProjectDashboardReporter = function () {
   function deploymentSummary(stats) {
     var options = {
       columns : ['update', 'production', 'usage', 'usage2'],
+      headings: {update:'Date', production:'Production Data', usage:'Performance Summary', usage2:'Highlights'},
       formatters: {
         update : () => {
           var cell;
@@ -149,15 +151,16 @@ ProjectDashboardReporter = function () {
         production : () => {
           var cell;
           if (prod) {
-            cell = `<p><span class="stat">${NUMBER(prod.duration_minutes)}</span> Minutes of Messaging</p>
-              <p><span class="stat">${NUMBER(prod.num_categories)}</span> Categories</p>
-              <p><span class="stat">${NUMBER(prod.num_messages)}</span> Messages</p>
-              <p><span class="stat">${NUMBER(prod.num_languages)}</span> Language(s)</p>`
+            var l = (prod.num_languages > 1) ? 'languages' : 'language';
+            cell = `<p><span class="stat">${NUMBER(prod.num_messages)}</span> Messages in 
+                  <span class="stat">${NUMBER(prod.num_languages)}</span> ${l}</p>
+              <p><span class="stat">${NUMBER(prod.duration_minutes)}</span> Minutes of Messaging</p>`
+              // `<p><span class="stat">${NUMBER(prod.num_categories)}</span> Categories</p>`
           } else {
             cell = '<p class="stat">Production information unavailable.</p>'
           }
           if (depl) {
-            cell += `<p></p><p>Deployed to <span class="stat">${NUMBER(depl.deployed_tbs)}</span> Talking Books.</p>`
+            cell += `<p>&nbsp;</p><p>Deployed to <span class="stat">${NUMBER(depl.deployed_tbs)}</span> Talking Books.</p>`
           }
           return cell;
         },
@@ -214,6 +217,7 @@ ProjectDashboardReporter = function () {
       }
     });
 
+    $('#update_header_name').text(depl.deployment);
     DataTable.create($('#update_statistics'), [null], options);
   }
 
