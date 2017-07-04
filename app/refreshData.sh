@@ -2,7 +2,10 @@
 set -x
 # script to refresh dashboard data from dropbox.
 
-dropbox=~/Dropbox
+if [ -z "${dropbox}" ]; then
+    dropbox=~/Dropbox
+    echo "dropbox in ${dropbox}"
+fi
 
 mkdir -p data
 cp  ${dropbox}/DashboardReports/* data/
