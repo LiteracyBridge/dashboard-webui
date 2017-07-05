@@ -1,9 +1,11 @@
 {
-  "name": "yo2",
+  "name": "Dashboard",
   "private": true,
   "dependencies": {
     "bootstrap": "~3.3.5",
-    "jquery-csv": "^0.8.2"
+    "jquery-csv": "^0.8.2",
+    "moment": "^2.18.1",
+    "chart.js": "^2.5.0"
   },
   "overrides": {
     "bootstrap": {

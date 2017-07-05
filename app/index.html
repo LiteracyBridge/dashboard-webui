@@ -1,78 +1,232 @@
 <!doctype html>
 <html lang="">
 <head>
-  <meta charset="utf-8">
-  <meta name="description" content="">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Literacy Bridge Statistics Dashboard</title>
+    <meta charset="utf-8">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ACM Utility</title>
 
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <!-- Place favicon.ico in the root directory -->
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
-  <!-- build:css styles/vendor.css -->
-  <!-- bower:css -->
-  <link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap.css" />
-  <!-- endbower -->
-  <!-- endbuild -->
+    <link rel="icon" type="image/x-icon" href="images/talking_book_64.png" />
 
-  <!-- build:css styles/main.css -->
-  <link rel="stylesheet" href="styles/main.css">
-  <link rel="stylesheet" href="styles/datatables.min.css"/>
-  <!-- endbuild -->
+    <!-- build:css styles/vendor.css -->
+    <!-- bower:css -->
+    <link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap.css" />
+    <!-- endbower -->
+    <!-- endbuild -->
+
+
+    <!-- build:css styles/main.css -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/datatables.min.css"/>
+    <link rel="stylesheet" href="styles/bootstrap-dialog.css">
+    <!-- endbuild -->
 
 
 </head>
 <body>
 <!--[if IE]>
 <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade
-  your browser</a> to improve your experience.</p>
+    your browser</a> to improve your experience.</p>
 <![endif]-->
 
-<ul id="main-tabs" class="nav nav-tabs">
-  <li role="presentation" class="active>"><a href="#overview">Overview</a></li>
-  <li role="presentation"><a href="#project-details">Details</a></li>
+<!-- Nav bar for application -->
+<nav id="main-nav" class="navbar navbar-default navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">Literacy Bridge</a>
+        </div>
+
+        <!-- Navigation items -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <!-- Application menus -->
+            <ul class="nav navbar-nav">
+                <li role="navigation" style="display:none;"><a class="main-nav" href="#splash">Splash</a></li>
+                <li role="navigation"><a class="main-nav" href="#overview-page">Overview</a></li>
+                <li role="navigation"><a class="main-nav" href="#project-details-page">Details</a>
+                </li>
+                <li role="navigation"><a class="main-nav" href="#userfeedback-page">User
+                    Feedback</a>
+                </li>
+
+                <!-- Admin dropdown menu. Hidden except for admins -->
+                <li class="dropdown hidden" id="admin-menu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                       aria-expanded="false">Admin
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="main-nav" href="#checkout-page">ACMs</a></li>
+                        <li><a class="main-nav" href="#users-page">Users</a></li>
+                    </ul>
+                </li>
+
+            </ul>
+
+            <!-- Authentication stuff -->
+            <ul class="nav navbar-nav navbar-right">
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                       aria-expanded="false">
+                        <span id="greeting">Attempting signin...</span>
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#change-greeting">Greeting...</a></li>
+                        <li><a href="#change-password">Change password...</a></li>
+                        <li class="hidden verify-email"><a href="#verify-email">Confirm email...</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li><a href="#signout">Sign out</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+
+<ul id="main-tabs" class="nav nav-tabs" style="visibility:hidden; height:12px">
+    <!-- li role="presentation" class="active>"><a href="#overview" data-toggle="tab">Overview</a></li -->
+    <li role="presentation"><a href="#checkout-page" data-toggle="tab">Checkouts</a></li>
 </ul>
 
 <div class="tab-content">
-
-  <div id="overview" role="tabpanel" class="tab-pane active">
-    <div class="container-fluid">
-      <h1 class="bg-primary">Overview</h1>
-      <p>Simple dashboard for ACM usage and deployment statistics. Created on <span id="report_date">server</span>.</p>
-
-
-      <h2>Usage</h2>
-      <div id='usage-container' class='usage detailtable'></div>
-      <h2>Deployment</h2>
-      <div id='deployment-container' class='deployment detailtable'></div>
+    <!-- The equivalent of a splash screen. Note that there is no navigation to this page -->
+    <div id="splash" role="tabpanel" class="tab-pane fade in active">
+        <div id="welcome" class="container-fluid">
+            <h2 class="bg-primary text-center">Welcome to the ACM Utility Console.</h2>
+            <h3 class="bg-info text-center invisible fade-in">Choose a function from the list above.</h3>
+        </div>
+        <img class="img-responsive center-block" src="images/slide2.jpg"/>
     </div>
-  </div>
 
-  <div id="project-details" role="tabpanel" class="tab-pane">
-    <div class="container-fluid">
-      <div id="project-select">
-        <h1 class="bg-primary form-inline"><span>Project Details</span><select id="project_selecter"
-                                                                    class="form-control form-inline bg_info"
-                                                                    name="project">
-          <option value="" disabled selected>Choose Project</option>
-          <!-- updates added when project is selected -->
-        </select>
-          <span>Content Update</span>
-          <select id="update_selecter" class="form-control form-inline bg_info" name="update">
+    <!-- Overview Report -->
+    <div id="overview-page" role="tabpanel" class="tab-pane fade">
+        <div class="container-fluid">
+            <h2 class="bg-primary">Overview</h2>
+            <p>Simple dashboard for ACM usage and deployment statistics. Created on <span id="report_date">server</span>.
+            </p>
 
-          </select>
-        </h1>
-      </div>
 
-      <h2 id='update_header'>Deployment <span id='update_header_name'></span> at a glance.</h2>
-      <div id='update_statistics' class="detailtable"></div>
-      <h2>Deployment Performance By Categories</h2>
-      <div id='category_statistics' class="detailtable"></div>
-      <h2>Message Performance</h2>
-      <div id='message_statistics' class="detailtable"></div>
+            <h2>Usage</h2>
+            <div id='usage-container' class='usage detailtable'></div>
+            <h2>Deployment</h2>
+            <div id='deployment-container' class='deployment detailtable'></div>
+        </div>
     </div>
-  </div>
+
+    <!-- Details Report -->
+    <div id="project-details-page" role="tabpanel" class="tab-pane fade">
+        <div class="container-fluid">
+            <h2 class="bg-primary">Details
+                &nbsp;<span id="details-project-placeholder"></span>
+            </h2>
+
+            <h2 id='update_header'>Deployment <span id='update_header_name'></span> at a glance.</h2>
+            <div id='deployment-summary' class="detailtable"></div>
+            <h2>Deployment Performance By Categories</h2>
+            <div class="row">
+                <div id='deployment-performance' class="col-md-9 detailtable"></div>
+                <div id='category_radar' class="col-md-3">
+                    <canvas id="deployment-performance-radar"></canvas>
+                </div>
+            </div>
+            <h2>Message Performance</h2>
+            <div id='message-performance' class="detailtable"></div>
+
+        </div>
+    </div>
+
+    <!-- User Feedback Report -->
+    <div id="userfeedback-page" role="tabpanel" class="tab-pane fade">
+        <div class="container-fluid">
+            <h2 class="bg-primary form-inline">Breakdown as of <span id="breakdown-date"></span>
+            &nbsp;<span id="uf-project-placeholder"></span>
+            </h2>
+
+            <div class="row">
+                <div class="col-sm-1">&nbsp;</div>
+                <div class="col-sm-6">
+                    <div class="h3">Breakdown of <span id="category-breakdown"></span></div>
+                    <h4><span id="hover-pie2"></span>&nbsp;</h4>
+                    <canvas id="category-breakdown-placeholder"></canvas>
+                </div>
+
+                <div class="col-sm-4">
+                    <h3>Lengths of Messages</h3>
+                    <h4><span id="hover-pie3"></span>&nbsp;</h4>
+                    <canvas id="message-length-placeholder"></canvas>
+                </div>
+                <div class="col-sm-1">&nbsp;</div>
+            </div>
+
+            <div class="row">
+                <h2 class="bg-primary">Categorization Progress for <span id="project-name">User Feedback</span></h2>
+                <h5 class="bg-default"><em>Progress in User Feedback Processing.</em></h5>
+
+                <div class="col-sm-2">&nbsp;</div>
+                <div class="col-sm-7">
+                    <div class="demo-container">
+                        <h3>Progress Over Time</h3>
+                        <canvas id="progress-placeholder" class="progress-placeholder"></canvas>
+                        <h4 id="clickdata"></h4>
+                    </div>
+                </div>
+                <div class="col-sm-3">&nbsp;</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkouts Report -->
+    <div id="checkout-page" role="tabpanel" class="tab-pane fade">
+        <div class="container-fluid">
+            <h2 class="bg-primary">ACM Checkout Status</h2>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="input-group">
+                        <label style="font-weight:normal">
+                            <input type="checkbox" id="include-user-feedback" value="option1">
+                            Include User Feedback ACMs
+                        </label>
+                        <span class="input-group-btn">
+                        <button id="refresh-checkout-list" class="btn btn-primary btn-large" style="border-radius:4px"
+                                type="button">
+                            <i class="glyphicon glyphicon-refresh"></i>
+                        </button>
+                    </span>
+                    </div><!-- /input-group -->
+                </div><!-- /.col-lg-6 -->
+            </div>
+
+            <div id="checkout-page-container" class="detailtable"></div>
+        </div>
+    </div>
 </div>
+
+<!-- Wait spinner -->
+<div id="wait-spinner" class="modal" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <img src="images/ajax-loader.gif"></img>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Generic tooltip -->
+<div id="tooltip"></div>
+
 
 <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
 <!-- script>
@@ -88,6 +242,8 @@
 <!-- bower:js -->
 <script src="/bower_components/jquery/dist/jquery.js"></script>
 <script src="/bower_components/jquery-csv/src/jquery.csv.js"></script>
+<script src="/bower_components/moment/moment.js"></script>
+<script src="/bower_components/chart.js/dist/Chart.js"></script>
 <!-- endbower -->
 <!-- endbuild -->
 
@@ -106,12 +262,34 @@
 <script src="/bower_components/bootstrap/js/tab.js"></script>
 <!-- endbuild -->
 
+
 <!-- build:js scripts/main.js -->
-<script src="scripts/datatables.min.js"></script>
+<script src="scripts/3p/jsbn.js"></script>
+<script src="scripts/3p/jsbn2.js"></script>
+<script src="scripts/3p/sjcl.js"></script>
+
+<script src="scripts/3p/aws-cognito-sdk.min.js"></script>
+<script src="scripts/3p/amazon-cognito-identity.min.js"></script>
+<!-- See comments in Cognito.js
+script src="scripts/3p/aws-sdk-2.5.0.min.js"></script -->
+
+
+<!-- script src="scripts/3p/palette.js"></script -->
+<script src="scripts/3p/datatables.min.js"></script>
+<script src="scripts/3p/bootstrap-dialog.js"></script>
 <script src="scripts/DataTable.js"></script>
-<script src="scripts/ProjectData.js"></script>
-<script src="scripts/ProjectDashboardReporter.js"></script>
+<script src="scripts/Cognito.js"></script>
+<script src="scripts/Authentication.js"></script>
 <script src="scripts/main.js"></script>
+<script src="scripts/CheckoutPage.js"></script>
+<script src="scripts/ProjectDetailsData.js"></script>
+<script src="scripts/ProjectDetailsPage.js"></script>
+<script src="scripts/UserFeedbackData.js"></script>
+<script src="scripts/UserFeedbackPage.js"></script>
+<script src="scripts/OverviewPage.js"></script>
+<script src="scripts/DropdownButton.js"></script>
+<script src="scripts/ProjectPicker.js"></script>
 <!-- endbuild -->
+
 </body>
 </html>

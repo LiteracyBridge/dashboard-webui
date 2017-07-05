@@ -5,6 +5,8 @@ const browserSync = require('browser-sync').create();
 const del = require('del');
 const wiredep = require('wiredep').stream;
 const runSequence = require('run-sequence');
+const debug = require('gulp-debug');
+
 
 const $ = gulpLoadPlugins();
 const reload = browserSync.reload;
@@ -24,7 +26,8 @@ gulp.task('scripts', () => {
   return gulp.src('app/scripts/**/*.js')
     .pipe($.plumber())
     .pipe($.if(dev, $.sourcemaps.init()))
-    .pipe($.babel())
+    .pipe($.babel({'ignore':['aws*', 'amazon*', 'jsbn*', 'sjcl*']}))
+    .pipe(debug())
     .pipe($.if(dev, $.sourcemaps.write('.')))
     .pipe(gulp.dest('.tmp/scripts'))
     .pipe(reload({stream: true}));
@@ -94,6 +97,14 @@ gulp.task('data', () => {
   }).pipe(gulp.dest('dist/data'));
 });
 
+gulp.task('uf', () => {
+  return gulp.src([
+    'app/uf/**'
+  ], {
+    dot: true
+  }).pipe(gulp.dest('dist/uf'));
+});
+
 gulp.task('clean', del.bind(null, ['.tmp', 'dist']));
 
 gulp.task('serve', () => {
@@ -161,7 +172,7 @@ gulp.task('wiredep', () => {
     .pipe(gulp.dest('app'));
 });
 
-gulp.task('build', ['lint', 'html', 'images', 'fonts', 'extras', 'data'], () => {
+gulp.task('build', ['lint', 'html', 'images', 'fonts', 'extras', 'data', 'uf'], () => {
   return gulp.src('dist/**/*').pipe($.size({title: 'build', gzip: true}));
 });
 

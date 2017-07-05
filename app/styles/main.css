@@ -45,6 +45,7 @@ body {
     max-width: 730px;
   }
 }
+
 .container-narrow > hr {
   margin: 30px 0;
 }
@@ -54,6 +55,7 @@ body {
   text-align: center;
   border-bottom: 1px solid #e5e5e5;
 }
+
 .jumbotron .btn {
   padding: 14px 24px;
   font-size: 21px;
@@ -106,8 +108,6 @@ body {
   margin-bottom: -1px;
 }
 
-
-
 #project-select h4 {
   line-height: 34px;
 }
@@ -118,7 +118,7 @@ body {
 }
 
 .stat {
-  font-style:italic;
+  font-style: italic;
 }
 
 .row.report_section {
@@ -127,6 +127,7 @@ body {
   border-radius: 5px;
   box-shadow: 5px 8px 5px #bbb;
 }
+
 .report_section p {
   margin-bottom: 2px;
 }
@@ -153,6 +154,7 @@ p.spacer {
 .marketing {
   margin: 40px 0;
 }
+
 .marketing p + h4 {
   margin-top: 28px;
 }
@@ -166,12 +168,134 @@ p.spacer {
     padding-right: 0;
     padding-left: 0;
   }
+
   /* Space out the masthead */
   .header {
     margin-bottom: 30px;
   }
+
   /* Remove the bottom border on the jumbotron for visual effect */
   .jumbotron {
     border-bottom: 0;
   }
+}
+
+/* flot */
+
+.legend table {
+  border-spacing: 5px;
+}
+
+/* authentication dialogs have an alert area */
+.alert-area .alert-info {
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.alert-area .alert-warning {
+  background-color: #eee;
+  border-color: #d6e9c6;
+  color: #333;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.alert-area .alert-danger {
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.auth-dialog input.form-control {
+    margin-bottom: 10px;
+}
+
+.auth-dialog-help {
+    padding: 20px;
+    margin: 10px;
+    border: 2px gray solid;
+    border-radius: 6px;
+    background-color: ivory;
+    z-index: 2000;
+}
+.auth-dialog-help button {
+    margin-right: 10px;
+}
+
+/* create account specific */
+.password-mismatch {
+  color: red;
+  font-style: italic;
+}
+
+/* checkout display */
+.btn-tiny {
+  padding: 1px 3px 0px 4px;
+  font-size: 10px;
+}
+
+/* Wait spinner */
+#wait-spinner .modal-dialog {
+  height: 50px; /* Any value displays as the same size, but this centers the box in the window */
+  width: 62px; /* this value gets the spinner centered in the box */
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+}
+
+/* Generic tooltip */
+#tooltip {
+  position: absolute;
+  display: none;
+  border: 1px solid #fdd;
+  padding: 2px;
+  background-color: #fee;
+  opacity: 0.80;
+}
+
+.demo-container {
+    box-sizing: border-box;
+    /*width: 850px;*/
+    /*height: 450px;*/
+    padding: 20px 15px 15px 15px;
+    margin: 15px auto 30px auto;
+    border: 1px solid #ddd;
+    background: #fff;
+    background: linear-gradient(#f6f6f6 0, #fff 50px);
+    background: -o-linear-gradient(#f6f6f6 0, #fff 50px);
+    background: -ms-linear-gradient(#f6f6f6 0, #fff 50px);
+    background: -moz-linear-gradient(#f6f6f6 0, #fff 50px);
+    background: -webkit-linear-gradient(#f6f6f6 0, #fff 50px);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    -o-box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    -ms-box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    -moz-box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    -webkit-box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.progress-placeholder {
+    /*width: 100%;*/
+    /*height: 100%;*/
+    font-size: 14px;
+    line-height: 1.2em;
+}
+
+#message-length-placeholder {
+    /*max-width: 75%;*/
+    /*max-height: 75%;*/
+    //height: 250px;
+    font-size: 14px;
+    line-height: 1.2em;
+    border: 1px red;
+}
+
+#category-breakdown-placeholder {
+    /*max-width: 60%;*/
+    /*max-height: 60%;*/
+    //height: 450px;
+    font-size: 14px;
+    line-height: 1.2em;
+    border: 1px red;
 }
