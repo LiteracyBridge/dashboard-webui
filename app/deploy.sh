@@ -4,4 +4,4 @@
 # Unfortunately, the s3 cli doesn't honor the --exclude flag when performing a --delete.
 # So, we just copy it all there. We could delete it all from time to time.
 
-aws s3 sync --exclude '.*' --exclude 'uf' --exclude 'data' --exclude '*.sh' . s3://dashboard-lb-stats
+aws s3 sync --exclude '.*' --exclude 'uf/*' --exclude 'data/*' --exclude '*.sh' . s3://dashboard-lb-stats
