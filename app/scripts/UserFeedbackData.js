@@ -152,19 +152,44 @@ UserFeedbackData = (function () {
  *    };
      *
      */
+
+    let UF_PATH0 = 'uf/';
+    let UF_PATH1 = 'uf/data/';
+    let MARKER = 'projects.txt'
+    var ufPath;
+    var feedbackPathPromise;
     
-    let UF_PATH = 'uf/data/';
-    var ROOT;
-    
-    function ufPath() {
-        if (!ROOT) {
-            ROOT = Main.getRootPath();
+    /**
+     * Determines the path to statistics data. Uses trial-and-error.
+     */
+    function getUserFeedbackPath() {
+        if (!feedbackPathPromise) {
+            feedbackPathPromise = $.Deferred();
+            var ROOT = Main.getRootPath();
+            // We know the file 'projects.txt' should exist in a 'uf' or a 'data' directory.
+            // Look first in {ROOT}/uf then in {ROOT}/uf/data.
+            $.get(ROOT+UF_PATH0+MARKER)
+                .then((data) => {
+                    ufPath = ROOT + UF_PATH0;
+                    feedbackPathPromise.resolve(ufPath);
+                }, (err) => {
+                    // But, if we can't find the data at '/dashboard-lb-stats/...', maybe this is a test running
+                    // locally on the dev's machine. In that case, try to find the data relative to where this
+                    // code is running. If we find it, cool, we can test with some local data.
+                    $.get(ROOT+UF_PATH1+MARKER)
+                        .then((data) => {
+                            ufPath = ROOT + UF_PATH1;
+                            feedbackPathPromise.resolve(ufPath);
+                        }, (err) => {
+                            feedbackPathPromise.reject(err);
+                        })
+                })
         }
-        return ROOT + UF_PATH;
+        return feedbackPathPromise;
     }
     
     function projectPath(proj) {
-        return ufPath() + proj + '/'
+        return ufPath + proj + '/'
     }
     
     function categoriesPath(proj) {
@@ -184,7 +209,7 @@ UserFeedbackData = (function () {
     }
     
     function projectsListPath() {
-        return ufPath() + 'projects.txt';
+        return ufPath + 'projects.txt';
     }
     
     // Promises keyed by project name.
@@ -559,6 +584,8 @@ UserFeedbackData = (function () {
         // { proj1 : { update1: acmname1, update2: acmname2, ...},
         //   proj2 : { update3: acmname3, update4: acmname4, ...}, ...
         projectsListPromise = $.Deferred();
+        
+        getUserFeedbackPath().then((ufPath) => {
         $.when($.get(projectsListPath()), ProjectDetailsData.getProjectList())
             .then((ufProjects, projects) => {
                 var nl = /\s/
@@ -584,6 +611,8 @@ UserFeedbackData = (function () {
                 })
                 projectsListPromise.resolve(result);
             }, projectsListPromise.reject);
+        });
+        
         return projectsListPromise;
     }
     
