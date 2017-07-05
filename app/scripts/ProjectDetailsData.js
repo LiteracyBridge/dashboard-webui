@@ -82,24 +82,24 @@ ProjectDetailsData = function () {
             var deplByDepl = $.get(prefix + 'deployments_by_deployment.csv');
             var prodByDepl = $.get(prefix + 'production_by_deployment.csv');
             var usageByDepl = $.get(prefix + 'usage_by_deployment.csv');
-            var usageByPackage = $.get(prefix + 'usage_by_package_category.csv');
+            var usageByCategory = $.get(prefix + 'usage_by_package_category.csv');
             var usageByMessage = $.get(prefix + 'usage_by_message.csv');
             
             // Wait for all to load. TODO: handle timeouts.
-            $.when(deplByDepl, prodByDepl, usageByDepl, usageByPackage, usageByMessage)
-                .done(function resolved(depl, prod, usage, pkg, msg) {
+            $.when(deplByDepl, prodByDepl, usageByDepl, usageByCategory, usageByMessage)
+                .done(function resolved(depl, prod, usage, cat, msg) {
                     // Parse the files.
                     // Can't refactor the options because $.csv craps on the options object.
                     var deploymentData = $.csv.toObjects(depl[0], {separator: ',', delimiter: '"'});
                     var productionData = $.csv.toObjects(prod[0], {separator: ',', delimiter: '"'});
                     var usageData = $.csv.toObjects(usage[0], {separator: ',', delimiter: '"'});
-                    var packageData = $.csv.toObjects(pkg[0], {separator: ',', delimiter: '"'});
+                    var categoryData = $.csv.toObjects(cat[0], {separator: ',', delimiter: '"'});
                     var messageData = $.csv.toObjects(msg[0], {separator: ',', delimiter: '"'});
                     
                     promise.resolve({deploymentData: deploymentData,
                         productionData: productionData,
                         usageData: usageData,
-                        packageData: packageData,
+                        categoryData: categoryData,
                         messageData: messageData
                     });
                 }).fail((err) => {
@@ -155,7 +155,7 @@ ProjectDetailsData = function () {
      *  .usageData -- an object like {project,deployment,deploymentnumber,num_packages,num_communities,
      *                                num_categories,num_messages,num_tbs,played_minutes,
      *                                num_effective_completions,num_completions}
-     *  .packageData -- an array of objects like {project,deploymentnumber,cat_packages,cat_languages,category,
+     *  .categoryData -- an array of objects like {project,deploymentnumber,cat_packages,cat_languages,category,
      *                                num_messages,duration_minutes,played_minutes,effective_completions,completions,
      *                                num_tbs}
      *  .messageData -- an array of objects like {project,deployment,deploymentnumber,package,languagecode,language,
@@ -180,7 +180,7 @@ ProjectDetailsData = function () {
             result.usageData = data.usageData.find((el) => {
                 return (el.deployment == update || el.deploymentnumber == update)
             });
-            result.packageData = data.packageData.filter((el) => {
+            result.categoryData = data.categoryData.filter((el) => {
                 return (el.deployment == update || el.deploymentnumber == update)
             });
             result.messageData = data.messageData.filter((el) => {

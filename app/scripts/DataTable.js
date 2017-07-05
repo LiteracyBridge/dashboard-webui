@@ -67,6 +67,7 @@ DataTable = function () {
                 $($tbody).append('<tr></tr>');
                 var $tr = $(':last', $tbody);
                 columns.forEach((column) => {
+                    var $td = $('<td>');
                     var cell = '';
                     // If there's a format function, call it. Otherwise just use the data.
                     if (formatters[column]) {
@@ -74,7 +75,8 @@ DataTable = function () {
                     } else {
                         cell = row[column];
                     }
-                    $tr.append('<td>' + cell + '</td>');
+                    $td.append(cell);
+                    $tr.append($td);
                 });
             });
         }

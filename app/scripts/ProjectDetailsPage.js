@@ -66,7 +66,7 @@ ProjectDetailsPage = function () {
      */
     function messagePerformance(stats) {
         var options = {
-            columns: ['language', 'title', 'num_categories', 'duration', 'eff_completions'],
+            columns: ['language', 'title', /*'num_categories',*/ 'duration', 'eff_completions'],
             headings: {
                 language: 'Language', title: 'Message Title', num_categories: '# Categories',
                 duration: 'Duration of Message',
@@ -76,25 +76,44 @@ ProjectDetailsPage = function () {
                 language: 'The language in which the message was recorded',
                 duration: 'Length of the recording, in minutes',
                 num_categories: 'Number of categories (topics) in which the message appeared in this package.',
-                eff_completions: 'How many times, alltogether, did the Talking Books listen to this message to completion?'
+                eff_completions: 'How many times, on average, did the Talking Books listen to this message to completion? Taken over all Talking Books that reported usage statistics for any message in this package.'
             },
             formatters: {
+                title: (row) => {
+                    if (row.num_categories <= 1) { return row.title }
+                    var tip = `This message appears in ${row.num_categories} categories.`;
+                    var $div = $('<div>');
+                    $div.append('<span>' + row.title + '</span>');
+                    $div.append('<img class="question" src="images/informationRed16.png" title="' + tip + '"/>');
+                    var $q = $('img', $div);
+                    $q.tooltip();
+                    // So clicking doesn't do anything...
+                    $q.on('click', () => {
+                        return false;
+                    });
+    
+                    return $div;
+                },
                 duration: (row) => {
                     return NUMBER(row.duration_minutes) + ' minutes'
                 },
                 eff_completions: (row) => {
-                    return NUMBER(row.effective_completions)
+                    return NUMBER(row.effective_completions / Math.max(1, row.num_package_tbs))
                 }
             },
             datatable: {colReorder: true}
         };
         
         var msgStats = stats.messageData || [];
-        // Initial sort order
+        // Initial sort order. Sort by language, then by title.
         msgStats.sort((a, b) => {
             var cmp = a.language.toLocaleLowerCase().localeCompare(b.language.toLocaleLowerCase());
             return cmp || a.title.toLocaleLowerCase().localeCompare(b.title.toLocaleLowerCase());
         });
+        // If no multi-category messages, don't need the # Categories column.
+        if (!msgStats.some(row=>row.num_categories > 1)) {
+            options.columns = options.columns.filter((col)=>col!=='num_categories');
+        }
         
         DataTable.create($('#message-performance'), msgStats, options);
     }
@@ -120,40 +139,42 @@ ProjectDetailsPage = function () {
     
     /**
      *
-     * @param packageData -- an array of objects like {project,deploymentnumber,cat_packages,cat_languages,category,
+     * @param categoryData -- an array of objects like {project,deploymentnumber,cat_packages,cat_languages,category,
      *                                num_messages,duration_minutes,played_minutes,effective_completions,completions,
      *                                num_tbs}
      */
-    function makeCategoryRadar(packageData) {
+    function makeCategoryRadar(categoryData) {
         // Combine categories with different languages.
         function ensureCd(category) {
-            if (!cd[category]) {
-                cd[category] = {category: category, duration_minutes: 0, played_minutes: 0, effective_completions: 0}
+            if (!catDataHash[category]) {
+                catDataHash[category] = {category: category, duration_minutes: 0, played_minutes: 0, effective_completions: 0}
             }
             ;
         }
         
-        var cd = {};
-        packageData.forEach((pd) => {
-            ensureCd(pd.category);
-            cd[pd.category].duration_minutes += 1 * pd.duration_minutes;
-            cd[pd.category].played_minutes += 1 * pd.played_minutes;
-            cd[pd.category].effective_completions += 1 * pd.effective_completions;
+        // A given category may appear multiple times (in different languages).  So, take an array of categoryData objects,
+        // and make a hash of them, indexed by category name, adding the counts into the objects in the hash.
+        var catDataHash = {};
+        categoryData.forEach((catData) => {
+            ensureCd(catData.category);
+            catDataHash[catData.category].duration_minutes += 1 * catData.duration_minutes;
+            catDataHash[catData.category].played_minutes += 1 * catData.played_minutes;
+            catDataHash[catData.category].effective_completions += 1 * catData.effective_completions;
         });
-        // Turn it back into a list.
-        var pd = Object.keys(cd).map(cat => cd[cat]);
+        // Turn it back into a list, but now there's one entry per category name.
+        var catDataList = Object.keys(catDataHash).map(cat => catDataHash[cat]);
         // Find maximums & totals, for scaling.
-        var maxDuration = Math.max.apply(null, pd.map(pd => pd.duration_minutes));
-        var maxListened = Math.max.apply(null, pd.map(pd => pd.played_minutes));
-        var maxCompletions = Math.max.apply(null, pd.map(pd => pd.effective_completions));
-        var totDuration = pd.reduce((s, v) => s + v.duration_minutes, 0);
-        var totListened = pd.reduce((s, v) => s + v.played_minutes, 0);
-        var totCompletions = pd.reduce((s, v) => s + v.effective_completions, 0);
+        var maxDuration = Math.max.apply(null, catDataList.map(pd => pd.duration_minutes));
+        var maxListened = Math.max.apply(null, catDataList.map(pd => pd.played_minutes));
+        var maxCompletions = Math.max.apply(null, catDataList.map(pd => pd.effective_completions));
+        var totDuration = catDataList.reduce((s, v) => s + v.duration_minutes, 0);
+        var totListened = catDataList.reduce((s, v) => s + v.played_minutes, 0);
+        var totCompletions = catDataList.reduce((s, v) => s + v.effective_completions, 0);
         // Arrays of scaled data, labels.
-        var durations = pd.map(pd => pd.duration_minutes / totDuration * 100);
-        var listened = pd.map(pd => pd.played_minutes / totListened * 100);
-        var completed = pd.map(pd => pd.effective_completions / totCompletions * 100);
-        var labels = pd.map(pd => pd.category);
+        var durations = catDataList.map(pd => pd.duration_minutes / totDuration * 100);
+        var listened = catDataList.map(pd => pd.played_minutes / totListened * 100);
+        var completed = catDataList.map(pd => pd.effective_completions / totCompletions * 100);
+        var labels = catDataList.map(pd => pd.category);
         // Chart data
         var durationDataset = {
             label: 'Published minutes',
@@ -187,7 +208,7 @@ ProjectDetailsPage = function () {
     
     /**
      * Builds a table with details about the package(s) in the update
-     * @param stats An object with {packageData} member.
+     * @param stats An object with {categoryData} member.
      */
     function deploymentPerformance(stats) {
         // To add a widget to a cell, use, eg:
@@ -200,37 +221,39 @@ ProjectDetailsPage = function () {
             },
             tooltips: {
                 category: 'A collection of messages on the same topic.',
-                completed: 'When a Talking Book played 85% or more of the message. ',
+                played: 'The per-TB is over all Talking Books that reported usage statistics for any message in this package.',
+                completed: 'When a Talking Book played 85% or more of the message. The per-TB is over all Talking Books that reported usage statistics for any message in this package.',
                 pkg_tbs: 'The number of Talking Books that reported usage statistics for any message in this package'
             },
             formatters: {
                 provided: (row) => {
                     return `<p>${NUMBER(row.duration_minutes)}  minutes of Messaging</p>
-            <p>${NUMBER(row.num_messages)} Messages</p>`
+                        <p>${NUMBER(row.num_messages)} Messages</p>`
                 },
                 played: (row) => {
                     return `<p>${NUMBER(row.played_minutes)} minutes</p>
-            <p>${NUMBER(row.played_minutes / 60)} hours</p>`
+                        <p>${NUMBER(row.played_minutes / 60)} hours</p>
+                        <p>${NUMBER(row.played_minutes / Math.max(1,row.pkg_tbs))} minutes per TB</p>`
                 },
                 completed: (row, ix) => {
-                    return `    ${NUMBER(row.effective_completions)} times`
+                    return `<p>${NUMBER(row.effective_completions)} times</p><p>${NUMBER(row.effective_completions / Math.max(1,row.pkg_tbs))} times per TB</p>`
                 }
             },
             datatable: {colReorder: true}
         };
         /*
-         *  .packageData -- an array of objects like {project,deploymentnumber,cat_packages,cat_languages,category,
+         *  .categoryData -- an array of objects like {project,deploymentnumber,cat_packages,cat_languages,category,
          *                                num_messages,duration_minutes,played_minutes,effective_completions,completions,
          *                                num_tbs}
          */
-        var pkgStats = stats.packageData || [];
+        var categoryStats = stats.categoryData || [];
         // Sort
-        pkgStats.sort((a, b) => {
+        categoryStats.sort((a, b) => {
             var cmp = a.language.toLocaleLowerCase().localeCompare(b.language.toLocaleLowerCase());
             return cmp || a.category.toLocaleLowerCase().localeCompare(b.category.toLocaleLowerCase());
         });
         
-        DataTable.create($('#deployment-performance'), pkgStats, options);
+        DataTable.create($('#deployment-performance'), categoryStats, options);
         $('#deployment-performance button').on('click', (ev) => {
             var btn = $(ev.currentTarget);
             var ix = $(btn).data('index');
@@ -240,7 +263,7 @@ ProjectDetailsPage = function () {
         });
         
         // Make a radar chart of published vs listened.
-        makeCategoryRadar(pkgStats);
+        makeCategoryRadar(categoryStats);
         
     }
     
@@ -327,14 +350,14 @@ ProjectDetailsPage = function () {
         var usage = stats.usageData;
         
         var mostCompletions, mostPlayed;
-        stats.packageData.forEach((pd) => {
-            if (!mostPlayed || pd.played_minutes / pd.duration_minutes > mostPlayed.played_minutes / mostPlayed.duration_minutes) {
-                mostPlayed = pd;
+        stats.categoryData.forEach((catData) => {
+            if (!mostPlayed || catData.played_minutes / catData.duration_minutes > mostPlayed.played_minutes / mostPlayed.duration_minutes) {
+                mostPlayed = catData;
             }
         });
-        stats.messageData.forEach((md) => {
-            if (!mostCompletions || +md.effective_completions > +mostCompletions.effective_completions) {
-                mostCompletions = md;
+        stats.messageData.forEach((msgData) => {
+            if (!mostCompletions || +msgData.effective_completions > +mostCompletions.effective_completions) {
+                mostCompletions = msgData;
             }
         });
         
