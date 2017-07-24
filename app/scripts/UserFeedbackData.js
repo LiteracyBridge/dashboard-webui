@@ -391,13 +391,14 @@ UserFeedbackData = (function () {
             configurable: true, enumerable: true, writable: true
         },
         add: {
-            value: function (id, count) {
+            value: function (id, count, name) {
                 // Look up the id in the list of Categories, to get name, fullname
-                var cat = categoryRoot.findCategory(id) || {name: 'id: ' + id};
+                var cat = categoryRoot.findCategory(id) || (name ? {name: name} : {name: 'id: ' + id});
                 var result = this.addCategory(id, cat.name, cat.fullname);
                 if (count) {
                     result.count = count
                 }
+                return result;
             },
             configurable: true, enumerable: true, writable: true
         },
@@ -414,6 +415,42 @@ UserFeedbackData = (function () {
                 return sum;
             },
             configurable: true, enumerable: true, writable: true
+        },
+        durations: {
+            /**
+             * Gets the sum of durations buckets for this category and sub-categories.
+             * If none contain durations buckets, will return 'undefined'
+             *
+             */
+            value: function () {
+                function accumulate(buckets) {
+                    if (buckets) {
+                        if (!result) {
+                            result = durationBuckets();
+                        }
+                        buckets.forEach((b,ix)=>result[ix]+=b);
+                    }
+                }
+                var result;
+                accumulate(this.durationBuckets);
+                this.getChildList().forEach(p => {
+                    accumulate(p.durations())
+                })
+                return result;
+            },
+            configurable: true, enumerable: true, writable: true
+        },
+        attachDurations: {
+            /**
+             * Attaches duration buckets to appropriate progress objects.
+             * @param durations An object like {'1-2-3': [0,0,1,2,3,0,0,0], '2-3-4': [...]}
+             */
+            value: function(durations) {
+                if (durations[this.id]) {
+                    this.durationBuckets = durations[this.id].slice(0);
+                }
+                this.getChildList().forEach(p=>{p.attachDurations(durations)})
+            }
         }
     });
     Progress.prototype.constructor = Progress;
@@ -442,17 +479,19 @@ UserFeedbackData = (function () {
         var categoryUselessRe = /^9-2$/;
         var categoryRe = /^[0-9-]*$/;
         var categorizedRe = /^90/;
+        let skippedRe = /^92/;
         var uncategorizedRe = /^9-0/;
         dailies.forEach(dailySummary => {
-            var dailyProgress = {};
+            var dailyProgress = new Progress('Feedback', 'All Feedback'); //  {};
             // Convert string like '2016-04-11' to Date object.
             dailyProgress.date = new Date(dailySummary.date);
             progressRoot.push(dailyProgress);
             
             // Slices of counts, organized by useless, categorized, uncategorized.
-            dailyProgress.categorized = new Progress('Categorized', 'Categorized');
-            dailyProgress.uncategorized = new Progress('Uncategorized', 'Uncategorized');
-            dailyProgress.useless = new Progress('Useless', 'Useless');
+            dailyProgress.categorized = dailyProgress.add('Processed', 0, 'Processed'); // new Progress('Processed', 'Processed');
+            dailyProgress.uncategorized = dailyProgress.add('Unprocessed', 0, 'Unprocessed'); // new Progress('Unprocessed', 'Unprocessed');
+            dailyProgress.useless = dailyProgress.add('Useless', 0, 'Useless'); // new Progress('Useless', 'Useless');
+            dailyProgress.skipped = dailyProgress.add('Skipped', 0, 'Skipped'); // new Progress('Skipped', 'Skipped');
             
             Object.keys(dailySummary).forEach(k => {
                 // If there is a count, and it looks like a category
@@ -462,13 +501,21 @@ UserFeedbackData = (function () {
                         dailyProgress.categorized.add(k, +dailySummary[k]);
                     } else if (uncategorizedRe.test(k)) {
                         dailyProgress.uncategorized.add(k, +dailySummary[k]);
-                    } else {
+                    } else if (categoryUselessRe.test(k)) {
                         dailyProgress.useless.add(k, +dailySummary[k]);
+                    } else if (skippedRe.test(k)) {
+                        dailyProgress.skipped.add(k, +dailySummary[k]);
+                    } else {
+                        dailyProgress.categorized.add(k, +dailySummary[k]);
                     }
                 }
             });
         });
         return progressRoot;
+    }
+    
+    function durationBuckets() {
+        return Array(durationLimits.length).fill(0);
     }
     
     // bucket by 2, 5, 10, 20 seconds; 1, 2, 5, + minutes
@@ -482,11 +529,61 @@ UserFeedbackData = (function () {
         300: ' 2:01 - 5 min',
         1000000: ' > 5 minutes', // a very long length of time
     }
+    let durationLimits = [2, 5, 10, 20, 60, 120, 300, Math.MAX_SAFE_INTEGER]
+    let durationLabels = [' 0 - 2 sec', ' 3 - 5 sec', ' 6 - 10 sec', ' 11 - 20 sec',
+        ' 21 sec - 1 min', ' 1:01 - 2 min', ' 2:01 - 5 min', ' > 5 minutes']
     
-    function parseMessages(msgs) {
+    /**
+     * Parses a list of messages, to get durations by category.
+     *
+     * @param msgs An array of objects, each like
+        {
+            DC_TITLE: 'B-00040220_9-0_F28A2F39',
+            DC_PUBLISHER: '',
+            DC_IDENTIFIER: 'LB-2_0ulbdv0vqj_k',
+            DC_SOURCE: '',
+            DC_LANGUAGE: 'en',
+            DC_RELATION: '',
+            DTB_REVISION: '1',
+            LB_DURATION: '48',
+            LB_MESSAGE_FORMAT: '',
+            LB_TARGET_AUDIENCE: '',
+            LB_DATE_RECORDED: '',
+            LB_KEYWORDS: '',
+            LB_TIMING: '',
+            LB_PRIMARY_SPEAKER: '',
+            LB_GOAL: '',
+            LB_ENGLISH_TRANSCRIPTION: '',
+            LB_NOTES: '',
+            LB_BENEFICIARY: '',
+            LB_STATUS: '',
+            CATEGORIES: '',
+            QUALITY: 'h',
+            PROJECT: 'UWR-FB-2016-14',
+            LB_CORRELATION_ID: 'LBRB'
+        }
+     * @returns {Array}
+     */
+    function extractDurations(msgs) {
         // Keep messages with categories; keep just category and duration
+        // TODO: Consider mapping messages with no category as '9-0', thusly:
+        //   msgs = msgs.map(msg=>{return {category:msg.CATEGORIES||'9-0', duration: +msg.LB_DURATION}});
         msgs = msgs.filter(msg => msg.CATEGORIES).map(msg => {
             return {category: msg.CATEGORIES, duration: +msg.LB_DURATION}
+        });
+        
+        // For every message, if we haven't yet seen the category, make a bucket for the category. Then count the duration.
+        var cats = {};
+        msgs.forEach(msg => {
+            if (!cats.hasOwnProperty(msg.category)) {
+                cats[msg.category] = durationBuckets()
+            }
+            durationLimits.some((limit, ix)=>{
+                if (msg.duration <= limit) {
+                    cats[msg.category][ix]++;
+                    return true;
+                }
+            });
         });
         
         // Count up the # messages in length buckets (0-2 seconds, 3-5 seconds, etc)
@@ -510,7 +607,7 @@ UserFeedbackData = (function () {
         durationData = keys.map((k) => {
             return {label: durations[k], data: buckets[k]};
         })
-        return durationData;
+        return {durationData: durationData, durationsByCategory: cats, durationLimits: durationLimits, durationLabels: durationLabels};
     }
     
     /**
@@ -563,8 +660,7 @@ UserFeedbackData = (function () {
         $.when(messages)
             .done(function resolved(messages) {
                 // Parse the files.
-                // Can't refactor the options because $.csv craps on the options object.
-                var durationData = parseMessages($.csv.toObjects(messages, {separator: ',', delimiter: '"'}));
+                var durationData = extractDurations($.csv.toObjects(messages, {separator: ',', delimiter: '"'}));
                 
                 durationsPromise.resolve(durationData);
             }).fail((err) => {

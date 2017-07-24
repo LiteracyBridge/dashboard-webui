@@ -2,7 +2,7 @@
  * Created by bill on 4/18/17.
  */
 /* jshint undef:true, esversion:6, asi:true */
-/* global $, BootstrapDialog, console, Cognito, AWS, DataTable, User */
+/* global $, BootstrapDialog, console, CognitoWrapper, AWS, DataTable, User, Main */
 
 var CheckoutPage = CheckoutPage || {};
 
@@ -13,7 +13,7 @@ CheckoutPage = (function () {
       <div class="panel-body container-fluid">
             <div>
                 <div id="message"></div>
-                <p>Enter the name of this project before confirming this action
+                <p>Enter the name of this project before confirming this action (upper- vs lower-case ignored)
                 <input id="project-confirmation" type="text" class="form-control"
                        aria-describedby="basic-addon1" autofocus>
                 </p>
@@ -38,7 +38,7 @@ CheckoutPage = (function () {
                 contentType: 'application/json; charset=utf-8',
                 type: 'post',
                 dataType: 'json',
-                headers: {Authorization: Cognito.getIdToken()}
+                headers: {Authorization: CognitoWrapper.getIdToken()}
             }
             $.ajax(request)
                 .done((result)=>{
@@ -61,9 +61,10 @@ CheckoutPage = (function () {
         
         $('#message', $dialog).html(message);
         // Don't enable the 'confirm' button until they type the ACM name correctly.
+        var target = row.acm_name.toLowerCase();
         var $p = $('#project-confirmation', $dialog);
         $p.on('input', () => {
-            var mismatched = $p.val() !== row.acm_name;
+            var mismatched = $p.val().toLowerCase() !== target;
             dialog.getButton('confirm')[mismatched ? 'disable' : 'enable']();
         });
         
@@ -203,14 +204,14 @@ CheckoutPage = (function () {
         
         var user = User.getUserAttributes();
         var input = {username: user.username, email: user.email};
-        
-        $('#wait-spinner').show();
+    
+        Main.incrementWait();
         
         // Don't refresh more often than 5 seconds. But do show a wait spinner for a half second, just to
         // show that the UI is alive.
         if (Date.now() - latestTimestamp < 5 * 1000) {
             setTimeout(() => {
-                $('#wait-spinner').hide()
+                Main.decrementWait();
             }, 500);
         } else {
             
@@ -218,12 +219,12 @@ CheckoutPage = (function () {
                 url: url,
                 type: 'get',
                 dataType: 'json',
-                headers: {Authorization: Cognito.getIdToken()}
+                headers: {Authorization: CognitoWrapper.getIdToken()}
             }
             
             $.ajax(request)
                 .done((result) => {
-                    $('#wait-spinner').hide();
+                    Main.decrementWait();
                     if (result.errorMessage) {
                         console.log(result.errorMessage);
                     } else {
@@ -233,7 +234,7 @@ CheckoutPage = (function () {
                     }
                 })
                 .fail((err) => {
-                    $('#wait-spinner').hide();
+                    Main.decrementWait();
                     console.log(err)
                 });
             

@@ -2,7 +2,7 @@
  * Created by bill on 3/2/17.
  */
 /* jshint undef:true, esversion:6, asi:true */
-/* globals console, $, ProjectDetailsData, BootstrapDialog, User, AWS, Cognito */
+/* globals console, $, ProjectDetailsData, BootstrapDialog, User, AWS, CognitoWrapper */
 
 var Main = Main || {};
 
@@ -42,6 +42,33 @@ Main = (function () {
         }
         return applicationPathPromise;
     }
+    
+    var waitCount = 0;
+    let delayTime = 500;
+    var delayTimeout;
+    function delayedSpinner() {
+        $('#wait-spinner').show();
+        delayTimeout = null;
+    }
+    function incrementWait() {
+        if (waitCount++ === 0) {
+            delayTimeout =setTimeout(delayedSpinner, delayTime);
+        }
+    }
+    function decrementWait() {
+        if (--waitCount === 0) {
+            clearTimeout(delayTimeout);
+            delayTimeout = null;
+            $('#wait-spinner').hide();
+        }
+    }
+    function clearWait() {
+        waitCount = 0;
+        clearTimeout(delayTimeout);
+        delayTimeout = null;
+        $('#wait-spinner').hide();
+    }
+    
     
     function onSignedIn() {
         function setGreeting() {
@@ -105,10 +132,13 @@ Main = (function () {
         $('a[href="#verify-email"]').on('click', User.verifyEmail);
     }
     
-    init();
+    setTimeout(init, 0);
     
     // Services that are global can be exposed here.
     return {
-        getRootPath: ()=>{return ROOT_PATH}
+        getRootPath: ()=>{return ROOT_PATH},
+        incrementWait: incrementWait,
+        decrementWait: decrementWait,
+        clearWait: clearWait
     }
 })();

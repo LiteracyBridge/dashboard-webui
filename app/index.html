@@ -134,11 +134,14 @@
             <h2 id='update_header'>Deployment <span id='update_header_name'></span> at a glance.</h2>
             <div id='deployment-summary' class="detailtable"></div>
             <h2>Deployment Performance By Categories</h2>
-            <div class="row">
-                <div id='deployment-performance' class="col-md-9 detailtable"></div>
-                <div id='category_radar' class="col-md-3">
-                    <canvas id="deployment-performance-radar"></canvas>
+            <div class="row deployment-performance">
+                <div id='durations-radar' class="col-md-3">
+                    <canvas></canvas>
                 </div>
+                <div id='completions-radar' class="col-md-3">
+                    <canvas></canvas>
+                </div>
+                <div id='deployment-performance-chart' class="col-md-6 detailtable"></div>
             </div>
             <h2>Message Performance</h2>
             <div id='message-performance' class="detailtable"></div>
@@ -162,7 +165,7 @@
                 </div>
 
                 <div class="col-sm-4">
-                    <h3>Lengths of Messages</h3>
+                    <h3>Lengths of <span id="category-durations">Messages</span></h3>
                     <h4><span id="hover-pie3"></span>&nbsp;</h4>
                     <canvas id="message-length-placeholder"></canvas>
                 </div>
@@ -270,7 +273,7 @@
 
 <script src="scripts/3p/aws-cognito-sdk.min.js"></script>
 <script src="scripts/3p/amazon-cognito-identity.min.js"></script>
-<!-- See comments in Cognito.js
+<!-- See commentsCognitoWrapper.jso.js
 script src="scripts/3p/aws-sdk-2.5.0.min.js"></script -->
 
 
@@ -278,7 +281,7 @@ script src="scripts/3p/aws-sdk-2.5.0.min.js"></script -->
 <script src="scripts/3p/datatables.min.js"></script>
 <script src="scripts/3p/bootstrap-dialog.js"></script>
 <script src="scripts/DataTable.js"></script>
-<script src="scripts/Cognito.js"></script>
+<script src="scripts/CognitoWrapper.js"></script>
 <script src="scripts/Authentication.js"></script>
 <script src="scripts/main.js"></script>
 <script src="scripts/CheckoutPage.js"></script>

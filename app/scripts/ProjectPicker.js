@@ -38,8 +38,9 @@ ProjectPicker = (function ProjectPicker() {
         var $elem = $(elem);
         $elem.empty();
         
-        var $projectsDropdown = $('<div class="btn-group"></div>').on('selected', onProjectSelected).appendTo($elem);
-        var $updatesDropdown = $('<div class="btn-group"></div>').on('selected', onUpdateSelected).appendTo($elem);
+        // Either a div or a span is a good element to host the DropdownButton.
+        var $projectsDropdown = $('<div>').on('selected', onProjectSelected).appendTo($elem);
+        var $updatesDropdown = $('<span>').on('selected', onUpdateSelected).appendTo($elem);
         
         var updatesDropdown = DropdownButton.create($updatesDropdown, {title: 'Update'});
         var projectsDropdown = DropdownButton.create($projectsDropdown, {title: 'Project'});

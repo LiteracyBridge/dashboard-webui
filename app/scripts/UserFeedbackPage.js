@@ -70,7 +70,7 @@ UserFeedbackPage = (function () {
     
     
     function makeCustomTooltips($elem) {
-        var customTooltips = function (tooltip) {
+        return function (tooltip) {
             if (!tooltip) {
                 return
             }
@@ -85,12 +85,12 @@ UserFeedbackPage = (function () {
                 }, 0);
                 var pct = Math.round(data[ix] / total * 100);
                 var color = '' + tooltip.labelColors[0].backgroundColor; // append an empty string to force to string.
+                // language=HTML
                 $elem.html(`<span style="font-weight:bold; color:${color}">${text} (${pct}%)</span>`);
             } catch (ex) {
                 // Just ignore.
             }
-        }
-        return customTooltips;
+        };
     }
     
     var breakdownChart;
@@ -115,7 +115,7 @@ UserFeedbackPage = (function () {
      * Pie chart of details. May be "useless" or "categorized", depending on which line the user clicked.
      * @param progressToDisplay The Progress object to display.
      */
-    function plotDailyDetail(progressToDisplay) {
+    function plotBreakdowns(progressToDisplay) {
         var data = [];
         var labels = [];
         var childList = progressToDisplay.getChildList();
@@ -137,6 +137,7 @@ UserFeedbackPage = (function () {
         breakdownData.labels = labels;
         breakdownData.datasets[0].data = data;
         
+        // Make sure there are enough color values
         while (breakdownData.datasets[0].backgroundColor.length < data.length) {
             breakdownData.datasets[0].backgroundColor = breakdownData.datasets[0].backgroundColor.concat(cb_qualitative);
         }
@@ -150,6 +151,7 @@ UserFeedbackPage = (function () {
             breakdownChart.update();
         }
         
+        // Handle when the user clicks on a slice of the pie chart.
         placeholder.unbind();
         placeholder.bind('click', (evt) => {
             // If there's anything there, where the click was, drill into it.
@@ -188,6 +190,13 @@ UserFeedbackPage = (function () {
             $('#category-breakdown .detail-stack').off('click');
             $('#category-breakdown').empty();
         }
+        // If the category has only a single sub-category, and that has sub-sub-categories, display
+        // the sub-category instead.
+        var children = progressToDisplay.getChildList();
+        if (children.length === 1 && children[0].getChildList().length > 0) {
+             drillInto(children[0]);
+             return;
+        }
         
         // Build the addition to the category name display. Note the '/' for second and subsequent levels.
         // data-index is where we'll come back to; index of the new chart in the drillStack
@@ -204,14 +213,16 @@ UserFeedbackPage = (function () {
                     children[drillStack.length - 1].remove();
                     drillStack.pop();
                 }
-                plotDailyDetail(drillStack[drillStack.length - 1]);
+                plotBreakdowns(drillStack[drillStack.length - 1]);
+                plotDurations(drillStack[drillStack.length - 1]);
             }
         });
         drillStack.push(progressToDisplay);
-        plotDailyDetail(progressToDisplay);
+        plotBreakdowns(progressToDisplay);
+        plotDurations(progressToDisplay);
     }
     
-    
+    var durationLabels;
     var durationsChart;
     var durationsChartData = {
         labels: null,
@@ -232,30 +243,37 @@ UserFeedbackPage = (function () {
      * Pie chart of message lengths.
      * @param durationData: [{label:'2 seconds', data:99}, {label:'5 seconds', data:100}, ...]
      */
-    function plotDurations(durationData) {
+    function plotDurations(progressToDisplay) {
         var placeholder = $('#message-length-placeholder');
         
-        var data = [];
-        var labels = [];
-        durationData.forEach((d) => {
-            data.push(d.data);
-            labels.push(d.label);
-        });
-        
-        durationsChartData.labels = labels;
-        durationsChartData.datasets[0].data = data;
-        while (durationsChartData.datasets[0].backgroundColor.length < data.length) {
-            durationsChartData.datasets[0].backgroundColor = durationsChartData.datasets[0].backgroundColor.concat(cb_diverging);
-        }
-        
-        if (!durationsChart) {
-            durationsChart = new Chart(placeholder, {
-                type: 'pie',
-                data: durationsChartData,
-                options: durationsChartOptions
-            });
-        } else {
-            durationsChart.update();
+        var data = progressToDisplay.durations();
+        if (data) {
+            // eslint-disable-next-line quotes
+            $('#category-durations').text("'"+progressToDisplay.name+"'");
+            // Filter the non-zero values
+            durationsChartData.datasets[0].data = data.filter((val,ix)=> data[ix]>0 );
+            // If there aren't any, add a single entry, 'No data'.
+            if (durationsChartData.datasets[0].data.length === 0) {
+                durationsChartData.datasets[0].data.push(1);
+                durationsChartData.labels = ['No data'];
+            } else {
+                durationsChartData.labels = data.map((num, ix) => {
+                    return durationLabels[ix] + ': ' + num
+                }).filter((val, ix) => data[ix] > 0 );
+            }
+            while (durationsChartData.datasets[0].backgroundColor.length < data.length) {
+                durationsChartData.datasets[0].backgroundColor = durationsChartData.datasets[0].backgroundColor.concat(cb_diverging);
+            }
+    
+            if (!durationsChart) {
+                durationsChart = new Chart(placeholder, {
+                    type: 'pie',
+                    data: durationsChartData,
+                    options: durationsChartOptions
+                });
+            } else {
+                durationsChart.update();
+            }
         }
         
     }
@@ -284,31 +302,38 @@ UserFeedbackPage = (function () {
         // The three data series to display. Each consists of an array of x-y pairs, where the x value is a date
         // and the y value is the count on that date.
         var cat = {
-            label: 'Categorized',
+            label: 'Processed',
             data: [],
-            tension: 0,
+            tension: 0.1,
             backgroundColor: 'rgba(153,255,51,0.4)'
         };
         // Uncategorized, by definition, has no detail. No need to expand it.
         var uncat = {
-            label: 'Uncategorized',
+            label: 'Unprocessed',
             data: [],
-            tension: 0,
+            tension: 0.1,
             backgroundColor: 'rgba(255,153,0,0.4)'
         };
         var useless = {
             label: 'Useless',
             data: [],
-            tension: 0, backgroundColor: 'rgba(51,153,255,0.4)'
+            tension: 0.1, backgroundColor: 'rgba(51,153,255,0.4)'
         };
+        var skipped = {
+            label: 'Skipped',
+            data: [],
+            tension: 0.1, backgroundColor: 'rgba(51,51,255,0.4)'
+        };
+        
         
         data.progressData.forEach(dailyProgress => {
             cat.data.push({x: dailyProgress.date, y: dailyProgress.categorized.total()});
             uncat.data.push({x: dailyProgress.date, y: dailyProgress.uncategorized.total()});
             useless.data.push({x: dailyProgress.date, y: dailyProgress.useless.total()});
+            skipped.data.push({x: dailyProgress.date, y: dailyProgress.skipped.total()});
         });
         
-        progressConfig.data = {datasets: [uncat, cat, useless]};
+        progressConfig.data = {datasets: [uncat, cat, useless, skipped]};
         
         if (!progressChart) {
             progressChart = new Chart($('#progress-placeholder'), progressConfig);
@@ -324,7 +349,7 @@ UserFeedbackPage = (function () {
         if (detail.getChildList().length === 1) {
             detail = detail.getChildList()[0];
         }
-        drillInto(detail, true);
+        drillInto(latest, true);
     }
     
     function noData() {
@@ -365,10 +390,19 @@ UserFeedbackPage = (function () {
             $('#project-name').text(data);
         });
         
-        UserFeedbackData.getDurations(acmName).done(plotDurations);
+        let durationsPromise = UserFeedbackData.getDurations(acmName);
         
         UserFeedbackData.getData(acmName)
-            .done(plotProgress)
+            .done(data => {
+                plotProgress(data);
+                durationsPromise.done(durationData => {
+                    durationLabels = durationData.durationLabels;
+                    var latest = data.progressData[data.progressData.length - 1];
+                    latest.attachDurations(durationData.durationsByCategory);
+                    
+                    plotDurations(drillStack[drillStack.length - 1]);
+                });
+            })
             .fail(noData);
     }
     

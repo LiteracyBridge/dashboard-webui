@@ -10,26 +10,41 @@
 /* jshint undef:true, esversion:6, asi:true */
 /* global $, console */
 
+/**
+ * Implements a "dropdown button", which behaves much like a combo box. The button displays the current
+ * selection, and a dropdown caret that shows a list from which to make a new selection. If there is a
+ * only single choice, it is automatically selected, and the caret is hidden.
+ *
+ * To use:
+ * -- Provide an element for the button. A div or span is good. Note that any contents will be deleted.
+ * -- Call DropdownButton.create($element, options)
+ * --    $element is the element that will contain the dropdown button.
+ * --    options is an optional object, with optional properties
+ * --         'title' to be shown if there is no selection
+ * --         'style' to apply to the buttons; btn-primary is the default
+ * -- The object returned has a 'selection' property to retrieve the current selection, and
+ * --    functions 'clear()' to empty the list of choices, and 'update(list, options)' to set a new
+ * --    list of choices.
+ * -- Listen to 'selected' events on the passed element. The first argument to the handler is the source
+ * --    event, and the second argument is the selection.
+ */
+
 var DropdownButton = DropdownButton || {};
 
 DropdownButton = (function () {
     'use strict';
     
     function makeHtml(options) {
-        var id = options.id ? 'id="'+options.id+'"' : '';
         var style = options.style || 'btn-primary';
-        
         var html = `
-        <div ${id} class="btn-group btn-group">
             <button type="button" class="btn ${style}" style="border:none">${options.title}</button>
             <button type="button" class="btn ${style} dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <span class="caret"></span>
                 <span class="sr-only">Toggle Dropdown</span>
             </button>
             <ul class="dropdown-menu">
-            </ul>
-        </div>`;
-        return $(html);
+            </ul>`;
+        return html;
     }
     
     /**
@@ -63,13 +78,18 @@ DropdownButton = (function () {
             $('ul', $elem).children().off();
             $('ul', $elem).empty();
             // If there was a previous selection, and no new default selection, try to preserve the previous selection.
-            // But if there is a new default selection, ignore any previous selection.
-            var prevSelection = selection;
+            // But if there is a new default selection, ignore any previous selection. We want to allow a pre-selected
+            // "no selection", so undefined, null, and empty string are all valid defaults.
+            var preSelected = opts.hasOwnProperty('default') ? opts.default : selection;
             selection = (list.length===1) ? list[0] : null;
             list.forEach((item) => {
+                // No gaps in the list
+                if (!item) {
+                    return;
+                }
                 var li = $(`<li><a class="main-nav" href="#select-item" data-item="${item}">${item}</a></li>`)
                 $('ul', $elem).append(li);
-                if (item === (opts.default||prevSelection)) {
+                if (item === preSelected) {
                     selection = item;
                 }
             });
@@ -99,6 +119,9 @@ DropdownButton = (function () {
         var $elem = $(elem);
         $elem.children().off();
         $elem.empty();
+        if (!$elem.hasClass('btn-group')) {
+            $elem.addClass('btn-group');
+        }
         var selection;
 
         $elem.html(makeHtml(options));

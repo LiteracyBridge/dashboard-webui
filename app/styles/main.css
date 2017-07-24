@@ -299,3 +299,9 @@ p.spacer {
     line-height: 1.2em;
     border: 1px red;
 }
+
+.deployment-performance {
+    /* otherwise, the row has margins of -15, making it extend to the absolute limit of the window */
+    margin-left: 0;
+    margin-right: 0;
+}

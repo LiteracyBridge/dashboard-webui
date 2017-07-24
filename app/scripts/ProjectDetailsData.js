@@ -118,9 +118,11 @@ ProjectDetailsData = function () {
      */
     function getProjectList() {
         var promise = $.Deferred();
+        Main.incrementWait()
         getProjectsAndPaths().then((paths) => {
+            Main.decrementWait();
             promise.resolve(Object.keys(paths));
-        });
+        }, Main.decrementWait);
         return promise;
     }
     
@@ -131,14 +133,16 @@ ProjectDetailsData = function () {
      */
     function getProjectUpdateList(project) {
         var promise = $.Deferred();
+        Main.incrementWait();
         
         getProjectData(project).then((data) => {
             var updates = [];
+            Main.decrementWait();
             data.deploymentData.forEach(function (element) {
                 updates.push(element.deployment);
             });
             promise.resolve(updates);
-        });
+        }, Main.decrementWait);
         
         return promise;
     }
@@ -167,7 +171,9 @@ ProjectDetailsData = function () {
         var promise = $.Deferred();
         
         // Get arrays of stats (per deployment) for this project
+        Main.incrementWait();
         getProjectData(project).then((data) => {
+            Main.decrementWait();
             // data is a hash of arrays. Need to look in each member for desired update.
             var result = {}
             // Look for the desired content update
@@ -187,7 +193,7 @@ ProjectDetailsData = function () {
                 return (el.deployment == update || el.deploymentnumber == update)
             });
             promise.resolve(result);
-        });
+        }, Main.decrementWait);
         
         return promise;
     }

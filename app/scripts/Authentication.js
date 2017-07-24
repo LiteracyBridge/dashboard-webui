@@ -2,7 +2,7 @@
  * Created by bill on 4/17/17.
  */
 /* jshint undef:true, esversion:6, asi:true */
-/* global $, BootstrapDialog, console, Cognito, AWS */
+/* global $, BootstrapDialog, console, CognitoWrapper, Main, AWS */
 
 
 var User = User || {};
@@ -10,8 +10,21 @@ var User = User || {};
 User = (function () {
     'use strict';
     
+    /**
+     * NOTE: Tabbing doesn't natively work properly with Bootstrap Dialogs. Buttons
+     * wrapped in divs, and inputs inside divs or spans need their enclosing elements
+     * to be tabable (by having a tabindex= property). Unfortunately, that causes
+     * tabbing to stop at those enclosing elements; completely unexpected and un-
+     * wanted behaviour.
+     *
+     * To work around the problem, decorate the nested elements a class="nested-tab",
+     * and then call fixTabOrdering() on the created HTML.
+     *
+     * See that function for the grisly details.
+     */
+
     var signInHtml = `<div id="auth-dialog" class="auth-dialog">
-    <div class="panel panel-default">
+    <form class="panel panel-default">
       <div class="panel-body container-fluid">
             <div>
                 <input id="username" type="text" class="form-control"
@@ -21,34 +34,38 @@ User = (function () {
                        placeholder="Password"
                        aria-describedby="basic-addon1">
 
-                <input type="checkbox" id="showpassword">
-                <label for="showpassword" class="light-checkbox"> Show password</label>
+                <span>
+                    <input type="checkbox" id="show-password" class="nested-tab">
+                    <label for="show-password" class="light-checkbox"> Show password</label>
+                </span>
                 <div class="btn-group pull-right" role="group">
-                    <button id="forgot-password" type="button" class="btn btn-link preserve-case">Forgot password?
+                    <button id="forgot-password" type="button" class="btn btn-link preserve-case nested-tab" tabindex="1">Forgot password?
                     </button>
                 </div>
                 <br/>
-                <input type="checkbox" id="remember-me">
-                <label for="remember-me" class="light-checkbox"> Remember me</label>
+                <span>
+                    <input type="checkbox" id="remember-me" class="nested-tab">
+                    <label for="remember-me" class="light-checkbox"> Remember me</label>
+                </span>
             </div>
         </div>
         <div class="panel-body container-fluid no-pad-top">
             <div class="btn-group" role="group">
-                <button id="do-signin" type="button" class="btn btn-default">Sign In</button>
+                <button id="do-signin" type="submit" class="btn btn-default nested-tab">Sign In</button>
             </div>
             <div class="btn-group pull-right" role="group">
                 <button id="create-account" type="button"
-                        class="btn btn-link preserve-case">No user id? Click here!
+                        class="btn btn-link preserve-case nested-tab" tabindex="1">No user id? Click here!
                 </button>
             </div>
         </div>
         <div class="panel-footer alert-area">
         </div>
-    </div>
+    </form>
 </div>`;
     
     var createAccountHtml = `<div class="auth-dialog">
-    <div class="panel panel-default">
+    <form class="panel panel-default">
         <div class="panel-heading">
             <h2 class="panel-title">Create New Account</h2>
         </div>
@@ -69,19 +86,21 @@ User = (function () {
                 <input id="newpassword2" type="password" class="password newpassword form-control"
                        placeholder="Repeat Passw0rd!"
                        aria-describedby="basic-addon1">
-                <input type="checkbox" id="showpassword"
-                <label for="showpassword" class="light-checkbox"> Show password</label>
+                <span>
+                    <input type="checkbox" id="show-password" class="nested-tab">
+                    <label for="show-password" class="light-checkbox"> Show password</label>
+                </span>
                 <span id="password-mismatch" class="password-mismatch">Passwords don't match.</span>
             </div>
         </div>
         <div class="panel-body container-fluid no-pad-top">
             <div class="btn-group" role="group">
-                <button id="do-create" type="button" class="btn btn-default">Create Account</button>
+                <button id="do-create" type="submit" class="btn btn-default nested-tab">Create Account</button>
             </div>
         </div>
         <div class="panel-footer">
         </div>
-    </div>
+    </form>
 </div>`;
     
     var createAccountHelpHtml = `<h3>Create An Account</h3>
@@ -101,7 +120,7 @@ User = (function () {
         `
     
     var changePasswordHtml = `<div class="auth-dialog">
-    <div class="panel panel-default">
+    <form class="panel panel-default">
         <div class="panel-heading">
             <h2 class="panel-title">Create New Account</h2>
         </div>
@@ -116,23 +135,25 @@ User = (function () {
                 <input id="newpassword2" type="password" class="password newpassword form-control"
                        placeholder="Repeat Passw0rd!"
                        aria-describedby="basic-addon1">
-                <input type="checkbox" id="showpassword"
-                <label for="showpassword" class="light-checkbox"> Show password</label>
+                <span>
+                    <input type="checkbox" id="show-password" class="nested-tab">
+                    <label for="show-password" class="light-checkbox"> Show password</label>
+                </span>
                 <span id="password-mismatch" class="password-mismatch">Passwords don't match.</span>
             </div>
         </div>
         <div class="panel-body container-fluid no-pad-top">
             <div class="btn-group" role="group">
-                <button id="do-change" type="button" class="btn btn-default">Change Password</button>
+                <button id="do-change" type="submit" class="btn btn-default nested-tab">Change Password</button>
             </div>
         </div>
         <div class="panel-footer">
         </div>
-    </div>
+    </form>
 </div>`;
     
     var confirmAccountHtml = `<div class="auth-dialog">
-    <div class="panel panel-default">
+    <form class="panel panel-default">
         <div class="panel-heading">
             <h3 class="panel-title">Create account: confirmation</h3>
         </div>
@@ -144,19 +165,19 @@ User = (function () {
         </div>
         <div class="panel-body container-fluid no-pad-top">
             <div class="btn-group" role="group">
-                <button id="do-confirm" type="button" class="btn btn-default">Confirm</button>
+                <button id="do-confirm" type="submit" class="btn btn-default nested-tab">Confirm</button>
             </div>
             <div class="btn-group pull-right" role="group">
-                <button id="resend-code" type="button" class="btn btn-default">Click to resend confirmation</button>
+                <button id="resend-code" type="button" class="btn btn-default nested-tab">Click to resend confirmation</button>
             </div>
         </div>
         <div class="panel-footer">
         </div>
-    </div>
+    </form>
 </div>`;
     
     var confirmPasswordHtml = `<div class="ngdialog-message auth-dialog">
-    <div class="panel panel-default">
+    <form class="panel panel-default">
         <div class="panel-heading">
             <h3 class="panel-title">Reset password</h3>
         </div>
@@ -164,15 +185,17 @@ User = (function () {
             <p>Your account has been reset by the administrator. Please enter a new password, and
                 the Passwrd Reset Code from the server. If you do not have a Password Reset Code,
                 please contact the administrator.</p>
-            <input id="newpassword"  type="password newpassword" class="password form-control"
+            <input id="newpassword"  type="password" class="password newpassword form-control"
                    placeholder="Passw0rd!"
                    aria-describedby="basic-addon1" autofocus>
-            <input id="newpassword2"  type="password newpassword" class="password form-control"
+            <input id="newpassword2"  type="password" class="password newpassword form-control"
                    placeholder="Repeat Passw0rd!"
                    aria-describedby="basic-addon1">
 
-            <input type="checkbox" id="showpassword">
-            <label for="showpassword" class="light-checkbox"> Show password</label>
+            <span>
+                <input type="checkbox" id="show-password" class="nested-tab">
+                <label for="show-password" class="light-checkbox"> Show password</label>
+            </span>
             <span id="password-mismatch" class="password-mismatch" >Passwords don't match.</span>
             <div>
                 <input id="confirmation-code" type="text"  class="form-control"
@@ -182,16 +205,16 @@ User = (function () {
         </div>
         <div class="panel-body container-fluid no-pad-top">
             <div class="btn-group" role="group">
-                <button id="do-reset" type="button" class="btn btn-default">Reset</button>
+                <button id="do-reset" type="submit" class="btn btn-default nested-tab">Reset</button>
             </div>
         </div>
         <div class="panel-footer">
         </div>
-    </div>
+    </form>
 </div>`;
     
     var changeGreetingHtml = `<div class="auth-dialog">
-    <div class="panel panel-default">
+    <form class="panel panel-default">
         <div class="panel-heading">
             <h3 class="panel-title">Change Preferred Greeting</h3>
         </div>
@@ -204,17 +227,23 @@ User = (function () {
         </div>
         <div class="panel-body container-fluid no-pad-top">
             <div class="btn-group" role="group">
-                <button id="do-change" type="button" class="btn btn-default">Change</button>
+                <button id="do-change" type="submit" class="btn btn-default nested-tab">Change</button>
             </div>
         </div>
         <div class="panel-footer">
         </div>
-    </div>
+    </form>
 </div>`;
     
     
-    
-    function draggable(help) {
+    /**
+     * Helper function to make the given window draggable. This is done by wrapping the window inside
+     * a draggable wrapper.
+     * @param target The window to be made draggable.
+     * @returns {*|jQuery|HTMLElement} The draggable wrapper.
+     */
+    function makeWindowDraggable(target) {
+        // Lazily add the draggable addin to jQuery.
         if (!$.fn.draggable) {
             $.fn.draggable = function (opt) {
                 opt = $.extend({handle: '', cursor: 'move'}, opt);
@@ -255,11 +284,11 @@ User = (function () {
         
         var $elem = $(`<div id="nonm" class="auth-dialog-help container container-fluid alert alert-info alert-dismissable">
                 <button type="button" class="close" data-dismiss="alert" aria-hidden="true">x</button>
-                <div id="help-message"></div>
+                <div id="wrapper"></div>
                 <button id="do-create" type="button" class="btn btn-info pull-right" data-dismiss="alert">Dismiss Help</button>
             </div>`);
         
-        $('#help-message', $elem).append(help);
+        $('#wrapper', $elem).append(target);
         $elem.draggable();
         
         return $elem;
@@ -308,8 +337,8 @@ User = (function () {
     function addPasswordUtils($dialog) {
         var newPassword = $('.newpassword', $dialog);
         // show/hide
-        $('#showpassword', $dialog).on('click', () => {
-            var showPassword = $('#showpassword', $dialog).prop('checked');
+        $('#show-password', $dialog).on('click', () => {
+            var showPassword = $('#show-password', $dialog).prop('checked');
             $('.password', $dialog).attr('type', showPassword ? 'text' : 'password');
         });
         // If there are two passwords, when they're unequal, light up "mismatch"
@@ -328,7 +357,111 @@ User = (function () {
         $('#password-mismatch', $dialog).hide();
     }
     
-    var defaultViewString = 'LBG-DEMO|DEMO';
+    /**
+     * This is an unfortunately complicated function to make tabbing work correctly in a Bootstrap Dialog.
+     *
+     * It assumes that the dialog, passed in $dialog, uses 'tabindex=' decorations to control anything that should
+     * be outside of the "natural" tab order (document order). It assumes that anything that should be in the natural
+     * order has no 'tabindex=' decoration.
+     *
+     * 'input' and 'button' elements with no 'tabindex=' will be explicitly set to tabindex=1. Anything that was previously
+     * 'tabindex=1' will be set to 'tabindex=2' and so forth.
+     *
+     * If an element is nested inside a <div> or <span>, it may need special handling to be tabbed. By marking those
+     * elements 'class="nested-tab"', the parent will be given the same tabindex (probably 1), and will receive
+     * special handling.
+     *
+     * The special handling: When the parent of a '.nested-tab' element receives focus:
+     * - if the element tabbing from is NOT the child, focus is set to the child.
+     * - if the element tabbing from IS the child:
+     * --  we get the elements with the same tabindex=, and find the element receiving focus (the parent of a '.nested-tab' element.)
+     * --  If that element is not first in the list, back up one, and set focus to that element.
+     * --  Else if that element is first in the list, get the list of elements at tabindex=N-1, and set focus to the last
+     *       in the list.
+     * @param $dialog The dialog to fix up.
+     */
+    function fixTabOrdering($dialog) {
+        function bumpTabIndex(ix) {
+            const list = $(`[tabindex=${ix}]`, $dialog);
+            if (list && list.length) {
+                // We're about to push these tabindex=${ix} elements to ix+1. Move any existing ones out of the way.
+                bumpTabIndex(ix+1);
+                list.attr('tabindex', ix+1);
+            }
+        }
+        
+        // If anything has tabindex=1, bump them to 2, because we're going to use 1.
+        bumpTabIndex(1);
+
+        // Controls with no tab-index get a tabindex of 1.
+        $('input:not([tabindex])', $dialog).attr('tabindex', 1);
+        $('button:not([tabindex])', $dialog).attr('tabindex', 1);
+    
+        // Parents of elements with .nested-tab get those elements' tabindex.
+        let nesteds = $('.nested-tab', $dialog);
+        nesteds.each((ix, nested)=>{
+            let tabix = $(nested).attr('tabindex');
+            $(nested).parent().attr('tabindex', tabix);
+        });
+    
+        // $(':not([tabindex]):has(>.nested-tab)', $dialog).attr('tabindex', 1)
+        
+        // These are non-focusing elements that have nested focusing elements.
+        let needsFixup = $(':has(>.nested-tab)', $dialog);
+        // Move focus forward or backward from the non-focusing elements.
+        needsFixup.focus(
+            function (focusEvent) {
+                // What control is being wrapped?
+                let $this=$(this);
+                let $nestedTarget = $('input', $this);
+                if (!$nestedTarget || !$nestedTarget.length) {
+                    $nestedTarget = $('button', $this);
+                }
+                // Where is focus coming *from*?
+                const $relatedTarget = $(focusEvent.relatedTarget);
+                // If focus is not FROM the wrapped control, it must be TO it.
+                if (!$nestedTarget.is($relatedTarget)) {
+                    $nestedTarget.focus();
+                } else {
+                    // This element is a container for a .nested-tab element; call it 'the container element'.
+                    // We need to try to find the element that would advance forward to the container element. Call
+                    // that element 'prev'.
+                    let prev;
+                    // Find the tabindex of the container element, and the list of all elements with the same tabindex
+                    let thisTabix = $this.attr('tabindex');
+                    let sameTabixElements = $(`[tabindex=${thisTabix}]`, $dialog);
+                    // console.log('reverse tab, peers:', sameIxElements);
+                    // Examine the elements at this tabindex, and find the container element.
+                    sameTabixElements.each((ix, peer)=>{
+                        if ($(peer).is($this)) {
+                            // Found the container element. If there are preceeding elements in the list with same tabindex
+                            // the prev element is the immediately preceeding element
+                            // console.log('found match, ix:', ix, ', element: ', $(sameIxElements[ix]));
+                            if (--ix >= 0) {
+                                prev = $(sameTabixElements[ix]);
+                                // console.log('Prev is at same tabindex level: ', prev);
+                            } else {
+                                // Otherwise, there are no preceeding elements at this tabindex, so find the list of
+                                // elements at a lower tabindex, and take the last item from the list.
+                                let lowerTabixElements = $(`[tabindex=${thisTabix-1}]`, $dialog);
+                                // console.log('Prev is at lower tabindex, in: ', previousLevel);
+                                if (lowerTabixElements && lowerTabixElements.length) {
+                                    prev = $(lowerTabixElements[lowerTabixElements.length-1]);
+                                    // console.log('Prev is at lower tabindex level: ', prev);
+                                }
+                            }
+                        }
+                    });
+                    if (prev) {
+                        // console.log('setting focus to ix: ', prev);
+                        prev.focus();
+                    }
+                }
+            })
+    }
+    
+    
+    let defaultViewString = 'LBG-DEMO|DEMO';
     defaultViewString = 'LBG-DEMO|DEMO|CARE|CBCC.*|MEDA|TUDRIDEP|UNICEFGHDF-MAHAMA|UWR|WINROCK';
     var defaultEditString = '';
     // Extracts the project name from an ACM-* name. Accounts for user feedback, ACM-*-FB-*
@@ -380,10 +513,11 @@ User = (function () {
         var alerter = addNotificationArea($('.panel-footer', $dialog));
         addPasswordUtils($dialog);
         
-        $('#do-reset', $dialog).on('click', () => {
+        //$('#do-reset', $dialog).on('click', () => {
+        $('form', $dialog).on('submit', () => {
             var newPassword = $('#newpassword', $dialog).val();
             var code = $('#confirmation-code', $dialog).val();
-            Cognito.confirmPassword({username: username, password: newPassword, code: code}).then(() => {
+            CognitoWrapper.confirmPassword({username: username, password: newPassword, code: code}).then(() => {
                 password = newPassword;
                 persist();
                 dialog.close();
@@ -392,6 +526,8 @@ User = (function () {
                 alerter.error(err.message || 'Error confirming password');
             });
         });
+        
+        fixTabOrdering($dialog);
         
         var options = {
             title: 'Enter Confirmation Code',
@@ -420,10 +556,11 @@ User = (function () {
             $('#old-greeting', $dialog).text(oldGreeting);
         }
         
-        $('#do-change', $dialog).on('click', () => {
+        //$('#do-change', $dialog).on('click', () => {
+        $('form', $dialog).on('submit', () => {
             var newGreeting = $('#new-greeting', $dialog).val();
             var attrs = {'custom:greeting': newGreeting};
-            Cognito.updateAttributes({attributes:attrs}).then(() => {
+            CognitoWrapper.updateAttributes({attributes:attrs}).then(() => {
                 userAttributes['custom:greeting'] = newGreeting;
                 $('body').trigger('custom:greeting')
                 dialog.close();
@@ -432,6 +569,8 @@ User = (function () {
                 alerter.error(err.message || 'Error changing greeting');
             });
         });
+        
+        fixTabOrdering($dialog);
         
         var options = {
             title: 'Change Custom Greeting',
@@ -454,27 +593,26 @@ User = (function () {
      */
     function doVerifyEmail() {
         var gotCodePromise = $.Deferred();
-        Cognito.getEmailVerificationCode(gotCodePromise);
+        CognitoWrapper.getEmailVerificationCode(gotCodePromise);
     
         var promise = $.Deferred();
         var $dialog = $(confirmAccountHtml);
         var alerter = addNotificationArea($('.panel-footer', $dialog));
     
-        $('#do-confirm', $dialog).on('click', () => {
+        // $('#do-confirm', $dialog).on('click', () => {
+        $('form', $dialog).on('submit', () => {
             var code = $('#confirmation-code', $dialog).val();
             gotCodePromise.resolve(code);
-       //     Cognito.confirmRegistration({username: username, code: code}).then(() => {
                 dialog.close();
                 promise.resolve();
-       //     }, (err) => {
-       //         alerter.error(err.message || 'Error in confirmation code');
-       //     });
         });
         $('#resend-code', $dialog).on('click', () => {
-            Cognito.resendConfirmationCode({username: username});
+            CognitoWrapper.resendConfirmationCode({username: username});
             alerter.notify('New confirmation code requested');
         });
-    
+
+        fixTabOrdering($dialog);
+        
         var options = {
             title: 'Enter Confirmation Code',
             message: $dialog,
@@ -496,9 +634,10 @@ User = (function () {
         var $dialog = $(confirmAccountHtml);
         var alerter = addNotificationArea($('.panel-footer', $dialog));
         
-        $('#do-confirm', $dialog).on('click', () => {
+        // $('#do-confirm', $dialog).on('click', () => {
+        $('form', $dialog).on('submit', () => {
             var code = $('#confirmation-code', $dialog).val();
-            Cognito.confirmRegistration({username: username, code: code}).then(() => {
+            CognitoWrapper.confirmRegistration({username: username, code: code}).then(() => {
                 dialog.close();
                 promise.resolve();
             }, (err) => {
@@ -506,9 +645,11 @@ User = (function () {
             });
         });
         $('#resend-code', $dialog).on('click', () => {
-            Cognito.resendConfirmationCode({username: username});
+            CognitoWrapper.resendConfirmationCode({username: username});
             alerter.notify('New confirmation code requested');
         });
+        
+        fixTabOrdering($dialog);
         
         var options = {
             title: 'Enter Confirmation Code',
@@ -526,7 +667,7 @@ User = (function () {
     }
     
     /**
-     * Handles changing the user's password. Prompts for old and new passwords, and calls Cognito function.
+     * Handles changing the user's password. Prompts for old and new passwords, and calls CognitoWrapper function.
      * @returns {*} A promise on the password change.
      */
     function doChangePassword() {
@@ -539,11 +680,12 @@ User = (function () {
         if (rememberMe && password) {
             $('#oldpassword', $dialog).val(password);
         }
-        
-        $('#do-change', $dialog).on('click', () => {
+    
+        //$('#do-change', $dialog).on('click', () => {
+        $('form', $dialog).on('submit', () => {
             var oldPassword = $('#oldpassword', $dialog).val();
-            var newPassword = $('#password', $dialog).val();
-            Cognito.changePassword({
+            var newPassword = $('#newpassword', $dialog).val();
+            CognitoWrapper.changePassword({
                 username: username,
                 oldPassword: oldPassword,
                 newPassword: newPassword
@@ -561,6 +703,8 @@ User = (function () {
             
             
         })
+        
+        fixTabOrdering($dialog);
         
         var options = {
             title: 'ACM Utility Change Password',
@@ -589,12 +733,13 @@ User = (function () {
         var alerter = addNotificationArea($('.panel-footer', $dialog));
         addPasswordUtils($dialog);
         
-        $('#do-create', $dialog).on('click', () => {
+        // $('#do-create', $dialog).on('click', () => {
+        $('form', $dialog).on('submit', () => {
             username = $('#newusername', $dialog).val();
             password = $('#newpassword', $dialog).val();
             var email = $('#newuseremail', $dialog).val();
             var phone = $('#newphone', $dialog).val();
-            Cognito.createAccount({
+            CognitoWrapper.createAccount({
                 username: username,
                 email: email,
                 password: password,
@@ -607,14 +752,13 @@ User = (function () {
                 }).fail((err) => {
                     alerter.error(err.message || 'Error in confirmation');
                 });
-                
+        
             }, function rejected(err) {
                 // There was an error. Show it, but don't close the dialog.
                 alerter.error(err.message || 'Error creating account.');
             });
-            
-            
-        })
+        });
+        fixTabOrdering($dialog);
         
         var options = {
             title: 'ACM Utility Create New Account',
@@ -636,7 +780,7 @@ User = (function () {
         
         function setupTimeout() {
             timeout = setTimeout(() => {
-                var h = draggable($(createAccountHelpHtml));
+                var h = makeWindowDraggable($(createAccountHelpHtml));
                 dialog.$modal.append(h);
                 timeout = null;
             }, 5000);
@@ -684,17 +828,17 @@ User = (function () {
          */
         function cognitoSignin() {
             alerter.notify('Signing in...')
-            $('#wait-spinner').show();
-            Cognito.signIn({username: username, password: password})
+            Main.incrementWait();
+            CognitoWrapper.signIn({username: username, password: password})
                 .done((result => {
-                    $('#wait-spinner').hide();
+                    Main.decrementWait();
                     persist();
                     dialog.close();
                     promise.resolve();
                     
                 }))
                 .fail((err) => {
-                    $('#wait-spinner').hide();
+                    Main.decrementWait();
                     /*
                      * For some reason, we sometimes the this error back, but simply retrying then works. So if we get
                      * this error, retry one time.
@@ -736,11 +880,13 @@ User = (function () {
         $('#create-account', $dialog).on('click', () => {
             doCreateAccount().done(cognitoSignin);
         });
-        $('#do-signin', $dialog).on('click', () => {
+        // $('#do-signin', $dialog).on('submit', () => {
+        $('form', $dialog).on('submit', () => {
+            console.log('submit');
             username = $('#username', $dialog).val();
             password = $('#password', $dialog).val();
             cognitoSignin();
-        });
+        })
         $('#forgot-password', $dialog).on('click', () => {
             username = $('#username', $dialog).val();
             if (!username) {
@@ -748,12 +894,14 @@ User = (function () {
                 $('#username', $dialog).focus();
                 return;
             }
-            Cognito.forgotPassword({username: username}).then(() => {
+            CognitoWrapper.forgotPassword({username: username}).then(() => {
                 doResetPassword().then(cognitoSignin);
             }, (err) => {
                 alerter.error(err.message || 'Error resetting password')
             })
         });
+        
+        fixTabOrdering($dialog);
         
         var options = {
             title: 'ACM Utility Sign In',
@@ -791,7 +939,7 @@ User = (function () {
             data: JSON.stringify(payload),
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
-            headers: {Authorization: Cognito.getIdToken()}
+            headers: {Authorization: CognitoWrapper.getIdToken()}
         }
         
         userPropertiesPromise = $.Deferred();
@@ -822,25 +970,25 @@ User = (function () {
             // userPropertiesPromise.resolve({edit:'.*', admin:true})
             // gotUserProperties({edit:'.*', admin:true});
             // return authenticationPromise;
-            
-            
-            $('#wait-spinner').show();
+    
+    
+            Main.incrementWait();
             
             // Get us to a "signed-in" state.
-            Cognito.getCurrentUser().done(() => {
-                $('#wait-spinner').hide();
+            CognitoWrapper.getCurrentUser().done(() => {
+                Main.decrementWait();
                 signin.resolve();
             }).fail(() => {
-                $('#wait-spinner').hide();
+                Main.decrementWait();
                 signinDialog().done(() => {
                     signin.resolve()
                 });
             });
             
-            // When signed in, get the user attributes from our DynamoDB user database, and Cognito attributes.
+            // When signed in, get the user attributes from our DynamoDB user database, and CognitoWrapper attributes.
             signin.done(() => {
                 getUserProperties();
-                Cognito.getUserAttributes().done((attributes) => {
+                CognitoWrapper.getUserAttributes().done((attributes) => {
                     // Convert from {'Name': 'attr_name', 'Value': 'attr_value'} to {attr_name: 'attr_value'}
                     attributes.forEach((attr) => {
                         userAttributes[attr.Name] = attr.Value
@@ -859,7 +1007,7 @@ User = (function () {
     }
     
     /**
-     * Sign out from Cognito, and reset user information, promises.
+     * Sign out from CognitoWrapper, and reset user information, promises.
      */
     function doSignout() {
         userAttributes = {};
@@ -867,7 +1015,7 @@ User = (function () {
         authenticationPromise = null;
         username = password = '';
         persist(false);
-        Cognito.signOut();
+        CognitoWrapper.signOut();
         userProperties = null;
         resetUserProperties();
     }

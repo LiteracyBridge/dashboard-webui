@@ -7,9 +7,9 @@
 /**
  * The best documentation is here: https://github.com/aws/amazon-cognito-identity-js/blob/master/README.md
  */
-var Cognito = Cognito || {};
+var CognitoWrapper = CognitoWrapper || {};
 
-Cognito = (function () {
+CognitoWrapper = (function () {
     'use strict';
     
     var REGION = 'us-west-2';
@@ -22,10 +22,10 @@ Cognito = (function () {
     var idToken;
 
     // --------------------------------------------------------------------------------------
-    // Currently unused AWS credential management. (Using Cognito only.)
+    // Currently unused AWS credential management. (Using CognitoWrapper only.)
     //
     // The code, here and in functions below, that starts with AWS. are for getting AWS
-    // credentials from a Cognito sign in. If we're not using AWS proper, but just the
+    // credentials from a CognitoWrapper sign in. If we're not using AWS proper, but just the
     // API Gateway, we don't need AWS, and can save 900K of the minimized code size!
     // However, if we do ever need AWS, say for S3, then we'll need to add this back.
     // AWS.config.region = REGION;
@@ -65,7 +65,7 @@ Cognito = (function () {
                 promise.resolve();
     
                 // --------------------------------------------------------------------------------------
-                // Currently unused AWS credential management. (Using Cognito only.)
+                // Currently unused AWS credential management. (Using CognitoWrapper only.)
                 //
                 // AWS.config.credentials = new AWS.CognitoIdentityCredentials({
                 //     IdentityPoolId: IDENTITY_POOL_ID, // your identity pool id here
@@ -240,7 +240,7 @@ Cognito = (function () {
                 promise.resolve();
     
                 // --------------------------------------------------------------------------------------
-                // Currently unused AWS credential management. (Using Cognito only.)
+                // Currently unused AWS credential management. (Using CognitoWrapper only.)
                 //
                 // AWS.config.credentials = new AWS.CognitoIdentityCredentials({
                 //     IdentityPoolId: IDENTITY_POOL_ID, // your identity pool id here
