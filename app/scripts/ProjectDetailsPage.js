@@ -146,28 +146,28 @@ ProjectDetailsPage = function () {
     }
     
     
-    var completionsRadarChart;
-    var completionsRadarChartConfig = {
-        type: 'radar',
-        data: {datasets: []},
-        options: {
-            scale: {
-                ticks: {
-                    beginAtZero: true,
-                    maxTicksLimit: 6,
-                    callback: (v) => `${v}%`
-                    // min: 0,
-                    // max: 100,
-                    // stepSize: 25
-                }
-            },
-            title: {
-                display: true,
-                text: 'Completions',
-                position: 'bottom'
-            }
-        }
-    }
+    // var completionsRadarChart;
+    // var completionsRadarChartConfig = {
+    //     type: 'radar',
+    //     data: {datasets: []},
+    //     options: {
+    //         scale: {
+    //             ticks: {
+    //                 beginAtZero: true,
+    //                 maxTicksLimit: 6,
+    //                 callback: (v) => `${v}%`
+    //                 // min: 0,
+    //                 // max: 100,
+    //                 // stepSize: 25
+    //             }
+    //         },
+    //         title: {
+    //             display: true,
+    //             text: 'Completions',
+    //             position: 'bottom'
+    //         }
+    //     }
+    // }
     var durationsRadarChart;
     var durationsRadarChartConfig = {
         type: 'radar',
@@ -244,19 +244,19 @@ ProjectDetailsPage = function () {
             tension: 0.3,
             backgroundColor: 'rgba(255,153,0,0.4)'
         };
-        var completionsDataset = {
-            label: 'Completions',
-            data: completed,
-            tension: 0.3,
-            backgroundColor: 'rgba(51,153,255,0.4)'
-        };
-        completionsRadarChartConfig.data.labels = labels;
-        completionsRadarChartConfig.data.datasets = [completionsDataset];
-        if (!completionsRadarChart) {
-            completionsRadarChart = new Chart($('#completions-radar canvas'), completionsRadarChartConfig);
-        } else {
-            completionsRadarChart.update();
-        }
+        // var completionsDataset = {
+        //     label: 'Completions',
+        //     data: completed,
+        //     tension: 0.3,
+        //     backgroundColor: 'rgba(51,153,255,0.4)'
+        // };
+        // completionsRadarChartConfig.data.labels = labels;
+        // completionsRadarChartConfig.data.datasets = [completionsDataset];
+        // if (!completionsRadarChart) {
+        //     completionsRadarChart = new Chart($('#completions-radar canvas'), completionsRadarChartConfig);
+        // } else {
+        //     completionsRadarChart.update();
+        // }
         durationsRadarChartConfig.data.labels = labels;
         durationsRadarChartConfig.data.datasets = [durationDataset, listenedDataset];
         if (!durationsRadarChart) {
@@ -453,10 +453,8 @@ ProjectDetailsPage = function () {
     previousUpdate = localStorage.getItem('project.details.update') || '';
     
     // Hook the tab-activated event for this tab.
-    $('a[href="#project-details-page"]').on('hidden.bs.tab', function (e) {
-        $('#project-picker').off('change');
-        $('#update-picker').off('change');
-    });
+    // $('a[href="#project-details-page"]').on('hidden.bs.tab', function (e) {
+    // });
     $('a[href="#project-details-page"]').on('shown.bs.tab', init);
     
     return {}

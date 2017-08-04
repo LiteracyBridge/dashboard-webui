@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>ACM Utility</title>
+    <title>Dashboard</title>
 
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
@@ -135,13 +135,13 @@
             <div id='deployment-summary' class="detailtable"></div>
             <h2>Deployment Performance By Categories</h2>
             <div class="row deployment-performance">
-                <div id='durations-radar' class="col-md-3">
+                <div id='durations-radar' class="col-md-5">
                     <canvas></canvas>
                 </div>
-                <div id='completions-radar' class="col-md-3">
+                <!-- div id='completions-radar' class="col-md-3">
                     <canvas></canvas>
-                </div>
-                <div id='deployment-performance-chart' class="col-md-6 detailtable"></div>
+                </div -->
+                <div id='deployment-performance-chart' class="col-md-7 detailtable"></div>
             </div>
             <h2>Message Performance</h2>
             <div id='message-performance' class="detailtable"></div>
@@ -155,24 +155,26 @@
             <h2 class="bg-primary form-inline">Breakdown as of <span id="breakdown-date"></span>
             &nbsp;<span id="uf-project-placeholder"></span>
             </h2>
+            <label style="font-weight:normal">
+                <input type="checkbox" id="feedback-as-partner-view">
+                Show as Partner View
+            </label>
 
             <div class="row">
-                <div class="col-sm-1">&nbsp;</div>
-                <div class="col-sm-6">
+                <div class="col-sm-7">
                     <div class="h3">Breakdown of <span id="category-breakdown"></span></div>
                     <h4><span id="hover-pie2"></span>&nbsp;</h4>
                     <canvas id="category-breakdown-placeholder"></canvas>
                 </div>
 
-                <div class="col-sm-4">
+                <div class="col-sm-5">
                     <h3>Lengths of <span id="category-durations">Messages</span></h3>
                     <h4><span id="hover-pie3"></span>&nbsp;</h4>
                     <canvas id="message-length-placeholder"></canvas>
                 </div>
-                <div class="col-sm-1">&nbsp;</div>
             </div>
 
-            <div class="row">
+            <div id="categorization-progress-view" class="row">
                 <h2 class="bg-primary">Categorization Progress for <span id="project-name">User Feedback</span></h2>
                 <h5 class="bg-default"><em>Progress in User Feedback Processing.</em></h5>
 

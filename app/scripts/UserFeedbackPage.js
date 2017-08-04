@@ -165,6 +165,9 @@ UserFeedbackPage = (function () {
             }
             var obj = childList[idx];
             if (!obj || !obj.getChildList().length) {
+                // The clicked item has no children, so we can't drill into it.
+                // Just show the duration breakdowns of the clicked item.
+                plotDurations(obj);
                 return
             }
             
@@ -297,6 +300,10 @@ UserFeedbackPage = (function () {
         }
     };
     
+    /**
+     *
+     * @param data
+     */
     function plotProgress(data) {
         
         // The three data series to display. Each consists of an array of x-y pairs, where the x value is a date
@@ -340,16 +347,7 @@ UserFeedbackPage = (function () {
         } else {
             progressChart.update();
         }
-        
-        var latest = data.progressData[data.progressData.length - 1];
-        $('#breakdown-date').text(latest.date);
-        // We expect (ie, we know) that the top category has only one child, so drill into that. (But if it has more,
-        // don't drill!)
-        var detail = latest.categorized;
-        if (detail.getChildList().length === 1) {
-            detail = detail.getChildList()[0];
-        }
-        drillInto(latest, true);
+
     }
     
     function noData() {
@@ -376,6 +374,39 @@ UserFeedbackPage = (function () {
     
     var initialized = '';
     
+    function plotAll(asPartner, acmName) {
+        let durationsPromise = UserFeedbackData.getDurations(acmName);
+    
+        UserFeedbackData.getData(acmName)
+            .done(data => {
+                if (asPartner) {
+                    $('#categorization-progress-view').addClass('hidden');
+                } else {
+                    $('#categorization-progress-view').removeClass('hidden');
+                    plotProgress(data);
+                }
+                var latest = data.progressData[data.progressData.length - 1];
+                $('#breakdown-date').text(latest.date);
+                // We expect (ie, we know) that the top category has only one child, so drill into that. (But if it has more,
+                // don't drill!)
+                var detail = latest.categorized;
+                if (detail.getChildList().length > 0) {
+                    detail = detail.getChildList().find((child)=>{if (child.id==='90') {return true;}}) || latest.categorized;
+                }
+                drillInto(asPartner?detail:latest, true);
+    
+                durationsPromise.done(durationData => {
+                    durationLabels = durationData.durationLabels;
+                    var latest = data.progressData[data.progressData.length - 1];
+                    latest.attachDurations(durationData.durationsByCategory);
+                
+                    plotDurations(drillStack[drillStack.length - 1]);
+                });
+            })
+            .fail(noData);
+    }
+    
+    
     function reportFeedback(project, update, acmName) {
         if (initialized === acmName) {
             return;
@@ -389,21 +420,14 @@ UserFeedbackPage = (function () {
         UserFeedbackData.getProjectName(acmName).done(data => {
             $('#project-name').text(data);
         });
-        
-        let durationsPromise = UserFeedbackData.getDurations(acmName);
-        
-        UserFeedbackData.getData(acmName)
-            .done(data => {
-                plotProgress(data);
-                durationsPromise.done(durationData => {
-                    durationLabels = durationData.durationLabels;
-                    var latest = data.progressData[data.progressData.length - 1];
-                    latest.attachDurations(durationData.durationsByCategory);
-                    
-                    plotDurations(drillStack[drillStack.length - 1]);
-                });
-            })
-            .fail(noData);
+    
+        let $asPartnerView = $('#feedback-as-partner-view');
+        var includeAll = $asPartnerView.prop('checked');
+        $asPartnerView.on('click', () => {
+            includeAll = $asPartnerView.prop('checked');
+            plotAll($asPartnerView.prop('checked'), acmName);
+        });
+        plotAll($asPartnerView.prop('checked'), acmName);
     }
     
     function init() {
@@ -414,10 +438,8 @@ UserFeedbackPage = (function () {
     previousUpdate = localStorage.getItem('userfeedback.update') || '';
     
     // Hook the tab-activated/deactivated events for this tab.
-    $('a[href="#userfeedback-page"]').on('hidden.bs.tab', function (e) {
-        $('#project-picker').off('change');
-        $('#update-picker').off('change');
-    })
+    // $('a[href="#userfeedback-page"]').on('hidden.bs.tab', function (e) {
+    // })
     $('a[href="#userfeedback-page"]').on('shown.bs.tab', init)
     
     return {};
