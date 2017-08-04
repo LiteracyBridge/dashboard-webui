@@ -10,29 +10,29 @@ ProjectPicker = (function ProjectPicker() {
     'use strict';
     
     /**
-     * Adds a Project and Update picker to the given element.
+     * Adds a Project and Deployment picker to the given element.
      * - If defaults are specified, and exist, they will be auto-selected.
      * - If a single entry exists for either list, it will be auto-selected.
-     * - When both project and update have been selected, an event, 'selected', will be fired on the elem
+     * - When both project and deployment have been selected, an event, 'selected', will be fired on the elem
      *
      * @param elem Element to get the project picker. Any previous content is emptied.
      * @param options for the pickers:
      *   projects : an array of projects
-     *   getUpdatesForProject: a function that takes a project name and returns a promise on a list of updates.
-     *   defaults: an optional object with optional project and update members.
+     *   getDeploymentsForProject: a function that takes a project name and returns a promise on a list of deployments.
+     *   defaults: an optional object with optional project and deployment members.
      */
     function add(elem, options) {
         function onProjectSelected(evt, proj) {
-            updatesDropdown.clear();
-            options.getUpdatesForProject(proj)
+            deploymentsDropdown.clear();
+            options.getDeploymentsForProject(proj)
                 .done((list) => {
-                    var def = list.selected || options.defaults.update;
-                    updatesDropdown.update(list, {default: def});
+                    var def = list.selected || options.defaults.deployment;
+                    deploymentsDropdown.update(list, {default: def});
                 });
         }
         
-        function onUpdateSelected(evt, update) {
-            $elem.trigger('selected', [{project: projectsDropdown.selection(), update: update}]);
+        function onDeploymentSelected(evt, deployment) {
+            $elem.trigger('selected', [{project: projectsDropdown.selection(), deployment: deployment}]);
         }
         
         var $elem = $(elem);
@@ -40,9 +40,9 @@ ProjectPicker = (function ProjectPicker() {
         
         // Either a div or a span is a good element to host the DropdownButton.
         var $projectsDropdown = $('<div>').on('selected', onProjectSelected).appendTo($elem);
-        var $updatesDropdown = $('<span>').on('selected', onUpdateSelected).appendTo($elem);
+        var $deploymentsDropdown = $('<span>').on('selected', onDeploymentSelected).appendTo($elem);
         
-        var updatesDropdown = DropdownButton.create($updatesDropdown, {title: 'Update'});
+        var deploymentsDropdown = DropdownButton.create($deploymentsDropdown, {title: 'Deployment'});
         var projectsDropdown = DropdownButton.create($projectsDropdown, {title: 'Project'});
         projectsDropdown.update(options.projects, {default: options.defaultProject});
         

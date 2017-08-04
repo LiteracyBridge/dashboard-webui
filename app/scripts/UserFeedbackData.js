@@ -675,10 +675,10 @@ UserFeedbackData = (function () {
     }
     
     function getProjectsList() {
-        // Resolved with an object like {proj:[{label:update, acmName:ufAcmName}, {label:...}], proj2:[]...}
+        // Resolved with an object like {proj:[{label:deployment, acmName:ufAcmName}, {label:...}], proj2:[]...}
         // Resolved with an object like:
-        // { proj1 : { update1: acmname1, update2: acmname2, ...},
-        //   proj2 : { update3: acmname3, update4: acmname4, ...}, ...
+        // { proj1 : { deployment1: acmname1, deployment2: acmname2, ...},
+        //   proj2 : { deployment3: acmname3, deployment4: acmname4, ...}, ...
         projectsListPromise = $.Deferred();
         
         getUserFeedbackPath().then((ufPath) => {

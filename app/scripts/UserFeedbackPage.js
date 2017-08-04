@@ -12,7 +12,7 @@ UserFeedbackPage = (function () {
     var cb_qualitative = ['#a6cee3', '#1f78b4', '#b2df8a', '#33a02c', '#fb9a99', '#e31a1c', '#fdbf6f', '#ff7f00', '#cab2d6', '#6a3d9a']
     var cb_sequential = ['#ffffd9', '#edf8b1', '#c7e9b4', '#7fcdbb', '#41b6c4', '#1d91c0', '#225ea8', '#253494', '#081d58']
     
-    var previousProject, previousUpdate;
+    var previousProject, previousDeployment;
     var projectsListPromise;
     
     var projectsFilled = false;
@@ -25,41 +25,41 @@ UserFeedbackPage = (function () {
             return;
         }
         projectsFilled = true;
-        var preSelectedUpdate = previousUpdate;
+        var preSelectedDeployment = previousDeployment;
         projectsListPromise
             .then((list) => {
                 // list is
-                // { proj1 : { update1: acmname1, update2: acmname2, ...},
-                //   proj2 : { update3: acmname3, update4: acmname4, ...}, ...
+                // { proj1 : { deployment1: acmname1, deployment2: acmname2, ...},
+                //   proj2 : { deployment3: acmname3, deployment4: acmname4, ...}, ...
                 
                 var projectList = Object.keys(list);
                 
-                function getUpdatesForProject(proj) {
+                function getDeploymentsForProject(proj) {
                     var promise = $.Deferred();
-                    var updatesList = Object.keys(list[proj])
-                    updatesList.selected = preSelectedUpdate || updatesList[Math.max(0, updatesList.length - 1)];
-                    preSelectedUpdate = null;
-                    promise.resolve(updatesList);
+                    var deploymentsList = Object.keys(list[proj])
+                    deploymentsList.selected = preSelectedDeployment || deploymentsList[Math.max(0, deploymentsList.length - 1)];
+                    preSelectedDeployment = null;
+                    promise.resolve(deploymentsList);
                     return promise;
                 }
                 
                 var options = {
                     projects: projectList,
                     defaultProject: previousProject,
-                    getUpdatesForProject: getUpdatesForProject
+                    getDeploymentsForProject: getDeploymentsForProject
                 };
                 
                 // Listen first, because adding the picker may trigger, if there are previous values.
                 $('#uf-project-placeholder').on('selected', (evt, extra) => {
                     console.log(evt, extra);
                     var project = extra.project;
-                    var update = extra.update;
+                    var deployment = extra.deployment;
                     var acmName;
-                    if (project && update && list[project] && list[project][update]) {
+                    if (project && deployment && list[project] && list[project][deployment]) {
                         // Convert from label back to acmName
-                        acmName = list[project][update]
+                        acmName = list[project][deployment]
                         if (acmName) {
-                            reportFeedback(project, update, acmName);
+                            reportFeedback(project, deployment, acmName);
                         }
                     }
                     
@@ -407,15 +407,15 @@ UserFeedbackPage = (function () {
     }
     
     
-    function reportFeedback(project, update, acmName) {
+    function reportFeedback(project, deployment, acmName) {
         if (initialized === acmName) {
             return;
         }
         initialized = acmName;
         previousProject = project;
-        previousUpdate = update;
+        previousDeployment = deployment;
         localStorage.setItem('userfeedback.project', previousProject);
-        localStorage.setItem('userfeedback.update', previousUpdate);
+        localStorage.setItem('userfeedback.deployment', previousDeployment);
         
         UserFeedbackData.getProjectName(acmName).done(data => {
             $('#project-name').text(data);
@@ -435,7 +435,9 @@ UserFeedbackPage = (function () {
     }
     
     previousProject = localStorage.getItem('userfeedback.project') || '';
-    previousUpdate = localStorage.getItem('userfeedback.update') || '';
+    // Todo: remove after 2017-09
+    localStorage.removeItem('userfeedback.update');
+    previousDeployment = localStorage.getItem('userfeedback.deployment') || '';
     
     // Hook the tab-activated/deactivated events for this tab.
     // $('a[href="#userfeedback-page"]').on('hidden.bs.tab', function (e) {

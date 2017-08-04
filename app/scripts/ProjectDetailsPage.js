@@ -6,7 +6,7 @@ var ProjectDetailsPage = ProjectDetailsPage || {};
 ProjectDetailsPage = function () {
     'use strict';
     
-    var previousProject, previousUpdate;
+    var previousProject, previousDeployment;
     
     var fillDone = false;
     
@@ -15,16 +15,16 @@ ProjectDetailsPage = function () {
             return;
         }
         fillDone = true;
-        var preSelectUpdate = previousUpdate;
+        var preSelectDeployment = previousDeployment;
         ProjectDetailsData.getProjectList().done((list) => {
             
-            function getUpdatesForProject(proj) {
+            function getDeploymentsForProject(proj) {
                 var promise = $.Deferred();
-                ProjectDetailsData.getProjectUpdateList(proj)
-                    .done((updatesList) => {
-                        updatesList.selected = preSelectUpdate || updatesList[Math.max(0, updatesList.length - 2)];
-                        preSelectUpdate = null;
-                        promise.resolve(updatesList);
+                ProjectDetailsData.getProjectDeploymentList(proj)
+                    .done((deploymentsList) => {
+                        deploymentsList.selected = preSelectDeployment || deploymentsList[Math.max(0, deploymentsList.length - 2)];
+                        preSelectDeployment = null;
+                        promise.resolve(deploymentsList);
                     });
                 return promise;
             }
@@ -32,14 +32,14 @@ ProjectDetailsPage = function () {
             var options = {
                 projects: list,
                 defaultProject: previousProject,
-                getUpdatesForProject: getUpdatesForProject
+                getDeploymentsForProject: getDeploymentsForProject
             };
             
             $('#details-project-placeholder').on('selected', (evt, extra) => {
                 var project = extra.project;
-                var update = extra.update;
-                if (project && update) {
-                    reportProject(project, update);
+                var deployment = extra.deployment;
+                if (project && deployment) {
+                    reportProject(project, deployment);
                 }
             });
             ProjectPicker.add('#details-project-placeholder', options);
@@ -269,7 +269,7 @@ ProjectDetailsPage = function () {
     
     
     /**
-     * Builds a table with details about the package(s) in the update
+     * Builds a table with details about the package(s) in the deployment
      * @param stats An object with {categoryData} member.
      */
     function deploymentPerformance(stats) {
@@ -334,20 +334,20 @@ ProjectDetailsPage = function () {
     }
     
     /**
-     * Builds a table with details about the Content Update.
+     * Builds a table with details about the Deployment.
      * @param stats An object with {deploymentData, productionData, and usageData} members.
      */
     function deploymentSummary(stats) {
         var options = {
-            columns: ['update', 'production', /*'usage',*/ 'usage2'],
+            columns: ['deployment', 'production', /*'usage',*/ 'usage2'],
             headings: {
-                update: 'Period',
+                deployment: 'Period',
                 production: 'Deployment',
                 usage: 'Performance Summary',
                 usage2: 'Highlights'
             },
             formatters: {
-                update: () => {
+                deployment: () => {
                     var cell;
                     if (depl) {
                         cell = `<p>Start date <span class="stat">${depl.startdate}</span></p>`
@@ -428,17 +428,17 @@ ProjectDetailsPage = function () {
         if (depl && depl.deploymentnumber>0) {
             heading += ` (#${depl.deploymentnumber})`;
         }
-        $('#update_header_name').text(heading);
+        $('#deployment_header_name').text(heading);
         DataTable.create($('#deployment-summary'), [null], options);
     }
     
     
-    function reportProject(project, update) {
+    function reportProject(project, deployment) {
         previousProject = project;
-        previousUpdate = update;
+        previousDeployment = deployment;
         localStorage.setItem('project.details.project', previousProject);
-        localStorage.setItem('project.details.update', previousUpdate);
-        ProjectDetailsData.getProjectStats(project, update).then((stats) => {
+        localStorage.setItem('project.details.deployment', previousDeployment);
+        ProjectDetailsData.getProjectStats(project, deployment).then((stats) => {
             deploymentSummary(stats);
             deploymentPerformance(stats);
             messagePerformance(stats);
@@ -450,7 +450,9 @@ ProjectDetailsPage = function () {
     }
     
     previousProject = localStorage.getItem('project.details.project') || '';
-    previousUpdate = localStorage.getItem('project.details.update') || '';
+    // Todo: remove after 2017-09
+    localStorage.removeItem('project.details.update');
+    previousDeployment = localStorage.getItem('project.details.deployment') || '';
     
     // Hook the tab-activated event for this tab.
     // $('a[href="#project-details-page"]').on('hidden.bs.tab', function (e) {

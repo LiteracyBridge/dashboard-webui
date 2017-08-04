@@ -21,20 +21,21 @@ OverviewPage = (function () {
     // Many of the columns are in common between the summary tables. One shared set of tooltips and heading names is
     // a simple way to improve consistency.
     var tooltips = {
-        'deploymentnumber': 'The Update Number of the Content Update (Deployment).',
-        'num_packages': 'Number of Content Packages in the Content Update. Generally one per language, but there can be ' +
+        'deployment': 'Sometimes called the Content Update.',
+        'deploymentnumber': 'The ordinal number of the Deployment.',
+        'num_packages': 'Number of Content Packages in the Deployment. Generally one per language, but there can be ' +
         'more, if some communities receive customized content.',
-        'startdate': 'The date that the Content Update was published, and was available to be installed in the field',
+        'startdate': 'The date that the Deployment was published, and was available to be installed in the field',
         'num_communities': 'The number of communities from which usage statistics have been collected, for ' +
-        'this Content Update.',
+        'this Deployment.',
         'num_tbs': 'The number of Talking Books from which usage statistics have been collected, for ' +
-        'this Content Update.'
+        'this Deployment.'
         
     };
     var headings = {
         project: 'Project',
-        deployment: 'Content Update',
-        deploymentnumber: 'Update #',
+        deployment: 'Deployment',
+        deploymentnumber: 'Deployment #',
         startdate: 'Start Date',
         'num_packages': '# Packages',
         'num_languages': '# Languages',

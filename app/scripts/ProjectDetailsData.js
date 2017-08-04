@@ -127,30 +127,30 @@ ProjectDetailsData = function () {
     }
     
     /**
-     * Fetch a list of the Deployments / Content Updates for a project. Built from getProjectData.
+     * Fetch a list of the Deployments (aka Content Updates) for a project. Built from getProjectData.
      * @param project The project for which the list of Deployments is desired.
      * @returns {*} A promise that resolves to a list of deployment names.
      */
-    function getProjectUpdateList(project) {
+    function getProjectDeploymentList(project) {
         var promise = $.Deferred();
         Main.incrementWait();
         
         getProjectData(project).then((data) => {
-            var updates = [];
+            var deployments = [];
             Main.decrementWait();
             data.deploymentData.forEach(function (element) {
-                updates.push(element.deployment);
+                deployments.push(element.deployment);
             });
-            promise.resolve(updates);
+            promise.resolve(deployments);
         }, Main.decrementWait);
         
         return promise;
     }
     
     /**
-     * Fetch the statistics for a given project and content update.
+     * Fetch the statistics for a given project and deployment.
      * @param project The project for which statistics are desired.
-     * @param update The content update for which statistics are desired.
+     * @param deployment The deployment for which statistics are desired.
      * @returns {*} A promise that resolves with an object with 3 members:
      *  .deploymentData -- an object like {project,deployment,deploymentnumber,num_packages,num_languages,
      *                                     num_communities,deployed_tbs}
@@ -167,30 +167,30 @@ ProjectDetailsData = function () {
      *                                effective_completions,effective_completions_per_tb,completions,num_tbs,
      *                                num_package_tbs,percent_tbs_playing}
      */
-    function getProjectStats(project, update) {
+    function getProjectStats(project, deployment) {
         var promise = $.Deferred();
         
         // Get arrays of stats (per deployment) for this project
         Main.incrementWait();
         getProjectData(project).then((data) => {
             Main.decrementWait();
-            // data is a hash of arrays. Need to look in each member for desired update.
+            // data is a hash of arrays. Need to look in each member for desired deployment.
             var result = {}
-            // Look for the desired content update
+            // Look for the desired deployment or deploymentnumber
             result.deploymentData = data.deploymentData.find((el) => {
-                return (el.deployment == update || el.deploymentnumber == update)
+                return (el.deployment == deployment || el.deploymentnumber == deployment)
             });
             result.productionData = data.productionData.find((el) => {
-                return (el.deployment == update || el.deploymentnumber == update)
+                return (el.deployment == deployment || el.deploymentnumber == deployment)
             });
             result.usageData = data.usageData.find((el) => {
-                return (el.deployment == update || el.deploymentnumber == update)
+                return (el.deployment == deployment || el.deploymentnumber == deployment)
             });
             result.categoryData = data.categoryData.filter((el) => {
-                return (el.deployment == update || el.deploymentnumber == update)
+                return (el.deployment == deployment || el.deploymentnumber == deployment)
             });
             result.messageData = data.messageData.filter((el) => {
-                return (el.deployment == update || el.deploymentnumber == update)
+                return (el.deployment == deployment || el.deploymentnumber == deployment)
             });
             promise.resolve(result);
         }, Main.decrementWait);
@@ -201,7 +201,7 @@ ProjectDetailsData = function () {
     
     return {
         getProjectList: getProjectList,
-        getProjectUpdateList: getProjectUpdateList,
+        getProjectDeploymentList: getProjectDeploymentList,
         getProjectStats: getProjectStats
     };
 }();
