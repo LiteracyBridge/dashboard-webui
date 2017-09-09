@@ -8,6 +8,11 @@ var CheckoutPage = CheckoutPage || {};
 
 CheckoutPage = (function () {
     'use strict';
+    let PAGE_ID = 'checkout-page';
+    let PAGE_HREF = 'a[href="#'+PAGE_ID+'"]';
+    let $PAGE = $('#'+PAGE_ID);
+    
+    
     var confirmUncheckoutHtml = `<div id="uncheckout-dialog" class="uncheckout-dialog">
     <div class="panel panel-default">
       <div class="panel-body container-fluid">
@@ -246,14 +251,14 @@ CheckoutPage = (function () {
         refreshData();
     }
     
-    $('#refresh-checkout-list').on('click', refreshData);
-    $('#include-user-feedback').on('click', () => {
-        includeUserFeedback = $('#include-user-feedback').prop('checked');
+    $('#refresh-checkout-list', $PAGE).on('click', refreshData);
+    $('#include-user-feedback', $PAGE).on('click', () => {
+        includeUserFeedback = $('#include-user-feedback', $PAGE).prop('checked');
         refreshFiltered();
     });
     
     // Hook the tab-activated event for this tab.
-    $('a[href="#checkout-page"]').on('shown.bs.tab', onTabActivated)
+    $(PAGE_HREF).on('shown.bs.tab', onTabActivated)
     
     return {};
 })();

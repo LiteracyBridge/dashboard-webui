@@ -514,7 +514,8 @@ User = (function () {
         addPasswordUtils($dialog);
         
         //$('#do-reset', $dialog).on('click', () => {
-        $('form', $dialog).on('submit', () => {
+        $('form', $dialog).on('submit', (evt) => {
+            evt.preventDefault();
             var newPassword = $('#newpassword', $dialog).val();
             var code = $('#confirmation-code', $dialog).val();
             CognitoWrapper.confirmPassword({username: username, password: newPassword, code: code}).then(() => {
@@ -557,7 +558,8 @@ User = (function () {
         }
         
         //$('#do-change', $dialog).on('click', () => {
-        $('form', $dialog).on('submit', () => {
+        $('form', $dialog).on('submit', (evt) => {
+            evt.preventDefault();
             var newGreeting = $('#new-greeting', $dialog).val();
             var attrs = {'custom:greeting': newGreeting};
             CognitoWrapper.updateAttributes({attributes:attrs}).then(() => {
@@ -600,7 +602,8 @@ User = (function () {
         var alerter = addNotificationArea($('.panel-footer', $dialog));
     
         // $('#do-confirm', $dialog).on('click', () => {
-        $('form', $dialog).on('submit', () => {
+        $('form', $dialog).on('submit', (evt) => {
+            evt.preventDefault();
             var code = $('#confirmation-code', $dialog).val();
             gotCodePromise.resolve(code);
                 dialog.close();
@@ -635,7 +638,8 @@ User = (function () {
         var alerter = addNotificationArea($('.panel-footer', $dialog));
         
         // $('#do-confirm', $dialog).on('click', () => {
-        $('form', $dialog).on('submit', () => {
+        $('form', $dialog).on('submit', (evt) => {
+            evt.preventDefault();
             var code = $('#confirmation-code', $dialog).val();
             CognitoWrapper.confirmRegistration({username: username, code: code}).then(() => {
                 dialog.close();
@@ -682,7 +686,8 @@ User = (function () {
         }
     
         //$('#do-change', $dialog).on('click', () => {
-        $('form', $dialog).on('submit', () => {
+        $('form', $dialog).on('submit', (evt) => {
+            evt.preventDefault();
             var oldPassword = $('#oldpassword', $dialog).val();
             var newPassword = $('#newpassword', $dialog).val();
             CognitoWrapper.changePassword({
@@ -734,7 +739,8 @@ User = (function () {
         addPasswordUtils($dialog);
         
         // $('#do-create', $dialog).on('click', () => {
-        $('form', $dialog).on('submit', () => {
+        $('form', $dialog).on('submit', (evt) => {
+            evt.preventDefault();
             username = $('#newusername', $dialog).val();
             password = $('#newpassword', $dialog).val();
             var email = $('#newuseremail', $dialog).val();
@@ -775,7 +781,7 @@ User = (function () {
         }
         var dialog = BootstrapDialog.show(options);
         
-        // Pop up help in 5 seconds.
+        // Pop up help in 15 seconds.
         var timeout = null;
         
         function setupTimeout() {
@@ -783,10 +789,11 @@ User = (function () {
                 var h = makeWindowDraggable($(createAccountHelpHtml));
                 dialog.$modal.append(h);
                 timeout = null;
-            }, 5000);
+            }, 15000);
         }
         
         function resetTimeout() {
+            // If there's a timeout active, reschedule it.
             if (timeout) {
                 clearTimeout(timeout)
                 setupTimeout();
@@ -794,7 +801,13 @@ User = (function () {
         }
         
         setupTimeout();
-        $('input', $dialog).on('input', resetTimeout);
+        $('input', $dialog)
+            .on('input', resetTimeout)
+            .on('focus', resetTimeout)
+            .on('blur', resetTimeout);
+        $('button', $dialog)
+            .on('focus', resetTimeout)
+            .on('blur', resetTimeout);
         
         return promise;
     }
@@ -881,11 +894,12 @@ User = (function () {
             doCreateAccount().done(cognitoSignin);
         });
         // $('#do-signin', $dialog).on('submit', () => {
-        $('form', $dialog).on('submit', () => {
+        $('form', $dialog).on('submit', (evt) => {
             console.log('submit');
             username = $('#username', $dialog).val();
             password = $('#password', $dialog).val();
             cognitoSignin();
+            evt.preventDefault();
         })
         $('#forgot-password', $dialog).on('click', () => {
             username = $('#username', $dialog).val();
