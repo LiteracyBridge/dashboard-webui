@@ -2,7 +2,7 @@
  * Created by bill on 3/2/17.
  */
 /* jshint undef:true, esversion:6, asi:true */
-/* globals console, $, UserFeedbackData, Chart, ProjectPicker */
+/* globals console, $, UserFeedbackData, Chart, ProjectPicker, ProjectDetailsData */
 
 var UserFeedbackPage = UserFeedbackPage || {};
 
@@ -27,24 +27,55 @@ UserFeedbackPage = (function () {
         projectsFilled = true;
         var preSelectedDeployment = previousDeployment;
         projectsListPromise
-            .then((list) => {
+            .then((feedbackByProject) => {
                 // list is
-                // { proj1 : { deployment1: acmname1, deployment2: acmname2, ...},
-                //   proj2 : { deployment3: acmname3, deployment4: acmname4, ...}, ...
+                // { proj1 : { deployment1: uf-acmname1, deployment2: uf-acmname2, ...},
+                //   proj2 : { deployment3: uf-acmname3, deployment4: uf-acmname4, ...}, ...
                 
-                var projectList = Object.keys(list);
+                var projectNames = Object.keys(feedbackByProject);
                 
                 function getDeploymentsForProject(proj) {
                     var promise = $.Deferred();
-                    var deploymentsList = Object.keys(list[proj])
-                    deploymentsList.selected = preSelectedDeployment || deploymentsList[Math.max(0, deploymentsList.length - 1)];
-                    preSelectedDeployment = null;
-                    promise.resolve(deploymentsList);
+    
+                    ProjectDetailsData.getProjectDeploymentList(proj)
+                        .done((deploymentsList) => {
+                            // deploymentsList is a list of {deployment:'name', deploymentnumber: number}
+                            // Build a map of deployment name to number.
+                            var deploymentsMap = {};
+                            deploymentsList.forEach((elem)=>{
+                                deploymentsMap[elem.deployment] = elem.deploymentnumber;
+                                // This hack is because we strip off leading alpha characters from the deployment name when
+                                // building the user feedback ACM name.  Search for  alpha - (digits -). ALSO store the
+                                // deployment number with a key of only the digits & hyphen(s)
+                                var alphaPrefixed = /[a-z]+-((?:\d*-?)*)/i;
+                                var numOnly = alphaPrefixed.exec(elem.deployment);
+                                if (numOnly) {
+                                    deploymentsMap[numOnly[1]] = elem.deploymentnumber;
+                                }
+                            });
+                            
+                            // Build values and label. Include deploymentnumber so we can sort it.
+                            var feedbackList = Object.keys(feedbackByProject[proj]).map((elem)=>{
+                                return {
+                                    value: elem,
+                                    deploymentnumber: deploymentsMap[elem],
+                                    label: `#${deploymentsMap[elem]} ${elem}`
+                                }
+                            });
+                            feedbackList.sort((a,b)=>a.deploymentnumber-b.deploymentnumber);
+                            
+                            var penultimate = feedbackList[Math.max(0, feedbackList.length - 2)];
+                            feedbackList.selected = preSelectedDeployment || penultimate && penultimate.value;
+                            preSelectedDeployment = null;
+                            promise.resolve(feedbackList);
+                        });
+    
+    
                     return promise;
                 }
                 
                 var options = {
-                    projects: projectList,
+                    projects: projectNames,
                     defaultProject: previousProject,
                     getDeploymentsForProject: getDeploymentsForProject
                 };
@@ -54,12 +85,12 @@ UserFeedbackPage = (function () {
                     console.log(evt, extra);
                     var project = extra.project;
                     var deployment = extra.deployment;
-                    var acmName;
-                    if (project && deployment && list[project] && list[project][deployment]) {
+                    var ufAcmName;
+                    if (project && deployment && feedbackByProject[project] && feedbackByProject[project][deployment]) {
                         // Convert from label back to acmName
-                        acmName = list[project][deployment]
-                        if (acmName) {
-                            reportFeedback(project, deployment, acmName);
+                        ufAcmName = feedbackByProject[project][deployment]
+                        if (ufAcmName) {
+                            reportFeedback(project, deployment, ufAcmName);
                         }
                     }
                     

@@ -677,22 +677,30 @@ UserFeedbackData = (function () {
     function getProjectsList() {
         // Resolved with an object like {proj:[{label:deployment, acmName:ufAcmName}, {label:...}], proj2:[]...}
         // Resolved with an object like:
-        // { proj1 : { deployment1: acmname1, deployment2: acmname2, ...},
-        //   proj2 : { deployment3: acmname3, deployment4: acmname4, ...}, ...
+        // { proj1 : { deployment1: uf-acmname1, deployment2: uf-acmname2, ...},
+        //   proj2 : { deployment3: uf-acmname3, deployment4: uf-acmname4, ...}, ...
         projectsListPromise = $.Deferred();
         
         getUserFeedbackPath().then((ufPath) => {
         $.when($.get(projectsListPath()), ProjectDetailsData.getProjectList())
             .then((ufProjects, projects) => {
+                // ufProjects is a file containing a list of ACM names for user-feedback projects, like:
+                // ACM-UWR-FB-2015-10
+                // ACM-UWR-FB-2016-1
+                // ...
+                
+                // projects is a list of project names, like ['UWR', 'MEDA', ...]
+            
                 var nl = /\s/
-                var ufAcmNames = ufProjects[0].split(nl);
+                var ufAcmNames = ufProjects[0].split(nl); // like ['ACM-UWR-FB-2015-10', 'ACM-UWR-FB-2016-1', ...]
                 var projList = projects;
                 var result = {};
                 // For each user feedback project...
                 ufAcmNames.forEach((acmName) => {
                     // Examine every project in turn...
                     projList.some((proj) => {
-                        // Until we find the one containing this user feedback.
+                        // Until we find the one to which this user feedback applies.
+                        // Looking for ACM-{proj}-FB-*
                         if (acmName.startsWith('ACM-' + proj)) {
                             var label = acmName.substring(4 + proj.length);
                             if (label.startsWith('-FB-')) {

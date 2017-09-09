@@ -22,7 +22,14 @@ ProjectDetailsPage = function () {
                 var promise = $.Deferred();
                 ProjectDetailsData.getProjectDeploymentList(proj)
                     .done((deploymentsList) => {
-                        deploymentsList.selected = preSelectDeployment || deploymentsList[Math.max(0, deploymentsList.length - 2)];
+                        // deploymentsList is a list of {deployment:'name', deploymentnumber: number}
+                        deploymentsList = deploymentsList.map((elem)=>{
+                            return {value: elem.deployment,
+                                label: `#${elem.deploymentnumber}: ${elem.deployment}`
+                            };
+                        });
+                        var penultimate = deploymentsList[Math.max(0, deploymentsList.length - 2)];
+                        deploymentsList.selected = preSelectDeployment || penultimate && penultimate.value;
                         preSelectDeployment = null;
                         promise.resolve(deploymentsList);
                     });
@@ -89,16 +96,17 @@ ProjectDetailsPage = function () {
      */
     function messagePerformance(stats) {
         var options = {
-            columns: ['category_list', /*'num_categories',*/ 'language', 'title', 'format', 'duration', 'eff_completions'],
+            columns: ['category_list', /*'num_categories',*/ 'language', 'title', 'format', 'duration', 'position_list', 'eff_completions'],
             headings: {
                 language: 'Language', title: 'Message Title', format: 'Format', category_list: 'Categories', num_categories: '# Categories',
-                duration: 'Duration of Message',
+                duration: 'Duration of Message', position_list: 'Position',
                 eff_completions: 'Times Message was Played to Completion'
             },
             tooltips: {
                 language: 'The language in which the message was recorded',
                 format: 'The format of the message (song, lecture, etc.), if known.',
                 duration: 'Length of the recording, in minutes',
+                position_list: 'Position of the message in category playlist. If message was in multiple categories, a list of positions (we don\'t know which category is which positionu.',
                 category_list: 'All of the categories in which this message appeared.',
                 num_categories: 'Number of categories (topics) in which the message appeared in this package.',
                 eff_completions: 'How many times, on average, did the Talking Books listen to this message to completion? Taken over all Talking Books that reported usage statistics for any message in this package.'
@@ -108,7 +116,14 @@ ProjectDetailsPage = function () {
                     if (row.num_categories <= 1) {
                         return row.title
                     }
-                    var tip = `This message appears in ${row.num_categories} categories, ${row.category_list}. Please note that statistics for the message are combined across all of these categories.`;
+                    // We know that the multiple categories are joined by semicolon. Split apart, enclose in quotes.
+                    var categories = row.category_list.split(';');
+                    categories = categories.map(x=>`'${x}'`);
+                    // Join the last one with 'and '.
+                    categories[categories.length-1] = 'and ' + categories[categories.length-1];
+                    // If only 2, just join them with space. Otherwise, join the list with commas.
+                    categories = categories.join(categories.length>2?', ':' ');
+                    var tip = `This message appears in ${row.num_categories} categories: ${categories}. Please note that statistics for the message are combined across all of these categories.`;
                     var $div = $('<div>');
                     $div.append('<span>' + row.title + '</span>');
                     $div.append('<img class="question" src="images/informationRed16.png" title="' + tip + '"/>');
@@ -426,7 +441,7 @@ ProjectDetailsPage = function () {
         });
         var heading = depl.deployment;
         if (depl && depl.deploymentnumber>0) {
-            heading += ` (#${depl.deploymentnumber})`;
+            heading = `#${depl.deploymentnumber}: (` + heading + ')';
         }
         $('#deployment_header_name').text(heading);
         DataTable.create($('#deployment-summary'), [null], options);
