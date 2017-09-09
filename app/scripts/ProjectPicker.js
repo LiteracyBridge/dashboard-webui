@@ -26,7 +26,7 @@ ProjectPicker = (function ProjectPicker() {
             deploymentsDropdown.clear();
             options.getDeploymentsForProject(proj)
                 .done((list) => {
-                    var def = list.selected || options.defaults.deployment;
+                    var def = list.selected;
                     deploymentsDropdown.update(list, {default: def});
                 });
         }
@@ -42,7 +42,7 @@ ProjectPicker = (function ProjectPicker() {
         var $projectsDropdown = $('<div>').on('selected', onProjectSelected).appendTo($elem);
         var $deploymentsDropdown = $('<span>').on('selected', onDeploymentSelected).appendTo($elem);
         
-        var deploymentsDropdown = DropdownButton.create($deploymentsDropdown, {title: 'Deployment'});
+        var deploymentsDropdown = DropdownButton.create($deploymentsDropdown, {title: 'No Deployments'});
         var projectsDropdown = DropdownButton.create($projectsDropdown, {title: 'Project'});
         projectsDropdown.update(options.projects, {default: options.defaultProject});
         

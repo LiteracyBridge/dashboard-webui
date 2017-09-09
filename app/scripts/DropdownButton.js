@@ -24,7 +24,7 @@
  * --         'style' to apply to the buttons; btn-primary is the default
  * -- The object returned has a 'selection' property to retrieve the current selection, and
  * --    functions 'clear()' to empty the list of choices, and 'update(list, options)' to set a new
- * --    list of choices.
+ * --    list of choices. Each choice can be a string (used for label and value) or an object with members 'value' and 'label'.
  * -- Listen to 'selected' events on the passed element. The first argument to the handler is the source
  * --    event, and the second argument is the selection.
  */
@@ -37,10 +37,10 @@ DropdownButton = (function () {
     function makeHtml(options) {
         var style = options.style || 'btn-primary';
         var html = `
-            <button type="button" class="btn ${style}" style="border:none">${options.title}</button>
-            <button type="button" class="btn ${style} dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <button type="button" class="btn ${style} dropdown-toggle" style="border:none" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <span class='title'>${options.title}</span>
                 <span class="caret"></span>
-                <span class="sr-only">Toggle Dropdown</span>
+                <!--  span class="sr-only">Toggle Dropdown</span -->
             </button>
             <ul class="dropdown-menu">
             </ul>`;
@@ -68,11 +68,24 @@ DropdownButton = (function () {
         function clearList() {
             $('ul', $elem).children().off();
             $('ul', $elem).empty();
-            $('button:first', $elem).text(options.title);
-            $('button:last', $elem).addClass('hidden');
+            $('button .title', $elem).text(options.title);
             selection = null;
         }
         function updateList(list, opts) {
+            function getLabel(item) {
+                if (typeof item === 'string') {
+                    return item;
+                } else {
+                    return item.label;
+                }
+            }
+            function getValue(item) {
+                if (typeof item === 'string') {
+                    return item;
+                } else {
+                    return item.value;
+                }
+            }
             list = list || [];
             opts = opts || {};
             $('ul', $elem).children().off();
@@ -81,37 +94,53 @@ DropdownButton = (function () {
             // But if there is a new default selection, ignore any previous selection. We want to allow a pre-selected
             // "no selection", so undefined, null, and empty string are all valid defaults.
             var preSelected = opts.hasOwnProperty('default') ? opts.default : selection;
-            selection = (list.length===1) ? list[0] : null;
+            selection = (list.length===1) ? getValue(list[0]) : null;
+            selectionLabel = (list.length===1) ? getLabel(list[0]) : null;
             list.forEach((item) => {
                 // No gaps in the list
                 if (!item) {
                     return;
                 }
-                var li = $(`<li><a class="main-nav" href="#select-item" data-item="${item}">${item}</a></li>`)
+                var value, label;
+                if (typeof item === 'string') {
+                    value = label = item;
+                } else {
+                    if (!item.hasOwnProperty('value') || !item.hasOwnProperty('label')) {
+                        return;
+                    }
+                    value = item.value;
+                    label = item.label;
+                }
+                var li = $(`<li><a class="main-nav" href="#select-item" data-value="${value}">${label}</a></li>`)
                 $('ul', $elem).append(li);
-                if (item === preSelected) {
-                    selection = item;
+                if (value === preSelected) {
+                    selection = value;
+                    selectionLabel = label;
                 }
             });
             // When an item is clicked: update the title, fire the event
             $('a[href="#select-item"]', $elem).on('click', (it) => {
-                var item = $(it.target).data('item');
-                $('button:first', $elem).text(item);
-                selection = item;
-                $elem.trigger('selected', [item]);
+                var value = $(it.target).data('value');
+                var label = $(it.target).text();
+                $('button .title', $elem).text(label);
+                selection = value;
+                selectionLabel = label;
+                $elem.trigger('selected', [value]);
             });
-            // Don't show the caret if there is nothing useful to drop down
+            // Don't show the caret and the dropdown list if there is nothing useful to drop down
             if (list.length<2) {
-                $('button:last', $elem).addClass('hidden');
+                $('ul', $elem).addClass('hidden');
+                $('button .caret', $elem).addClass('hidden');
             } else {
-                $('button:last', $elem).removeClass('hidden');
+                $('ul', $elem).removeClass('hidden');
+                $('button .caret', $elem).removeClass('hidden');
             }
             // Anything already selected?
             if (selection) {
-                $('button:first', $elem).text(selection);
+                $('button .title', $elem).text(selectionLabel);
                 $elem.trigger('selected', [selection]);
             } else {
-                $('button:first', $elem).text(opts.title || options.title);
+                $('button .title', $elem).text(opts.title || options.title);
             }
         }
         
@@ -123,6 +152,7 @@ DropdownButton = (function () {
             $elem.addClass('btn-group');
         }
         var selection;
+        var selectionLabel;
 
         $elem.html(makeHtml(options));
         
