@@ -974,6 +974,23 @@ User = (function () {
     
     function doAuthenticate() {
         if (!authenticationPromise) {
+            if (Main.hasParam('demo')) {
+                doSignout();
+                username='Demo';
+                password='Demonstration1';
+                rememberMe=false;
+            } else if (Main.hasParam('offline')) {
+                username='Offline';
+                password='';
+                rememberMe=false;
+                authenticationPromise = $.Deferred();
+                authenticationPromise.resolve({});
+                userProperties = {admin:true, edit:'*', view:'*'};
+                userPropertiesPromise = $.Deferred();
+                userPropertiesPromise.resolve(userProperties);
+                return authenticationPromise;
+            }
+    
             authenticationPromise = $.Deferred();
             var signin = $.Deferred();
             

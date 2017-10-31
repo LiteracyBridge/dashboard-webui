@@ -2,17 +2,17 @@
  * Created by bill on 3/2/17.
  */
 /* jshint undef:true, esversion:6, asi:true */
-/* globals console, $, ProjectDetailsData, BootstrapDialog, User, AWS, CognitoWrapper */
+/* globals console, $, ProjectDetailsData, BootstrapDialog, User, AWS, CognitoWrapper, URLSearchParams */
 
 var Main = Main || {};
 
 Main = (function () {
     'use strict';
-    
+
     var ROOT_PATH;
-    
+
     var applicationPathPromise;
-    
+
     /**
      * Determines the path to statistics data. Uses trial-and-error.
      */
@@ -42,34 +42,41 @@ Main = (function () {
         }
         return applicationPathPromise;
     }
-    
+
+    let params = new URLSearchParams(location.search.slice(1));
+    //params = new URLSearchParams('offline');
+
     var waitCount = 0;
     let delayTime = 500;
     var delayTimeout;
     function delayedSpinner() {
         $('#wait-spinner').show();
         delayTimeout = null;
+        console.log('setting wait spinner');
     }
     function incrementWait() {
         if (waitCount++ === 0) {
+            console.log('setting wait spinner timeout');
             delayTimeout =setTimeout(delayedSpinner, delayTime);
         }
     }
     function decrementWait() {
         if (--waitCount === 0) {
+            console.log('clearing wait spinner timeout');
             clearTimeout(delayTimeout);
             delayTimeout = null;
             $('#wait-spinner').hide();
         }
     }
     function clearWait() {
+        console.log('*clearing wait spinner timeout');
         waitCount = 0;
         clearTimeout(delayTimeout);
         delayTimeout = null;
         $('#wait-spinner').hide();
     }
-    
-    
+
+
     function onSignedIn() {
         function setGreeting() {
             var attributes = User.getUserAttributes();
@@ -80,7 +87,7 @@ Main = (function () {
         }
         $('body').on('custom:greeting', setGreeting);
         setGreeting();
-        
+
         getApplicationPath().then(() => {
             // Enable Bootstrap tabbing.
             $('#main-nav a.main-nav').on('click', function (e) {
@@ -89,21 +96,21 @@ Main = (function () {
             })
             $('#splash h3').removeClass('invisible');
         });
-        
+
         User.getUserProperties()
             .then(()=>{
                 if (User.isAdminUser()) {
                     $('#admin-menu').removeClass('hidden');
                 }
             });
-        
+
         var attributes = User.getUserAttributes();
         if (attributes['email_verified'] === 'false') {
             $('li.verify-email').removeClass('hidden');
         }
-        
+
     }
-    
+
     /**
      * Sign out the user, and reset the UI.
      * @param evt
@@ -122,7 +129,7 @@ Main = (function () {
         $('li.verify-email').addClass('hidden');
         User.authenticate().done(onSignedIn);
     }
-    
+
     function init() {
         getApplicationPath();
         User.authenticate().done(onSignedIn);
@@ -131,12 +138,16 @@ Main = (function () {
         $('a[href="#change-greeting"]').on('click', User.changeGreeting);
         $('a[href="#verify-email"]').on('click', User.verifyEmail);
     }
-    
+
     setTimeout(init, 0);
-    
+
     // Services that are global can be exposed here.
     return {
         getRootPath: ()=>{return ROOT_PATH},
+
+        getParam: (param)=>{return params.get(param)},
+        hasParam: (param)=>{return params.has(param)},
+
         incrementWait: incrementWait,
         decrementWait: decrementWait,
         clearWait: clearWait

@@ -6,8 +6,13 @@
 
 sub=
 if [ ! -z $1 ]; then
-    sub="$1"
-    if [ ${sub:0:1} != "/" ]; then sub="/${sub}"; fi
+    if [ "$1" != "--prod" ]; then
+        sub="$1"
+        if [ ${sub:0:1} != "/" ]; then sub="/${sub}"; fi
+    fi
+else
+    echo "Error! Must specify subdirectory or '--prod'"
+    exit 1
 fi
 
 aws s3 sync --exclude '.*' --exclude 'uf/*' --exclude 'data/*' --exclude '*.sh' . s3://dashboard-lb-stats${sub}

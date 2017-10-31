@@ -1,5 +1,5 @@
 /* jshint esversion:6, asi:true */
-/* global $, console, Main */
+/* global $, console, Main, User, User */
 
 var ProjectDetailsData = ProjectDetailsData || {};
 
@@ -47,7 +47,7 @@ ProjectDetailsData = function () {
                 // ...
                 var pairs = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
                 var paths = {};
-                pairs.forEach((el) => {
+                pairs.filter(row=>User.isViewableProject(row.project)).forEach((el) => {
                     paths[el.project] = el.path
                 });
                 projectPaths.resolve(paths);

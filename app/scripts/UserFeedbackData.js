@@ -5,7 +5,7 @@ var UserFeedbackData = UserFeedbackData || {};
 
 UserFeedbackData = (function () {
     'use strict';
-    
+
     /**
      * This is what data might look like (subsetted). 'categoryData' will describe all defined categories, whether or
      * not they're used in this data. 'progressData' is an array of daily snapshots, with uncategorized, categorized,
@@ -158,7 +158,7 @@ UserFeedbackData = (function () {
     let MARKER = 'projects.txt'
     var ufPath;
     var feedbackPathPromise;
-    
+
     /**
      * Determines the path to statistics data. Uses trial-and-error.
      */
@@ -187,40 +187,40 @@ UserFeedbackData = (function () {
         }
         return feedbackPathPromise;
     }
-    
+
     function projectPath(proj) {
         return ufPath + proj + '/'
     }
-    
+
     function categoriesPath(proj) {
         return projectPath(proj) + 'categories.csv';
     }
-    
+
     function summaryPath(proj) {
         return projectPath(proj) + 'summary.csv';
     }
-    
+
     function messagesPath(proj) {
         return projectPath(proj) + 'messages.csv';
     }
-    
+
     function projectNamePath(proj) {
         return projectPath(proj) + 'project.txt';
     }
-    
+
     function projectsListPath() {
         return ufPath + 'projects.txt';
     }
-    
+
     // Promises keyed by project name.
     // Each is a promise resoved with {categories:[category rows...], progress:[progress rows...]
     var progressPromises = {};
     // Promises keyed by project name.
     // Each is a promise resolved with [{label:' 0 - 2 seconds', data:123}, ...]
     var durationsPromises = {};
-    
+
     var projectsListPromise;
-    
+
     /**
      * This class represents the Category hierarchy, and parses a list of category entries into the hierarchy. Each
      * Construct a new category with:
@@ -240,7 +240,7 @@ UserFeedbackData = (function () {
             this.fullname = fullname
         }
     }
-    
+
     Category.prototype = {
         createNew: function create(id, name, fullname) {
             return new Category(id, name, fullname);
@@ -354,10 +354,16 @@ UserFeedbackData = (function () {
             return parent && parent.children && parent.children[id];
         }
     }
-    
+
     /**
      * Daily progress data. It's much like Category data, except that it is sparse (only categories with actual
      * content), and has a count.
+     *
+     * A Progress object has these members:
+     * - id: the category id, generally like "1-2"
+     * - name: a short name of just the node, like "Hand Washing"
+     * - fullname: a longer name, with the parent parts, like "Hand Washing:Children"
+     *
      * @param id
      * @param name
      * @param fullname
@@ -366,7 +372,7 @@ UserFeedbackData = (function () {
     function Progress(id, name, fullname) {
         Category.call(this, id, name, fullname);
     }
-    
+
     Progress.prototype = Object.create(Category.prototype, {
         createNew: {
             /**
@@ -426,7 +432,7 @@ UserFeedbackData = (function () {
                 function accumulate(buckets) {
                     if (buckets) {
                         if (!result) {
-                            result = durationBuckets();
+                            result = newDurationBuckets();
                         }
                         buckets.forEach((b,ix)=>result[ix]+=b);
                     }
@@ -454,11 +460,11 @@ UserFeedbackData = (function () {
         }
     });
     Progress.prototype.constructor = Progress;
-    
+
     // Global variable because it is needed by parseProgress. Gets reset with each set of categories, but that's
     // OK because it isn't needed by Progress after the parsing is done.
     var categoryRoot;
-    
+
     /**
      * Parses a series of individual category objects, creates and returns a hierarchical category object.
      * @param cats An array of {ID, NAME, FULLNAME} objects
@@ -473,7 +479,7 @@ UserFeedbackData = (function () {
         });
         return categoryRoot;
     }
-    
+
     function parseProgress(dailies) {
         var progressRoot = [];
         var categoryUselessRe = /^9-2$/;
@@ -486,13 +492,13 @@ UserFeedbackData = (function () {
             // Convert string like '2016-04-11' to Date object.
             dailyProgress.date = new Date(dailySummary.date);
             progressRoot.push(dailyProgress);
-            
+
             // Slices of counts, organized by useless, categorized, uncategorized.
             dailyProgress.categorized = dailyProgress.add('Processed', 0, 'Processed'); // new Progress('Processed', 'Processed');
             dailyProgress.uncategorized = dailyProgress.add('Unprocessed', 0, 'Unprocessed'); // new Progress('Unprocessed', 'Unprocessed');
             dailyProgress.useless = dailyProgress.add('Useless', 0, 'Useless'); // new Progress('Useless', 'Useless');
             dailyProgress.skipped = dailyProgress.add('Skipped', 0, 'Skipped'); // new Progress('Skipped', 'Skipped');
-            
+
             Object.keys(dailySummary).forEach(k => {
                 // If there is a count, and it looks like a category
                 if (+dailySummary[k] && categoryRe.test(k)) {
@@ -513,11 +519,11 @@ UserFeedbackData = (function () {
         });
         return progressRoot;
     }
-    
-    function durationBuckets() {
+
+    function newDurationBuckets() {
         return Array(durationLimits.length).fill(0);
     }
-    
+
     // bucket by 2, 5, 10, 20 seconds; 1, 2, 5, + minutes
     var durations = {
         2: ' 0 - 2 sec',
@@ -527,12 +533,12 @@ UserFeedbackData = (function () {
         60: ' 21 sec - 1 min',
         120: ' 1:01 - 2 min',
         300: ' 2:01 - 5 min',
-        1000000: ' > 5 minutes', // a very long length of time
+        1000000: ' > 5 minutes', // 11 1/2 days, longer than batteries can possibly last.
     }
-    let durationLimits = [2, 5, 10, 20, 60, 120, 300, Math.MAX_SAFE_INTEGER]
+    let durationLimits = [2, 5, 10, 20, 60, 120, 300, 1000000]
     let durationLabels = [' 0 - 2 sec', ' 3 - 5 sec', ' 6 - 10 sec', ' 11 - 20 sec',
         ' 21 sec - 1 min', ' 1:01 - 2 min', ' 2:01 - 5 min', ' > 5 minutes']
-    
+
     /**
      * Parses a list of messages, to get durations by category.
      *
@@ -571,23 +577,25 @@ UserFeedbackData = (function () {
         msgs = msgs.filter(msg => msg.CATEGORIES).map(msg => {
             return {category: msg.CATEGORIES, duration: +msg.LB_DURATION}
         });
-        
+
         // For every message, if we haven't yet seen the category, make a bucket for the category. Then count the duration.
         var cats = {};
         msgs.forEach(msg => {
             if (!cats.hasOwnProperty(msg.category)) {
-                cats[msg.category] = durationBuckets()
+                cats[msg.category] = newDurationBuckets()
             }
             durationLimits.some((limit, ix)=>{
+                // the durations are smallest to largest; if the message is shorter than the duration's limit, we've
+                // found it; increment the count, and stop looking for the duration.
                 if (msg.duration <= limit) {
                     cats[msg.category][ix]++;
                     return true;
                 }
             });
         });
-        
+
         // Count up the # messages in length buckets (0-2 seconds, 3-5 seconds, etc)
-        
+
         // Initialize buckets to 0
         var keys = Object.keys(durations); // 2, 5, 10, 20, etc. Upper bounds for buckets
         var buckets = {}
@@ -609,7 +617,7 @@ UserFeedbackData = (function () {
         })
         return {durationData: durationData, durationsByCategory: cats, durationLimits: durationLimits, durationLabels: durationLabels};
     }
-    
+
     /**
      * Fetch progress statistics for the project.
      * @returns {*} A promise that resolves to an object with 3 members:
@@ -623,10 +631,10 @@ UserFeedbackData = (function () {
         }
         var progressPromise = $.Deferred();
         progressPromises[project] = progressPromise;
-        
+
         var categories = $.get(categoriesPath(project));
         var progress = $.get(summaryPath(project));
-        
+
         // Wait for all to load. TODO: handle timeouts.
         $.when(categories, progress)
             .done(function resolved(categories, progress) {
@@ -634,7 +642,7 @@ UserFeedbackData = (function () {
                 // Can't refactor the options because $.csv craps on the options object.
                 var categoryRoot = parseCategories($.csv.toObjects(categories[0], {separator: ',', delimiter: '"'}));
                 var progressRoot = parseProgress($.csv.toObjects(progress[0], {separator: ',', delimiter: '"'}));
-                
+
                 progressPromise.resolve({
                     categoryData: categoryRoot,
                     progressData: progressRoot
@@ -642,10 +650,10 @@ UserFeedbackData = (function () {
             }).fail((err) => {
             progressPromise.reject(err);
         });
-        
+
         return progressPromise;
     }
-    
+
     function getDurations(project) {
         // Already have it?
         if (durationsPromises[project] !== undefined) {
@@ -653,34 +661,34 @@ UserFeedbackData = (function () {
         }
         var durationsPromise = $.Deferred();
         durationsPromises[project] = durationsPromise;
-        
+
         var messages = $.get(messagesPath(project));
-        
+
         // Wait for all to load. TODO: handle timeouts.
         $.when(messages)
             .done(function resolved(messages) {
                 // Parse the files.
                 var durationData = extractDurations($.csv.toObjects(messages, {separator: ',', delimiter: '"'}));
-                
+
                 durationsPromise.resolve(durationData);
             }).fail((err) => {
             durationsPromise.reject(err);
         });
-        
+
         return durationsPromise;
     }
-    
+
     function getProjectName(project) {
         return $.get(projectNamePath(project));
     }
-    
+
     function getProjectsList() {
         // Resolved with an object like {proj:[{label:deployment, acmName:ufAcmName}, {label:...}], proj2:[]...}
         // Resolved with an object like:
         // { proj1 : { deployment1: uf-acmname1, deployment2: uf-acmname2, ...},
         //   proj2 : { deployment3: uf-acmname3, deployment4: uf-acmname4, ...}, ...
         projectsListPromise = $.Deferred();
-        
+
         getUserFeedbackPath().then((ufPath) => {
         $.when($.get(projectsListPath()), ProjectDetailsData.getProjectList())
             .then((ufProjects, projects) => {
@@ -688,9 +696,9 @@ UserFeedbackData = (function () {
                 // ACM-UWR-FB-2015-10
                 // ACM-UWR-FB-2016-1
                 // ...
-                
+
                 // projects is a list of project names, like ['UWR', 'MEDA', ...]
-            
+
                 var nl = /\s/
                 var ufAcmNames = ufProjects[0].split(nl); // like ['ACM-UWR-FB-2015-10', 'ACM-UWR-FB-2016-1', ...]
                 var projList = projects;
@@ -716,11 +724,11 @@ UserFeedbackData = (function () {
                 projectsListPromise.resolve(result);
             }, projectsListPromise.reject);
         });
-        
+
         return projectsListPromise;
     }
-    
-    
+
+
     return {
         getProjectsList: getProjectsList,
         getProjectName: getProjectName,

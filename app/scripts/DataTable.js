@@ -5,7 +5,7 @@ var DataTable = DataTable || {};
 
 DataTable = function () {
     'use strict';
-    
+
     /**
      * Creates a standard stats table.
      * @param container The jQuery container to receive the table. Existing contents will be removed.
@@ -13,7 +13,7 @@ DataTable = function () {
      * @param options An object with any of the following fields:
      *   columns: An array of names by which the columns are referenced. If not provided, the keys
      *       of  rows[0] will be used.
-     *   classes: A string of classes to be applied to the table. NOTE: 'table-striped' will be *removed*
+     *   tableClasses: A string of classes to be applied to the table. NOTE: 'table-striped' will be *removed*
      *       if the rows object is empty.
      *   headings: An object whose keys are column names, and their values are column titles. If no title
      *       is provided, the column name is used.
@@ -26,23 +26,26 @@ DataTable = function () {
         // Remove old content; create a new table.
         function initializeTable() {
             $(container).empty();
-            var classes = options.classes || 'table table-condensed table-bordered table-striped';
+            var classes = options.tableClasses || 'table table-condensed table-bordered table-striped';
             if (rows.length === 0) {
                 classes = classes.replace('table-striped', ' ');
             }
             $(container).html('<table class="' + classes + '">');
         }
-        
+
         // Builds headings according to the options.
         function buildHeadings() {
             // One row for the headings.
             $('table', container).append('<thead><tr></tr></thead>');
             var $tr = $('thead tr', container);
-            columns.forEach((column) => {
+            columns.forEach((column, ix) => {
                 // Heading text and optional tooltip
-                var text = options.headings[column] || column;
+                var text = headings[column] || column;
                 var tip = options.tooltips && options.tooltips[column];
                 $tr.append('<th><div></div></th>');
+                if (headingClasses[column]) {
+                    $('th', $tr).last().addClass(headingClasses[column]);
+                }
                 var $div = $('th div', $tr).last();
                 $div.append('<span>' + text + '</span>');
                 // If there's a tooltip, attach it to a image of a question mark.
@@ -57,17 +60,22 @@ DataTable = function () {
                 }
             });
         }
-        
+
         // Populates the data rows of the table, calls 'datatable' at the end.
         function populateRows() {
             $('table', container).append('<tbody></tbody>');
             var $tbody = $('table tbody', container);
             // One row for each array element
             rows.forEach((row, ix) => {
-                $($tbody).append('<tr></tr>');
+                $($tbody).append(`<tr data-row-index="${ix}"></tr>`);
                 var $tr = $(':last', $tbody);
                 columns.forEach((column) => {
                     var $td = $('<td>');
+                    if (columnClasses[column]) {
+                        let cl = (typeof columnClasses[column] === 'function') ? columnClasses[column](row) : columnClasses[column];
+                        $td.addClass(cl);
+                    }
+
                     var cell = '';
                     // If there's a format function, call it. Otherwise just use the data.
                     if (formatters[column]) {
@@ -80,9 +88,12 @@ DataTable = function () {
                 });
             });
         }
-        
+
         options = options || {};
         var columns = options.columns || Object.keys(rows[0]);
+        var columnClasses = options.columnClasses || {};
+        var headings = options.headings || {};
+        var headingClasses = options.headingClasses || {};
         var formatters = options.formatters || {};
         var tableOptions = {paging: false, searching: false, colReorder: false};
         if (options.datatable && (typeof options.datatable) === 'object') {
@@ -90,6 +101,7 @@ DataTable = function () {
                 tableOptions[k] = options.datatable[k]
             });
         }
+
         initializeTable();
         if (options.headings) {
             buildHeadings();
@@ -104,17 +116,17 @@ DataTable = function () {
         }
         return table;
     }
-    
+
     function createFromCsv(container, path, options) {
         $.get(path).done((csvData) => {
             var data = $.csv.toObjects(csvData, {separator: ',', delimiter: '"'});
             createTable(container, data, options);
         });
     }
-    
+
     return {
         create: createTable,
         fromCsv: createFromCsv
     }
-    
+
 }();

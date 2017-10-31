@@ -8,7 +8,7 @@
 
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
-    <link rel="icon" type="image/x-icon" href="images/talking_book_64.png" />
+    <link rel="icon" type="image/x-icon" href="images/talking_book_64.png"/>
 
     <!-- build:css styles/vendor.css -->
     <!-- bower:css -->
@@ -53,8 +53,19 @@
                 <li role="navigation" style="display:none;"><a class="main-nav" href="#splash">Splash</a></li>
                 <li role="navigation"><a class="main-nav" href="#overview-page">Overview</a></li>
                 <li role="navigation"><a class="main-nav" href="#project-details-page">Details</a>
-                <li role="navigation"><a class="main-nav" href="#inventory-page">Inventories</a></li>
+                    <!-- li role="navigation"><a class="main-nav" href="#inventory-page">Inventories</a></li -->
+                <li class="dropdown" id="idm-menu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                       aria-expanded="false">IDM
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li role="navigation"><a class="main-nav" href="#inventory-page">Inventories</a></li>
+                        <li role="navigation"><a class="main-nav" href="#installation-progress-page">Installations</a>
+                        </li>
+                    </ul>
                 </li>
+
                 <li role="navigation"><a class="main-nav" href="#userfeedback-page">User
                     Feedback</a>
                 </li>
@@ -164,25 +175,67 @@
         </div>
     </div>
 
+    <!-- Installation Report -->
+    <div id="installation-progress-page" role="tabpanel" class="tab-pane fade">
+        <div class="container-fluid">
+            <h2 class="bg-primary">Deployment Installation Summary
+                &nbsp;<span id="installation-progress-project-placeholder"></span>
+            </h2>
+
+            <div id='installation-progress-summary'>
+                <div class="row">
+                    <div class="col-sm-4">
+                        <h3>
+                            The Deployment has been installed to
+                            </br><span id="installation-num-tbs-installed"></span>
+                                <span class="only-with-tb-count"> of <span id="installation-num-tbs"></span></span>
+                                Talking Books
+                                <span class="only-with-tb-count"> (<span id="installation-pct-tbs-installed"></span>%)</span>
+                            </br>in <span id="installation-num-communities"></span>
+                                communities<span class="only-with-group-count"></br> and <span id="installation-num-groups"></span> groups</span>.
+                        </h3>
+                        <h4>
+                            Deployment #<span id="installation-progress-deployment-number"></span>, '<span id="installation-progress-deployment-name"></span>',
+                            </br>from <span id="installation-progress-deployment-start"></span> to <span id="installation-progress-deployment-end"></span>.
+                        </h4>
+                        <h4>
+                            Installations found <span id="installation-progress-deployment-range"></span>.
+                        </h4>
+                    </div>
+                    <div class="col-sm-5 installation-progress-timing-wrapper">
+                        <div class="h3">Installation Progress Over Time</div>
+                        <div class="no-tb-count-warning"><p>Graph based on actual install count, not project
+                            specification.</p></div>
+                        <canvas id="installation-progress-timing"></canvas>
+                    </div>
+                </div>
+            </div>
+            <h2>Deployment Installation Details by Community & Group</h2>
+            <div id='installation-progress-detail' class="detailtable"></div>
+
+        </div>
+    </div>
+
     <!-- User Feedback Report -->
     <div id="userfeedback-page" role="tabpanel" class="tab-pane fade">
         <div class="container-fluid">
             <h2 class="bg-primary form-inline">Breakdown as of <span id="breakdown-date"></span>
-            &nbsp;<span id="uf-project-placeholder"></span>
+                &nbsp;<span id="uf-project-placeholder"></span>
             </h2>
             <label style="font-weight:normal">
-                <input type="checkbox" id="feedback-as-partner-view">
-                Show as Partner View
+                <input type="checkbox" id="feedback-with-uncategorized">
+                Include uncategorized feedback
             </label>
 
             <div class="row">
-                <div class="col-sm-7">
-                    <div class="h3">Breakdown of <span id="category-breakdown"></span></div>
+                <div class="col-sm-1">&nbsp;</div>
+                <div class="col-sm-6 category-breakdown-wrapper">
+                    <div class="h3">Categorization of <span id="category-breakdown"></span></div>
                     <h4><span id="hover-pie2"></span>&nbsp;</h4>
                     <canvas id="category-breakdown-placeholder"></canvas>
                 </div>
 
-                <div class="col-sm-5">
+                <div class="col-sm-4 message-length-wrapper">
                     <h3>Lengths of <span id="category-durations">Messages</span></h3>
                     <h4><span id="hover-pie3"></span>&nbsp;</h4>
                     <canvas id="message-length-placeholder"></canvas>
@@ -295,6 +348,7 @@ script src="scripts/3p/aws-sdk-2.5.0.min.js"></script -->
 
 
 <!-- script src="scripts/3p/palette.js"></script -->
+<script src="scripts/3p/chroma.js"></script>
 <script src="scripts/3p/datatables.min.js"></script>
 <script src="scripts/3p/bootstrap-dialog.js"></script>
 <script src="scripts/DataTable.js"></script>
@@ -307,6 +361,8 @@ script src="scripts/3p/aws-sdk-2.5.0.min.js"></script -->
 <script src="scripts/InventoryPage.js"></script>
 <script src="scripts/UserFeedbackData.js"></script>
 <script src="scripts/UserFeedbackPage.js"></script>
+<script src="scripts/InstallationData.js"></script>
+<script src="scripts/InstallationPage.js"></script>
 <script src="scripts/OverviewPage.js"></script>
 <script src="scripts/DropdownButton.js"></script>
 <script src="scripts/ProjectPicker.js"></script>

@@ -103,10 +103,10 @@ ProjectDetailsPage = function () {
                 eff_completions: 'Times Message was Played to Completion'
             },
             tooltips: {
-                language: 'The language in which the message was recorded',
-                format: 'The format of the message (song, lecture, etc.), if known.',
-                duration: 'Length of the recording, in minutes',
-                position_list: 'Position of the message in category playlist. If message was in multiple categories, a list of positions (we don\'t know which category is which positionu.',
+                language: 'The language in which the message was recorded.',
+                format: 'The format of the message (song, interview, etc.), if known.',
+                duration: 'Length of the recording, in minutes.',
+                position_list: 'Position of the message in category playlist. If message was in multiple categories, a list of positions (we don\'t know which category is which position).',
                 category_list: 'All of the categories in which this message appeared.',
                 num_categories: 'Number of categories (topics) in which the message appeared in this package.',
                 eff_completions: 'How many times, on average, did the Talking Books listen to this message to completion? Taken over all Talking Books that reported usage statistics for any message in this package.'

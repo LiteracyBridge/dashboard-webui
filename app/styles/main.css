@@ -282,19 +282,21 @@ p.spacer {
     line-height: 1.2em;
 }
 
-#message-length-placeholder {
-    /*max-width: 75%;*/
-    /*max-height: 75%;*/
-    //height: 250px;
+.category-breakdown-wrapper {
+    max-width: 575px;
+}
+
+.message-length-wrapper {
+    max-width: 450px;
+}
+
+#category-breakdown-placeholder {
     font-size: 14px;
     line-height: 1.2em;
     border: 1px red;
 }
 
-#category-breakdown-placeholder {
-    /*max-width: 60%;*/
-    /*max-height: 60%;*/
-    //height: 450px;
+#message-length-placeholder {
     font-size: 14px;
     line-height: 1.2em;
     border: 1px red;
@@ -304,4 +306,94 @@ p.spacer {
     /* otherwise, the row has margins of -15, making it extend to the absolute limit of the window */
     margin-left: 0;
     margin-right: 0;
+}
+
+
+td.details-control {
+    cursor: pointer;
+    text-align: center;
+}
+td.details-control::before {
+    margin-top    : 5px;
+    margin-bottom : 5px;
+    font-size     : 12px;
+    position      : relative;
+    top           : 1px;
+    display       : inline-block;
+    font-family   : 'Glyphicons Halflings';
+    font-style    : normal;
+    font-weight   : 400;
+    line-height   : 1;
+    -webkit-font-smoothing : antialiased;
+    content : '\2b';
+}
+tr.shown td.details-control::before {
+     content : '\2212';
+}
+/* To use images for expand/collapse indicators:
+td.details-control {
+    background: url('../images/details_open.png') no-repeat center center;
+    cursor: pointer;
+}
+tr.shown td.details-control {
+    background: url('../images/details_close.png') no-repeat center center;
+}
+*/
+
+/* (odd) is lighter, (even) darker */
+.table-striped > tbody > tr:nth-of-type(odd).deployment-progress-detail {
+    background-color: lightyellow; /* #e7f3f9; */
+}
+.table-striped > tbody > tr:nth-of-type(even).deployment-progress-detail {
+    background-color: lightgoldenrodyellow; /*#f9f9f9; */
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) .needs-improvement {
+    background-color: orange; /* #ffa500 */
+    color: white;
+}
+.table-striped > tbody > tr:nth-of-type(even) .needs-improvement{
+    background-color: #ef9500; /* darkerorange */
+    color: white;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) .unacceptable {
+    background-color: #9f0000; /* notasdarkred */
+    color: white;
+}
+.table-striped > tbody > tr:nth-of-type(even) .unacceptable {
+    background-color: darkred; /* #8b0000 */
+    color: white;
+}
+
+#installation-progress-summary .only-with-tb-count {
+    display: none;
+}
+#installation-progress-summary.has-tb-count .only-with-tb-count {
+    display: inline;
+}
+
+#installation-progress-summary .no-tb-count-warning{
+    display: inline;
+    font-family: italic;
+}
+#installation-progress-summary.has-tb-count .no-tb-count-warning{
+    display: none;
+    font-family: italic;
+}
+
+#installation-progress-summary.has-group-count .only-with-group-count {
+    display: inline;
+}
+#installation-progress-summary .only-with-group-count {
+    display: none;
+}
+
+#installation-progress-detail .group-name {
+    font-style: italic;
+    padding-left: 1em;
+}
+
+.installation-progress-timing-wrapper canvas {
+    max-height: 200px;
 }
