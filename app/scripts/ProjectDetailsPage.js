@@ -5,11 +5,11 @@ var ProjectDetailsPage = ProjectDetailsPage || {};
 
 ProjectDetailsPage = function () {
     'use strict';
-    
+
     var previousProject, previousDeployment;
-    
+
     var fillDone = false;
-    
+
     function fillProjects() {
         if (fillDone) {
             return;
@@ -17,15 +17,15 @@ ProjectDetailsPage = function () {
         fillDone = true;
         var preSelectDeployment = previousDeployment;
         ProjectDetailsData.getProjectList().done((list) => {
-            
+
             function getDeploymentsForProject(proj) {
                 var promise = $.Deferred();
                 ProjectDetailsData.getProjectDeploymentList(proj)
                     .done((deploymentsList) => {
-                        // deploymentsList is a list of {deployment:'name', deploymentnumber: number}
+                        // deploymentsList is a list of {deploymentname:'name', deploymentnumber: number}
                         deploymentsList = deploymentsList.map((elem)=>{
-                            return {value: elem.deployment,
-                                label: `#${elem.deploymentnumber}: ${elem.deployment}`
+                            return {value: elem.deploymentnumber,
+                                label: `#${elem.deploymentnumber}: ${elem.deploymentname}`
                             };
                         });
                         var penultimate = deploymentsList[Math.max(0, deploymentsList.length - 2)];
@@ -35,13 +35,13 @@ ProjectDetailsPage = function () {
                     });
                 return promise;
             }
-            
+
             var options = {
                 projects: list,
                 defaultProject: previousProject,
                 getDeploymentsForProject: getDeploymentsForProject
             };
-            
+
             $('#details-project-placeholder').on('selected', (evt, extra) => {
                 var project = extra.project;
                 var deployment = extra.deployment;
@@ -52,21 +52,21 @@ ProjectDetailsPage = function () {
             ProjectPicker.add('#details-project-placeholder', options);
         });
     }
-    
+
     function format(str) {
         if (str === null || str === undefined) {
             return 'n/a';
         }
         return str;
     }
-    
+
     function NUMBER(number) {
         if (number === null || number === undefined || isNaN(number)) {
             return 'n/a';
         }
         return Number(Math.round(number)).toLocaleString();
     }
-    
+
     function MINUTES(number) {
         let fractions = ['', ' &frac14;', ' &frac12;', ' &frac34;'];
         if (number === null || number === undefined || isNaN(number)) {
@@ -88,8 +88,8 @@ ProjectDetailsPage = function () {
         }
         return Math.round(number / 60).toLocaleString() + ' hours';
     }
-    
-    
+
+
     /**
      * Builds a table with details about the messages in the deployment.
      * @param stats An object with a {messageData} member.
@@ -133,7 +133,7 @@ ProjectDetailsPage = function () {
                     $q.on('click', () => {
                         return false;
                     });
-                    
+
                     return $div;
                 },
                 duration: (row) => {
@@ -145,7 +145,7 @@ ProjectDetailsPage = function () {
             },
             datatable: {colReorder: true}
         };
-        
+
         var msgStats = stats.messageData || [];
         // Initial sort order. Sort by language, then by title.
         msgStats.sort((a, b) => {
@@ -156,11 +156,11 @@ ProjectDetailsPage = function () {
         if (!msgStats.some(row => row.num_categories > 1)) {
             options.columns = options.columns.filter((col) => col !== 'num_categories');
         }
-        
+
         DataTable.create($('#message-performance'), msgStats, options);
     }
-    
-    
+
+
     // var completionsRadarChart;
     // var completionsRadarChartConfig = {
     //     type: 'radar',
@@ -201,7 +201,7 @@ ProjectDetailsPage = function () {
             }
         }
     }
-    
+
     /**
      *
      * @param categoryData -- an array of objects like {project,deploymentnumber,cat_packages,cat_languages,category,
@@ -221,7 +221,7 @@ ProjectDetailsPage = function () {
             }
             ;
         }
-        
+
         // A given category may appear multiple times (in different languages).  So, take an array of categoryData objects,
         // and make a hash of them, indexed by category name, adding the counts into the objects in the hash.
         var catDataHash = {};
@@ -279,10 +279,10 @@ ProjectDetailsPage = function () {
         } else {
             durationsRadarChart.update();
         }
-        
+
     }
-    
-    
+
+
     /**
      * Builds a table with details about the package(s) in the deployment
      * @param stats An object with {categoryData} member.
@@ -316,7 +316,7 @@ ProjectDetailsPage = function () {
          *                                num_tbs}
          */
         var categoryStats = stats.categoryData || [];
-        
+
         // remove from here through 'extract back to array' to stop aggregating within languages
         // Combine by category (aggregate multiple languages), keeping category, sum of {num_messages, duration_minutes, ...}
         let fieldsToAggregate = ['num_messages', 'duration_minutes', 'played_minutes', 'effective_completions', 'completions', 'cat_tbs', 'pkg_tbs']
@@ -329,25 +329,25 @@ ProjectDetailsPage = function () {
                 st[f] = (st[f] || 0) + (+stat[f]);
             })
         })
-        
+
         // Extract back to array
         categoryStats = Object.keys(combinedStats).map((k) => {
             return combinedStats[k];
         })
-        
+
         // Sort
         categoryStats.sort((a, b) => {
             var cmp = 0; //a.language.toLocaleLowerCase().localeCompare(b.language.toLocaleLowerCase());
             return cmp || a.category.toLocaleLowerCase().localeCompare(b.category.toLocaleLowerCase());
         });
-        
+
         DataTable.create($('#deployment-performance-chart'), categoryStats, options);
-        
+
         // Make a radar chart of published vs listened.
         makeDeploymentRadars(categoryStats);
-        
+
     }
-    
+
     /**
      * Builds a table with details about the Deployment.
      * @param stats An object with {deploymentData, productionData, and usageData} members.
@@ -422,12 +422,12 @@ ProjectDetailsPage = function () {
             },
             datatable: false
         };
-        
-        
+
+
         var depl = stats.deploymentData;
         var prod = stats.productionData;
         var usage = stats.usageData;
-        
+
         var mostCompletions, mostPlayed;
         stats.categoryData.forEach((catData) => {
             if (!mostPlayed || catData.played_minutes / catData.duration_minutes > mostPlayed.played_minutes / mostPlayed.duration_minutes) {
@@ -446,8 +446,8 @@ ProjectDetailsPage = function () {
         $('#deployment_header_name').text(heading);
         DataTable.create($('#deployment-summary'), [null], options);
     }
-    
-    
+
+
     function reportProject(project, deployment) {
         previousProject = project;
         previousDeployment = deployment;
@@ -459,20 +459,20 @@ ProjectDetailsPage = function () {
             messagePerformance(stats);
         });
     }
-    
+
     function init() {
         fillProjects();
     }
-    
+
     previousProject = localStorage.getItem('project.details.project') || '';
     // Todo: remove after 2017-09
     localStorage.removeItem('project.details.update');
     previousDeployment = localStorage.getItem('project.details.deployment') || '';
-    
+
     // Hook the tab-activated event for this tab.
     // $('a[href="#project-details-page"]').on('hidden.bs.tab', function (e) {
     // });
     $('a[href="#project-details-page"]').on('shown.bs.tab', init);
-    
+
     return {}
 }();

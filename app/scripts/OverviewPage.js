@@ -10,19 +10,19 @@ OverviewPage = (function () {
     'use strict'
     let DATA_PATH = 'data/'
     var ROOT;
-    
+
     function getPath() {
         if (!ROOT) {
             ROOT=Main.getRootPath();
         }
         return ROOT + DATA_PATH;
     }
-    
+
     // Many of the columns are in common between the summary tables. One shared set of tooltips and heading names is
     // a simple way to improve consistency.
     var tooltips = {
-        'deployment': 'Sometimes called the Content Update.',
-        'deploymentnumber': 'The ordinal number of the Deployment.',
+        'deployment': 'Sometimes called the Content Update. These are the name(s) given to a Deployment.',
+        'deploymentnumber': 'Which Deployment, 1, 2, 3, etc.',
         'num_packages': 'Number of Content Packages in the Deployment. Generally one per language, but there can be ' +
         'more, if some communities receive customized content.',
         'startdate': 'The date that the Deployment was published, and was available to be installed in the field',
@@ -30,12 +30,12 @@ OverviewPage = (function () {
         'this Deployment.',
         'num_tbs': 'The number of Talking Books from which usage statistics have been collected, for ' +
         'this Deployment.'
-        
+
     };
     var headings = {
         project: 'Project',
-        deployment: 'Deployment',
         deploymentnumber: 'Deployment #',
+        deployment: 'Deployment',
         startdate: 'Start Date',
         'num_packages': '# Packages',
         'num_languages': '# Languages',
@@ -43,8 +43,8 @@ OverviewPage = (function () {
         'num_tbs': '# Talking Books Reporting',
         'deployed_tbs': '# Talking Books Deployed'
     }
-    
-    
+
+
     /**
      * initSummaryTable - reads a .csv file, populates a summary table from it.
      * @param fn The file name of the .csv.
@@ -58,7 +58,7 @@ OverviewPage = (function () {
                 DataTable.create(container, filtered, options);
             });
         }
-    
+
         var path = getPath() + fn;
         var options = {
             headings: headings,
@@ -67,7 +67,7 @@ OverviewPage = (function () {
         }
         createFromCsv($elem, path, options);
     }
-    
+
     /**
      * Reads a 'reports_date.txt' file, displays the date on the summary page.
      */
@@ -80,8 +80,8 @@ OverviewPage = (function () {
                 $('#report_date').addClass('bg-info ');
             });
     }
-    
-    
+
+
     var initialized = false;
     function show() {
         if (!initialized) {
@@ -91,9 +91,9 @@ OverviewPage = (function () {
             initSummaryTable('deployment_dashboard.csv', '#deployment-container');
         }
     }
-    
+
     // Hook the tab-activated event for this tab.
     $('a[href="#overview-page"]').on('shown.bs.tab', show)
-    
+
     return {}
 })();

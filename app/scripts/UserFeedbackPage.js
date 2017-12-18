@@ -46,18 +46,19 @@ UserFeedbackPage = (function () {
                 function getDeploymentsForProject(proj) {
                     var promise = $.Deferred();
 
-                    ProjectDetailsData.getProjectDeploymentList(proj)
+                    ProjectDetailsData.getProjectDeploymentNames(proj)
                         .done((deploymentsList) => {
-                            // deploymentsList is a list of {deployment:'name', deploymentnumber: number}
+                            // deploymentsList is a list of {deploymentname:'name', deploymentnumber: number}
+                            // There may be multiple names per number.
                             // Build a map of deployment name to number.
                             var deploymentsMap = {};
                             deploymentsList.forEach((elem)=>{
-                                deploymentsMap[elem.deployment] = elem.deploymentnumber;
+                                deploymentsMap[elem.deploymentname] = elem.deploymentnumber;
                                 // This hack is because we strip off leading alpha characters from the deployment name when
                                 // building the user feedback ACM name.  Search for  alpha - (digits -). ALSO store the
                                 // deployment number with a key of only the digits & hyphen(s)
                                 var alphaPrefixed = /[a-z]+-((?:\d*-?)*)/i;
-                                var numOnly = alphaPrefixed.exec(elem.deployment);
+                                var numOnly = alphaPrefixed.exec(elem.deploymentname);
                                 if (numOnly) {
                                     deploymentsMap[numOnly[1]] = elem.deploymentnumber;
                                 }

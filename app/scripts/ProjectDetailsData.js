@@ -5,31 +5,35 @@ var ProjectDetailsData = ProjectDetailsData || {};
 
 ProjectDetailsData = function () {
     'use strict';
-    
+
     let STATS_PATH = 'data/';
     var ROOT;
-    
+
     function statsPath() {
         if (!ROOT) {
             ROOT = Main.getRootPath();
         }
         return ROOT + STATS_PATH;
     }
-    
+
     function projectsListPath() {
         return statsPath() + 'project_list.csv';
     }
-    
+
     // Contans a promise resoved with {project:path,...} pairs.
     var projectPaths;
-    
+
     // Contains per-project promise; resolved with {deploymentData:[], productionData:[], usageData:[]}
     // deploymentData is an array of DeploymentData (in random order):
     //   {project:,deployment:,deploymentnumber:,num_packages:,num_languages:,num_communities:,deployed_tbs:}
     var projectCache = {};
-    
+
+    // Projects sometimes have multiple deployment names for the same deployment number. This is a map, by
+    // project of all those names to their respective numbers.
+    var deploymentNamesCache = {};
+
     var deploymentDataCache = {};
-    
+
     /**
      * Fetch the projectList.csv file from the server. Cached for subsequent calls.
      * @returns {*} A promise that resolves to a hash of {project:path} like
@@ -38,7 +42,7 @@ ProjectDetailsData = function () {
     function getProjectsAndPaths() {
         if (projectPaths === undefined) {
             projectPaths = $.Deferred();
-            
+
             $.get(projectsListPath()).done((list) => {
                 // The projects list file is a .csv with data like:
                 // project,path
@@ -57,12 +61,51 @@ ProjectDetailsData = function () {
         }
         return projectPaths;
     }
-    
+
+    /**
+     * Given a project, get the list of deployment names, with the deployment # of each one.
+     * @param project for which to get deployments.
+     * @returns {*} A promise that resovles to a list of [{deploymentname:'name', deploymentnumber:number},...]
+     */
+    function getProjectDeploymentNames(project) {
+        if (deploymentNamesCache[project] === undefined) {
+            var promise = new $.Deferred();
+            deploymentNamesCache[project] = promise;
+
+            getProjectsAndPaths().done((paths) => {
+                // If the request was for a project we don't know about, we must fail the request.
+                if (!paths[project]) {
+                    promise.reject(null);
+                    return;
+                }
+                var prefix = statsPath() + paths[project] + project + '-';
+                var depls = $.get(prefix + 'deployments.csv');
+                $.when(depls)
+                    .done(function resolved(deplnames) {
+                        // Parse the files.
+                        var deploymentNames = $.csv.toObjects(deplnames, {separator: ',', delimiter: '"'});
+                        deploymentNames = deploymentNames.map(d=>{return {deploymentname:d.deployment, deploymentnumber:Number(d.deploymentnumber)}});
+                        promise.resolve(deploymentNames);
+                    }).fail((err) => {
+                    promise.reject(err);
+                });
+            }).fail((err) => {
+                promise.reject(err);
+            });
+        }
+        return deploymentNamesCache[project];
+    }
+
+    /**
+     * Given a project, get a list of all deployments made to all villages.
+     * @param project for which to get deployment data.
+     * @returns {*} a promise that resolves to a list of [{project,deployment,deploymentnumber,startdate,enddate,package,community,deployed_tbs},...]
+     */
     function getDeploymentData(project) {
         if (deploymentDataCache[project] === undefined) {
             var promise = new $.Deferred();
             deploymentDataCache[project] = promise;
-    
+
             getProjectsAndPaths().done((paths) => {
                 // If the request was for a project we don't know about, we must fail the request.
                 if (!paths[project]) {
@@ -75,7 +118,7 @@ ProjectDetailsData = function () {
                     .done(function resolved(comm) {
                         // Parse the files.
                         var deploymentByCommunityData = $.csv.toObjects(comm, {separator: ',', delimiter: '"'});
-            
+
                         promise.resolve({deploymentByCommunityData: deploymentByCommunityData});
                     }).fail((err) => {
                     promise.reject(err);
@@ -86,10 +129,17 @@ ProjectDetailsData = function () {
         }
         return deploymentDataCache[project];
     }
-    
+
+    /**
+     * Given a project and a deployment, get deployment data for the specific deployment.
+     * @param project for which to get deployment data.
+     * @param deployment OR deploymentnumber in particular for which to get data.
+     * @returns {*} a promise that resolves to a list of [{project,deployment,deploymentnumber,startdate,enddate,package,community,deployed_tbs},...]
+     *   NOTE: records are for the same project, and same deployment OR deploymentnumber as requested.
+     */
     function getDeploymentDetails(project, deployment) {
         var promise = $.Deferred();
-    
+
         // Get arrays of stats (per deployment) for this project
         Main.incrementWait();
         getDeploymentData(project).then((data) => {
@@ -99,17 +149,17 @@ ProjectDetailsData = function () {
             // Look for the desired deployment or deploymentnumber
             if (deployment) {
                 result.deploymentByCommunityData = data.deploymentByCommunityData.find((el) => {
-                    return (el.deployment == deployment || el.deploymentnumber == deployment)
+                    return (el.deployment == deployment || el.deploymentnumber == deployment) // jshint ignore:line
                 });
             } else {
                 result.deploymentByCommunityData = data.deploymentByCommunityData;
             }
             promise.resolve(result);
         }, Main.decrementWait);
-    
+
         return promise;
     }
-    
+
     /**
      * Fetch statistics for a project. Cached for subsequent calls.
      * @param project The project for which stats are desired.
@@ -127,24 +177,24 @@ ProjectDetailsData = function () {
         if (projectCache[project] !== undefined) {
             return projectCache[project];
         }
-        
+
         var promise = new $.Deferred();
         projectCache[project] = promise;
-        
+
         getProjectsAndPaths().done((paths) => {
             // If the request was for a project we don't know about, we must fail the request.
             if (!paths[project]) {
                 promise.reject(null);
                 return;
             }
-            
+
             var prefix = statsPath() + paths[project] + project + '-';
             var deplByDepl = $.get(prefix + 'deployments_by_deployment.csv');
             var prodByDepl = $.get(prefix + 'production_by_deployment.csv');
             var usageByDepl = $.get(prefix + 'usage_by_deployment.csv');
             var usageByCategory = $.get(prefix + 'usage_by_package_category.csv');
             var usageByMessage = $.get(prefix + 'usage_by_message.csv');
-            
+
             // Wait for all to load. TODO: handle timeouts.
             $.when(deplByDepl, prodByDepl, usageByDepl, usageByCategory, usageByMessage)
                 .done(function resolved(depl, prod, usage, cat, msg) {
@@ -155,7 +205,7 @@ ProjectDetailsData = function () {
                     var usageData = $.csv.toObjects(usage[0], {separator: ',', delimiter: '"'});
                     var categoryData = $.csv.toObjects(cat[0], {separator: ',', delimiter: '"'});
                     var messageData = $.csv.toObjects(msg[0], {separator: ',', delimiter: '"'});
-                    
+
                     promise.resolve({deploymentData: deploymentData,
                         productionData: productionData,
                         usageData: usageData,
@@ -168,10 +218,10 @@ ProjectDetailsData = function () {
         }).fail((err) => {
             promise.reject(err);
         });
-        
+
         return promise;
     }
-    
+
     /**
      * Fetch just a list of available projects. Built from getProjectsAndPaths.
      * @returns {*} A promise that resolves to an array of project names, like ['UWR', 'MEDA', ...] .
@@ -185,7 +235,7 @@ ProjectDetailsData = function () {
         }, Main.decrementWait);
         return promise;
     }
-    
+
     /**
      * Fetch a list of the Deployments (aka Content Updates) for a project. Built from getProjectData.
      * @param project The project for which the list of Deployments is desired.
@@ -194,27 +244,27 @@ ProjectDetailsData = function () {
     function getProjectDeploymentList(project) {
         var promise = $.Deferred();
         Main.incrementWait();
-        
+
         getProjectData(project).then((data) => {
             var deployments = [];
             Main.decrementWait();
             data.deploymentData.forEach(function (element) {
                 deployments.push({
-                    deployment:element.deployment,
+                    deploymentname:element.deployment,
                     deploymentnumber:element.deploymentnumber
                 });
             });
             deployments.sort((a,b)=>a.deploymentnumber-b.deploymentnumber);
             promise.resolve(deployments);
         }, Main.decrementWait);
-        
+
         return promise;
     }
-    
+
     /**
      * Fetch the statistics for a given project and deployment.
      * @param project The project for which statistics are desired.
-     * @param deployment The deployment for which statistics are desired.
+     * @param deployment The deployment OR deploymentnumber for which statistics are desired.
      * @returns {*} A promise that resolves with an object with 3 members:
      *  .deploymentData -- an object like {project,deployment,deploymentnumber,num_packages,num_languages,
      *                                     num_communities,deployed_tbs}
@@ -233,39 +283,40 @@ ProjectDetailsData = function () {
      */
     function getProjectStats(project, deployment) {
         var promise = $.Deferred();
-        
+
         // Get arrays of stats (per deployment) for this project
         Main.incrementWait();
         getProjectData(project).then((data) => {
             Main.decrementWait();
             // data is a hash of arrays. Need to look in each member for desired deployment.
             var result = {}
-            // Look for the desired deployment or deploymentnumber
+            // Look for the desired deployment or deploymentnumber. Note that the double = is intentional.
             result.deploymentData = data.deploymentData.find((el) => {
-                return (el.deployment == deployment || el.deploymentnumber == deployment)
+                return (el.deployment == deployment || el.deploymentnumber == deployment) // jshint ignore:line
             });
             result.productionData = data.productionData.find((el) => {
-                return (el.deployment == deployment || el.deploymentnumber == deployment)
+                return (el.deployment == deployment || el.deploymentnumber == deployment) // jshint ignore:line
             });
             result.usageData = data.usageData.find((el) => {
-                return (el.deployment == deployment || el.deploymentnumber == deployment)
+                return (el.deployment == deployment || el.deploymentnumber == deployment) // jshint ignore:line
             });
             result.categoryData = data.categoryData.filter((el) => {
-                return (el.deployment == deployment || el.deploymentnumber == deployment)
+                return (el.deployment == deployment || el.deploymentnumber == deployment) // jshint ignore:line
             });
             result.messageData = data.messageData.filter((el) => {
-                return (el.deployment == deployment || el.deploymentnumber == deployment)
+                return (el.deployment == deployment || el.deploymentnumber == deployment) // jshint ignore:line
             });
             promise.resolve(result);
         }, Main.decrementWait);
-        
+
         return promise;
     }
-    
-    
+
+
     return {
         getProjectList: getProjectList,
         getProjectDeploymentList: getProjectDeploymentList,
+        getProjectDeploymentNames: getProjectDeploymentNames,
         getProjectStats: getProjectStats,
         getDeploymentDetails: getDeploymentDetails
     };

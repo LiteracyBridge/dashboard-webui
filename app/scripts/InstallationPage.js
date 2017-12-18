@@ -340,7 +340,8 @@ InstallationPage = (function () {
                 num_TBsInstalled: '# Installed',
                 percentinstalled: '% Installed',
                 daystoinstall: 'Days To Install',
-                supportentity: 'Support Entity'
+                supportentity: 'Support Entity',
+                model: 'Model'
             },
             headingClasses: {
                 detailsControl: 'sorting-disabled'
@@ -359,7 +360,8 @@ InstallationPage = (function () {
                 detailsControl: row=>' ',
                 num_HHs: row=>NUMBER_NOTZERO(row.num_HHs),
                 num_TBs: row=>NUMBER_NOTZERO(row.num_TBs),
-                percentinstalled: row=>row.num_TBs?Math.round(row.num_TBsInstalled/row.num_TBs*100, 0):'n/a'
+                percentinstalled: row=>row.num_TBs?Math.round(row.num_TBsInstalled/row.num_TBs*100, 0):'n/a',
+                model: row=>row.model==='Group Rotation'?'Group':row.model
             },
             datatable: {/*colReorder:{fixedColumnsLeft:1},*/ columnDefs:[{orderable: false, targets: 0}]}
         };

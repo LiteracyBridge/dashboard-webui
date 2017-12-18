@@ -1,13 +1,11 @@
-/* jshint esversion:6, asi:true */
-/* global $, console, Main, User, User, moment */
+/* jshint esversion:6, asi:true*/
+/* global $, console, Main, User, User, moment, ProjectDetailsData */
 
-var InstallationData = InstallationData || {};
-
-InstallationData = function () {
+let InstallationData = function () {
     'use strict';
 
     let STATS_PATH = 'data/';
-    var ROOT;
+    let ROOT;
 
     function statsPath() {
         if (!ROOT) {
@@ -32,7 +30,7 @@ InstallationData = function () {
                 // UNICEF-2,2017-1,1,10/1/17,12/31/17
                 // UNICEF-3,2018-2,2,1/1/18,3/31/18
                 // ...
-                var deployments = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
+                let deployments = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
                 // Convert date fields to actual dates, keeping the string form as well.
                 deployments = deployments.map((d) => {
                     d.startdatestr = d.startdate;
@@ -71,7 +69,7 @@ InstallationData = function () {
                 // LBG,UNICEF,Jirapa HH Rotation,Ghana,Upper West,Jirapa,Goziel,,Goziel,105,27,,Robert Yaw,HHR,dga
                 // LBG,UNICEF,Jirapa Groups,Ghana,Upper West,Jirapa,Ul-Tuopare,Songbaala ,Songbaala Ul-Tuopare,,2,B-00060266,Bosore Gilbert,Group Rotation,dga
                 // ...
-                var recipients = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
+                let recipients = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
                 // Convert number fields to actual numbers.
                 recipients = recipients.map((r) => {
                     r.num_HHs = 1 * r.numhouseholds;
@@ -86,24 +84,32 @@ InstallationData = function () {
         return recipientPromises[project];
     }
 
-    let tbsDeployedPromises = {}
+    let tbsDeployedPromises = {};
 
     function getTBsDeployedForProject(project) {
         if (!tbsDeployedPromises[project]) {
             tbsDeployedPromises[project] = $.Deferred();
 
             let path = pathForProject(project) + project + '-tbsdeployed.csv';
-            $.get(path).done((list) => {
+            let tbsDeployed = $.get(path);
+            $.when(tbsDeployed, ProjectDetailsData.getProjectDeploymentNames(project)).done((tbList, deploymentNamesList) => {
+                let deploymentNamesMap = {};
+                deploymentNamesList.forEach((elem)=> {
+                    deploymentNamesMap[elem.deploymentname] = elem.deploymentnumber;
+                });
                 // The projects list file is a .csv with data like:
                 // tbsDeployed: [ {talkingbookid,deployedtimestamp,project,deployment,contentpackage,community,firmware,location,coordinates,username,tbcdid,action,newsn,testing} ]
                 // B-00050232,20171004T171836.977Z,UNICEF-2,UNICEF-2-2017-1,UNICEF-2-2017-1-DGA,TIZZA NIMBARE,r1212,JIRAPA OFFICE,,literacybridge\Tb,6,update-fw,f,f
                 // B-0006031E,20171005T102130.934Z,UNICEF-2,UNICEF-2-2017-1,UNICEF-2-2017-1-DGA,NON-SPECIFIC,r1212,JIRAPA OFFICE,,literacybridge\Tb,6,update-fw,f,f
                 // ...
-                var tbDeployments = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
-                // Convert date fields to actual dates, keeping the string form as well.
+                let tbDeployments = $.csv.toObjects(tbList[0], {separator: ',', delimiter: '"'});
+                // Convert date fields to actual dates, keeping the string form as well. Add deploymentnumber if missing.
                 tbDeployments = tbDeployments.map((d) => {
                     d.deployedtimestampstr = d.deployedtimestamp;
                     d.deployedtimestamp = moment(d.deployedtimestamp);
+                    if (!(d.hasOwnProperty('deploymentnumber')) || d.deploymentnumber === '') {
+                        d.deploymentnumber = deploymentNamesMap[d.deployment];
+                    }
                     return d;
                 });
                 tbsDeployedPromises[project].resolve(tbDeployments);
@@ -115,18 +121,18 @@ InstallationData = function () {
     }
 
     function getTBsDeployedForDeployment(project, deployment) {
-        var promise = $.Deferred();
+        let promise = $.Deferred();
         deployment = deployment.toUpperCase();
         getTBsDeployedForProject(project).then((tbDeployments) => {
                 promise.resolve(tbDeployments.filter(d => d.deployment.toUpperCase() === deployment));
             },
-            promise.reject)
+            promise.reject);
         return promise;
     }
 
     function getInstallationStatusForDeployment(project, deployment) {
         const sameInMostGroupsOfACommunity = ['program', 'country', 'region', 'district', 'supportentity', 'model', 'language'];
-        var promise = $.Deferred();
+        let promise = $.Deferred();
         deployment = deployment.toUpperCase();
         $.when(getRecipientsForProject(project),
             getTBsDeployedForDeployment(project, deployment),
@@ -137,8 +143,8 @@ InstallationData = function () {
             //                  region, district, num_HHs, num_TBs, supportentity, model, language, coordinates} ]
 
             // Bucketize the relevant tbsDeployed by recipient.
-            var installedPerRecipient = {}; // {recipientid: {talkingbookid: tbsdeployedrecord, talkingbookid: ...}, recipientid: ...
-            var duplicateInstallations = 0;
+            let installedPerRecipient = {}; // {recipientid: {talkingbookid: tbsdeployedrecord, talkingbookid: ...}, recipientid: ...
+            let duplicateInstallations = 0;
             tbsDeployed.forEach((d) => {
                 if (d.deployment.toUpperCase() !== deployment) { return }
 
@@ -179,7 +185,7 @@ InstallationData = function () {
                         tbsInstalled[k].daystoinstall = dd;
                         recip.tbsInstalled[k] = {deployedtimestamp: ts, daystoinstall: dd};
                     });
-                    recip.daystoinstall = Math.round(days/recip.num_TBsInstalled, 1);
+                    recip.daystoinstall = Math.round(days/recip.num_TBsInstalled);
                 }
             });
 
@@ -225,7 +231,7 @@ InstallationData = function () {
                             days += group.tbsInstalled[k].daystoinstall;
                         });
                     });
-                    community.daystoinstall = Math.round(days/community.num_TBsInstalled, 1);
+                    community.daystoinstall = Math.round(days/community.num_TBsInstalled);
                 }
             });
 
@@ -244,22 +250,7 @@ InstallationData = function () {
         return promise;
     }
 
-    /**
-     * Fetch just a list of available projects.
-     * @returns {*} A promise that resolves to an array of project names, like ['UWR', 'MEDA', ...] .
-     */
-    function getProjectList() {
-        var promise = $.Deferred();
-
-        // TODO: Implement it.
-        promise.resolve(['UNICEF-2']);
-
-        return promise;
-    }
-
-
     return {
-        getProjectList: getProjectList,
         getDeploymentsForProject: getDeploymentsForProject,
         getInstallationStatusForDeployment: getInstallationStatusForDeployment
     }
