@@ -308,6 +308,9 @@ p.spacer {
     margin-right: 0;
 }
 
+td.details-column {
+    width: 2em;
+}
 
 td.details-control {
     cursor: pointer;

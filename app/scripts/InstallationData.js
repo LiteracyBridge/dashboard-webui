@@ -18,8 +18,56 @@ let InstallationData = function () {
         return statsPath() + project + '/';
     }
 
-    let deploymentsPromises = {};
+    function Set(values) {
+        let set = {}
+        values.forEach( v => set[v]=true );
+        set.contains = function(value) {
+            return this.hasOwnProperty(value)
+        }
+        return set;
+    }
 
+
+    let componentDeploymentsPromises = {};
+    function getComponentDeploymentsForProject(project) {
+        project = project.toUpperCase();
+        if (!componentDeploymentsPromises[project]) {
+            let promise = $.Deferred();
+            componentDeploymentsPromises[project] = promise;
+
+            let path = pathForProject(project) + project + '-component_deployments.csv';
+            $.get(path).done((list) => {
+                // deploymentnumber,component
+                // 1,"Jirapa Groups"
+                // 1,"Jirapa HH Rotation"
+                // 2,"Jirapa Groups"
+                // 2,"NOYED-GHANA"
+                // ...
+                let componentDeployments = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
+                componentDeployments = componentDeployments.map((d) => {
+                    d.deploymentnumber = 1 * d.deploymentnumber;
+                    return d;
+                }).sort((a,b)=>{return a.deploymentnumber - b.deploymentnumber});
+                console.log(`Got ${componentDeployments.length} component deployments for ${project}.`)
+                promise.resolve(componentDeployments);
+            }).fail((err => {
+                promise.reject(err);
+            }));
+        }
+        return componentDeploymentsPromises[project];
+    }
+
+    function getComponentsForProjectAndDeployment(project, deploymentnumber) {
+        let promise = $.Deferred();
+        getComponentDeploymentsForProject(project).then((components)=>{
+            components = components.filter(d=>d.deploymentnumber == deploymentnumber); // jshint ignore:line
+            console.log(`Got ${components.length} component deployments for ${project}/${deploymentnumber}.`)
+            promise.resolve(components);
+        }, promise.reject);
+        return promise;
+    }
+
+    let deploymentsPromises = {};
     function getDeploymentsForProject(project) {
         if (!deploymentsPromises[project]) {
             deploymentsPromises[project] = $.Deferred();
@@ -37,8 +85,10 @@ let InstallationData = function () {
                     d.enddatestr = d.enddate;
                     d.startdate = moment(d.startdate);
                     d.enddate = moment(d.enddate);
+                    d.deploymentnumber = 1 * d.deploymentnumber;
                     return d;
                 }).sort((a,b)=>{return a.deploymentnumber - b.deploymentnumber});
+                console.log(`Got ${deployments.length} deployments for ${project}.`)
                 deploymentsPromises[project].resolve(deployments);
             }).fail((err) => {
                 deploymentsPromises[project].reject(err);
@@ -47,11 +97,34 @@ let InstallationData = function () {
         return deploymentsPromises[project];
     }
 
-    function getDeploymentInfo(project, deployment) {
-        deployment = deployment.toUpperCase();
+    /**
+     * Gets information about a deployment for a project
+     * @param project
+     * @param deployment
+     * @returns {*}
+     */
+    function getDeploymentInfo(project, deploymentnumber) {
+        let deployment = ('' + deploymentnumber).toUpperCase();
         let promise = $.Deferred();
         getDeploymentsForProject(project).then((deployments)=>{
-            promise.resolve(deployments.find(d=>d.deployment.toUpperCase()===deployment));
+            promise.resolve(deployments.find(d=>d.deployment.toUpperCase()===deployment || d.deploymentnumber==deploymentnumber)); // jshint ignore:line
+        }, promise.reject);
+        return promise;
+    }
+
+    /**
+     * Given a project and a deploymentnumber, get the names for that deployment. Ususally there is only one name
+     * per deployment, but occasionally there are multiples.
+     * @param project The project desired.
+     * @param deploymentnumber The deployment number.
+     * @returns {*} A promise that resovles with a list of deployment names.
+     */
+    function getDeploymentNames(project, deploymentnumber) {
+        let promise = $.Deferred();
+        getDeploymentsForProject(project).then((deployments)=>{
+            let result = []
+            deployments.forEach((elem, ix) => { if (elem.deploymentnumber === deploymentnumber) { result.push(elem.deployment) }})
+            promise.resolve(result);
         }, promise.reject);
         return promise;
     }
@@ -76,12 +149,42 @@ let InstallationData = function () {
                     r.num_TBs = 1 * r.numtbs;
                     return r;
                 });
+                console.log(`Got ${recipients.length} recipients for ${project}.`)
                 recipientPromises[project].resolve(recipients);
             }).fail((err) => {
                 recipientPromises[project].reject(err);
             });
         }
         return recipientPromises[project];
+    }
+
+    /**
+     * Get all of the recipients that should have received a deploymentnumber. Map deploymentnumber to the
+     * components that should have received it, then get the recipients from those components.
+     * @param project
+     * @param deploymentnumber
+     * @returns {*}
+     */
+    function getRecipientsForProjectAndDeployment(project, deploymentnumber) {
+        let promise = $.Deferred();
+        let recips = getRecipientsForProject(project);
+        let comps = getComponentsForProjectAndDeployment(project, deploymentnumber);
+
+        recips.then((recipients) => {
+            // We don't have a "components for project" file for every project. If we don't have one, simply use the
+            // unfiltered list.
+            comps.then((components) => {
+                let componentsInDeployment = Set( components.map( c => c.component ));
+                let r2 = recipients.filter( r  => componentsInDeployment.contains(r.component) );
+                console.log(`Got ${r2.length} recipients for ${project}/${deploymentnumber}.`)
+                promise.resolve(r2)
+            }, (err) => {
+                console.log(`Got ${recipients.length} recipients for ${project} without deployment filter.`)
+                promise.resolve(recipients)
+            });
+        }, promise.reject);
+
+        return promise;
     }
 
     let tbsDeployedPromises = {};
@@ -112,6 +215,7 @@ let InstallationData = function () {
                     }
                     return d;
                 });
+                console.log(`Got ${tbDeployments.length} tbs deployed for ${project}.`)
                 tbsDeployedPromises[project].resolve(tbDeployments);
             }).fail((err) => {
                 tbsDeployedPromises[project].reject(err);
@@ -120,72 +224,86 @@ let InstallationData = function () {
         return tbsDeployedPromises[project];
     }
 
-    function getTBsDeployedForDeployment(project, deployment) {
+    /**
+     * Given a project and a deploymentnumber, get the tb deployment records for that deployment.
+     * @param project of interest
+     * @param deploymentnumber of interest
+     * @returns {*} Promise that resolves with the desired tbsDeployed records.
+     */
+    function getTBsDeployedForDeployment(project, deploymentnumber) {
         let promise = $.Deferred();
-        deployment = deployment.toUpperCase();
-        getTBsDeployedForProject(project).then((tbDeployments) => {
-                promise.resolve(tbDeployments.filter(d => d.deployment.toUpperCase() === deployment));
-            },
-            promise.reject);
+        // The tbsdeployed records have a deployment name in them. We need to map the deployment number to a list
+        // of one or more names, then match on that list.
+        $.when(getTBsDeployedForProject(project),
+            getDeploymentNames(project, deploymentnumber))
+            .then((tbDeployments, deploymentnames) => {
+                    let names = Set(deploymentnames)
+                    promise.resolve(tbDeployments.filter(d => names.contains(d.deployment)));
+                },
+                promise.reject);
         return promise;
     }
 
-    function getInstallationStatusForDeployment(project, deployment) {
+    function getInstallationStatusForDeployment(project, deploymentnumber) {
         const sameInMostGroupsOfACommunity = ['program', 'country', 'region', 'district', 'supportentity', 'model', 'language'];
         let promise = $.Deferred();
-        deployment = deployment.toUpperCase();
-        $.when(getRecipientsForProject(project),
-            getTBsDeployedForDeployment(project, deployment),
-            getDeploymentInfo(project, deployment)).then((recipients, tbsDeployed, deploymentInfo) => {
+        $.when(getRecipientsForProjectAndDeployment(project, deploymentnumber),
+            getTBsDeployedForDeployment(project, deploymentnumber),
+            getDeploymentInfo(project, deploymentnumber)).then((recipients, tbsDeployed, deploymentInfo) => {
             // tbsDeployed: [ {talkingbookid, recipientid, deployedtimestamp, project, deployment, contentpackage, firmware,
             //                  location, coordinates, username, tbcdid, action, newsn, testing} ]
             // recipients: [ {recipientid, project, partner, communityname, groupname, affiliate, component, country,
             //                  region, district, num_HHs, num_TBs, supportentity, model, language, coordinates} ]
 
+            // Copy the data before modifying it, to avoid polluting the source.
+            recipients = $.extend(true, [], recipients)
+            tbsDeployed = $.extend(true, [], tbsDeployed)
+
             // Bucketize the relevant tbsDeployed by recipient.
             let installedPerRecipient = {}; // {recipientid: {talkingbookid: tbsdeployedrecord, talkingbookid: ...}, recipientid: ...
             let duplicateInstallations = 0;
-            tbsDeployed.forEach((d) => {
-                if (d.deployment.toUpperCase() !== deployment) { return }
+            tbsDeployed.forEach((tbInstalled) => {
+                if (tbInstalled.deploymentnumber != deploymentnumber) { return } // jshint ignore:line
 
-                let deployedTbs = installedPerRecipient[d.recipientid] || (installedPerRecipient[d.recipientid] = {});
-                if (deployedTbs.hasOwnProperty(d.talkingbookid)) {
+                let installedThisRecipient = installedPerRecipient[tbInstalled.recipientid] || (installedPerRecipient[tbInstalled.recipientid] = {});
+                if (installedThisRecipient.hasOwnProperty(tbInstalled.talkingbookid)) {
                     // A duplicate. Should we keep the oldest or newest? It usually doesn't matter, because, usually, they'll be in the same session.
                     // But if it was re-installed due to a problem, then it wasn't really fully available until the correction.
                     // Keep the latest one.
-                    if (d.deployedtimestamp.isAfter(deployedTbs[d.talkingbookid])) {
-                        deployedTbs[d.talkingbookid] = d;
+                    if (tbInstalled.deployedtimestamp.isAfter(installedThisRecipient[tbInstalled.talkingbookid])) {
+                        installedThisRecipient[tbInstalled.talkingbookid] = tbInstalled;
                     }
                     duplicateInstallations++;
                 } else {
-                    deployedTbs[d.talkingbookid] = d;
+                    // First time this TB was seen
+                    installedThisRecipient[tbInstalled.talkingbookid] = tbInstalled;
                 }
             });
 
             // tbsInstalled is like tbsDeployed, but without any duplicate installations to the same TB.
             let tbsInstalled = [];
             Object.keys(installedPerRecipient).forEach((recipientid) => {
-                let installedForRecipient = installedPerRecipient[recipientid];
-                Object.keys(installedForRecipient).forEach((tb) => {
-                    tbsInstalled.push(installedForRecipient[tb]);
+                let installedThisRecipient = installedPerRecipient[recipientid];
+                Object.keys(installedThisRecipient).forEach((talkingbookid) => {
+                    tbsInstalled.push(installedThisRecipient[talkingbookid]);
                 });
             });
 
             // Now add the # deployed into the recipients data.
-            recipients.forEach((recip) => {
-                let tbsInstalled = installedPerRecipient[recip.recipientid];
-                recip.num_TBsInstalled = (tbsInstalled && Object.keys(tbsInstalled).length) || 0;
-                recip.tbsInstalled = {};
-                if (tbsInstalled) {
+            recipients.forEach((recipient) => {
+                let installedThisRecipient = installedPerRecipient[recipient.recipientid];
+                recipient.num_TBsInstalled = (installedThisRecipient && Object.keys(installedThisRecipient).length) || 0;
+                recipient.tbsInstalled = {};
+                if (installedThisRecipient) {
                     let days = 0;
-                    Object.keys(tbsInstalled).forEach((k) => {
-                        let ts = tbsInstalled[k].deployedtimestamp;
-                        let dd = ts.diff(deploymentInfo.startdate, 'days');
-                        days += dd;
-                        tbsInstalled[k].daystoinstall = dd;
-                        recip.tbsInstalled[k] = {deployedtimestamp: ts, daystoinstall: dd};
+                    Object.keys(installedThisRecipient).forEach((talkingbookid) => {
+                        let tbInstalledTimestamp = installedThisRecipient[talkingbookid].deployedtimestamp;
+                        let tbDaysToInstall = tbInstalledTimestamp.diff(deploymentInfo.startdate, 'days');
+                        days += tbDaysToInstall;
+                        installedThisRecipient[talkingbookid].daystoinstall = tbDaysToInstall;
+                        recipient.tbsInstalled[talkingbookid] = {deployedtimestamp: tbInstalledTimestamp, daystoinstall: tbDaysToInstall};
                     });
-                    recip.daystoinstall = Math.round(days/recip.num_TBsInstalled);
+                    recipient.daystoinstall = Math.round(days/recipient.num_TBsInstalled);
                 }
             });
 
@@ -227,8 +345,8 @@ let InstallationData = function () {
                 if (community.numGroups) {
                     let days = 0;
                     community.groups.forEach((group)=>{
-                        Object.keys(group.tbsInstalled).forEach((k)=>{
-                            days += group.tbsInstalled[k].daystoinstall;
+                        Object.keys(group.tbsInstalled).forEach((talkingbookid)=>{
+                            days += group.tbsInstalled[talkingbookid].daystoinstall;
                         });
                     });
                     community.daystoinstall = Math.round(days/community.num_TBsInstalled);

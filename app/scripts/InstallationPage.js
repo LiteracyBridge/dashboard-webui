@@ -40,7 +40,7 @@ InstallationPage = (function () {
                         // deploymentsList is a list of {project:'name', deployment:'name', deploymentnumber: number, startdate:'date', enddate:'date'}
                         deploymentsList = deploymentsList.map((elem) => {
                             return {
-                                value: elem.deployment,
+                                value: elem.deploymentnumber,
                                 label: `#${elem.deploymentnumber}: ${formatDate(elem.startdate)} - ${formatDate(elem.enddate, 'TBD')}`
                             };
                         });
@@ -241,14 +241,14 @@ InstallationPage = (function () {
         let start = status.deploymentInfo.startdate.clone();
         let dailyInstalls = [];
         let span = status.deploymentInfo.enddate.diff(start, 'days');
-        status.tbsInstalled.forEach((depl, ix) => {
-            if (depl.deployedtimestamp.isBefore(earliest)) { earliest = depl.deployedtimestamp}
-            if (depl.deployedtimestamp.isAfter(latest)) { latest = depl.deployedtimestamp}
+        status.tbsInstalled.forEach((oneTbInstallation, ix) => {
+            if (oneTbInstallation.deployedtimestamp.isBefore(earliest)) { earliest = oneTbInstallation.deployedtimestamp}
+            if (oneTbInstallation.deployedtimestamp.isAfter(latest)) { latest = oneTbInstallation.deployedtimestamp}
 
-            if (depl.daystoinstall < 0) {
+            if (oneTbInstallation.daystoinstall < 0) {
                 dailyInstalls[0] = 1 + (dailyInstalls[0]||0);
-            } else if (depl.daystoinstall < span) {
-                dailyInstalls[depl.daystoinstall] = 1 + (dailyInstalls[depl.daystoinstall]||0);
+            } else if (oneTbInstallation.daystoinstall < span) {
+                dailyInstalls[oneTbInstallation.daystoinstall] = 1 + (dailyInstalls[oneTbInstallation.daystoinstall]||0);
             } else {
                 dailyInstalls[span - 1] = 1 + (dailyInstalls[span - 1]||0);
             }
@@ -347,7 +347,7 @@ InstallationPage = (function () {
                 detailsControl: 'sorting-disabled'
             },
             columnClasses: {
-                detailsControl: row=>(row.numGroups ? 'details-control' : ''),
+                detailsControl: row=>(row.numGroups ? 'details-control' : '')+' details-column',
                 num_TBsInstalled: row=>ratingForRecipient(row),
                 percentinstalled: row=>ratingForRecipient(row),
                 groupname: row=>'group-name'

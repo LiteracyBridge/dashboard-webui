@@ -100,7 +100,7 @@ ProjectDetailsPage = function () {
             headings: {
                 language: 'Language', title: 'Message Title', format: 'Format', category_list: 'Categories', num_categories: '# Categories',
                 duration: 'Duration of Message', position_list: 'Position',
-                eff_completions: 'Times Message was Played to Completion'
+                completions: 'Times Message was Played to Completion'
             },
             tooltips: {
                 language: 'The language in which the message was recorded.',
@@ -109,7 +109,7 @@ ProjectDetailsPage = function () {
                 position_list: 'Position of the message in category playlist. If message was in multiple categories, a list of positions (we don\'t know which category is which position).',
                 category_list: 'All of the categories in which this message appeared.',
                 num_categories: 'Number of categories (topics) in which the message appeared in this package.',
-                eff_completions: 'How many times, on average, did the Talking Books listen to this message to completion? Taken over all Talking Books that reported usage statistics for any message in this package.'
+                completions: 'How many times, on average, did the Talking Books listen to this message to completion? Taken over all Talking Books that reported usage statistics for any message in this package.'
             },
             formatters: {
                 title: (row) => {
@@ -139,8 +139,8 @@ ProjectDetailsPage = function () {
                 duration: (row) => {
                     return MINUTES(row.duration_minutes)
                 },
-                eff_completions: (row) => {
-                    return NUMBER(row.effective_completions / Math.max(1, row.num_package_tbs))
+                completions: (row) => {
+                    return NUMBER(row.completions / Math.max(1, row.num_package_tbs))
                 }
             },
             datatable: {colReorder: true}
@@ -157,7 +157,9 @@ ProjectDetailsPage = function () {
             options.columns = options.columns.filter((col) => col !== 'num_categories');
         }
 
-        DataTable.create($('#message-performance'), msgStats, options);
+        var messageTable = DataTable.create($('#message-performance'), msgStats, options);
+        // This says sort by eff_completions, then by category_list (not the other way around, as one is likely to read it).
+        messageTable.order([[options.columns.indexOf('category_list'),'asc'],[options.columns.indexOf('eff_completions'),'desc']]).draw();
     }
 
 
@@ -216,7 +218,7 @@ ProjectDetailsPage = function () {
                     category: category,
                     duration_minutes: 0,
                     played_minutes: 0,
-                    effective_completions: 0
+                    completions: 0
                 }
             }
             ;
@@ -229,21 +231,21 @@ ProjectDetailsPage = function () {
             ensureCd(catData.category);
             catDataHash[catData.category].duration_minutes += 1 * catData.duration_minutes;
             catDataHash[catData.category].played_minutes += 1 * catData.played_minutes;
-            catDataHash[catData.category].effective_completions += 1 * catData.effective_completions;
+            catDataHash[catData.category].completions += 1 * catData.completions;
         });
         // Turn it back into a list, but now there's one entry per category name.
         var catDataList = Object.keys(catDataHash).map(cat => catDataHash[cat]);
         // Find maximums & totals, for scaling.
         var maxDuration = Math.max.apply(null, catDataList.map(pd => pd.duration_minutes));
         var maxListened = Math.max.apply(null, catDataList.map(pd => pd.played_minutes));
-        var maxCompletions = Math.max.apply(null, catDataList.map(pd => pd.effective_completions));
+        var maxCompletions = Math.max.apply(null, catDataList.map(pd => pd.completions));
         var totDuration = catDataList.reduce((s, v) => s + v.duration_minutes, 0);
         var totListened = catDataList.reduce((s, v) => s + v.played_minutes, 0);
-        var totCompletions = catDataList.reduce((s, v) => s + v.effective_completions, 0);
+        var totCompletions = catDataList.reduce((s, v) => s + v.completions, 0);
         // Arrays of scaled data, labels.
         var durations = catDataList.map(pd => pd.duration_minutes / totDuration * 100);
         var listened = catDataList.map(pd => pd.played_minutes / totListened * 100);
-        var completed = catDataList.map(pd => pd.effective_completions / totCompletions * 100);
+        var completed = catDataList.map(pd => pd.completions / totCompletions * 100);
         var labels = catDataList.map(pd => pd.category);
         // Chart data
         var durationDataset = {
@@ -305,7 +307,7 @@ ProjectDetailsPage = function () {
                     return `<p>${MINUTES(row.played_minutes / Math.max(1, row.pkg_tbs))} per TB</p>`
                 },
                 completed: (row, ix) => {
-                    return `<p>${NUMBER(row.effective_completions / Math.max(1, row.pkg_tbs))} times per TB</p>`
+                    return `<p>${NUMBER(row.completions / Math.max(1, row.pkg_tbs))} times per TB</p>`
                 }
             },
             datatable: {colReorder: true}
@@ -319,7 +321,7 @@ ProjectDetailsPage = function () {
 
         // remove from here through 'extract back to array' to stop aggregating within languages
         // Combine by category (aggregate multiple languages), keeping category, sum of {num_messages, duration_minutes, ...}
-        let fieldsToAggregate = ['num_messages', 'duration_minutes', 'played_minutes', 'effective_completions', 'completions', 'cat_tbs', 'pkg_tbs']
+        let fieldsToAggregate = ['num_messages', 'duration_minutes', 'played_minutes', 'completions', 'cat_tbs', 'pkg_tbs']
         let combinedStats = {}
         categoryStats.forEach((stat) => {
             // Retrieve or initialize the stats record for this category
@@ -382,11 +384,20 @@ ProjectDetailsPage = function () {
                 },
                 production: () => {
                     var cell;
-                    if (depl) {
+
+                    if (tbsDeployed) {
+                        cell = `<p>Deployed to <span class="stat">${NUMBER(tbsDeployed.num_tbs)}</span> Talking Books.</p>`;
+                    } else if (depl) {
                         cell = `<p>Deployed to <span class="stat">${NUMBER(depl.deployed_tbs)}</span> Talking Books.</p>`
                     } else {
                         cell = '<p class="stat">Deployment information unavailable.</p>';
                     }
+                    if (usage) {
+                        cell += `<p>Statistics from <span class="stat">${NUMBER(usage.num_tbs)}</span> Talking Books.</p>`;
+                    } else {
+                        cell += '<p> class="stat">Usage information unavailable.</p>';
+                    }
+
                     return cell;
                 },
                 usage: () => {
@@ -408,12 +419,12 @@ ProjectDetailsPage = function () {
                         if (prod.num_languages > 1) {
                             language = ` (${mostCompletions.language}) `;
                         }
-                        var cell = `<p><span class="stat">${NUMBER(usage.num_effective_completions)}</span> # times messages were listened to completion</p>
+                        var cell = `<p><span class="stat">${NUMBER(usage.num_completions)}</span> # times messages were listened to completion</p>
                             <p>Messages in the <span class="stat">${MINUTES(mostPlayed.duration_minutes)}</span> deployed for category
                                 <span class="stat">"${mostPlayed.category}"</span> were played for a total of
                                 <span class="stat">${MINUTES(mostPlayed.played_minutes)}</span>.</p>
                             <p>Message <span class="stat">"${mostCompletions.title}"</span>${language} was played to completion
-                                <span class="stat">${NUMBER(mostCompletions.effective_completions)}</span> times.</p>
+                                <span class="stat">${NUMBER(mostCompletions.completions)}</span> times.</p>
 
               `;
                         return cell;
@@ -425,6 +436,7 @@ ProjectDetailsPage = function () {
 
 
         var depl = stats.deploymentData;
+        var tbsDeployed = stats.tbsDeployedData;
         var prod = stats.productionData;
         var usage = stats.usageData;
 
@@ -435,7 +447,7 @@ ProjectDetailsPage = function () {
             }
         });
         stats.messageData.forEach((msgData) => {
-            if (!mostCompletions || +msgData.effective_completions > +mostCompletions.effective_completions) {
+            if (!mostCompletions || +msgData.completions > +mostCompletions.completions) {
                 mostCompletions = msgData;
             }
         });

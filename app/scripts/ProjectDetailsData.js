@@ -190,23 +190,26 @@ ProjectDetailsData = function () {
 
             var prefix = statsPath() + paths[project] + project + '-';
             var deplByDepl = $.get(prefix + 'deployments_by_deployment.csv');
+            var tbsdDeplByDepl = $.get(prefix + 'tb_deployments_by_deployment.csv');
             var prodByDepl = $.get(prefix + 'production_by_deployment.csv');
             var usageByDepl = $.get(prefix + 'usage_by_deployment.csv');
             var usageByCategory = $.get(prefix + 'usage_by_package_category.csv');
             var usageByMessage = $.get(prefix + 'usage_by_message.csv');
 
             // Wait for all to load. TODO: handle timeouts.
-            $.when(deplByDepl, prodByDepl, usageByDepl, usageByCategory, usageByMessage)
-                .done(function resolved(depl, prod, usage, cat, msg) {
+            $.when(deplByDepl, tbsdDeplByDepl, prodByDepl, usageByDepl, usageByCategory, usageByMessage)
+                .done(function resolved(depl, tbsDepl, prod, usage, cat, msg) {
                     // Parse the files.
                     // Can't refactor the options because $.csv craps on the options object.
                     var deploymentData = $.csv.toObjects(depl[0], {separator: ',', delimiter: '"'});
+                    var tbsDeployedData = $.csv.toObjects(tbsDepl[0], {separator: ',', delimiter: '"'});
                     var productionData = $.csv.toObjects(prod[0], {separator: ',', delimiter: '"'});
                     var usageData = $.csv.toObjects(usage[0], {separator: ',', delimiter: '"'});
                     var categoryData = $.csv.toObjects(cat[0], {separator: ',', delimiter: '"'});
                     var messageData = $.csv.toObjects(msg[0], {separator: ',', delimiter: '"'});
 
                     promise.resolve({deploymentData: deploymentData,
+                        tbsDeployedData: tbsDeployedData,
                         productionData: productionData,
                         usageData: usageData,
                         categoryData: categoryData,
@@ -293,6 +296,9 @@ ProjectDetailsData = function () {
             // Look for the desired deployment or deploymentnumber. Note that the double = is intentional.
             result.deploymentData = data.deploymentData.find((el) => {
                 return (el.deployment == deployment || el.deploymentnumber == deployment) // jshint ignore:line
+            });
+            result.tbsDeployedData = data.tbsDeployedData.find((el) => {
+                return (el.deploymentnumber == deployment) // jshint ignore:line
             });
             result.productionData = data.productionData.find((el) => {
                 return (el.deployment == deployment || el.deploymentnumber == deployment) // jshint ignore:line

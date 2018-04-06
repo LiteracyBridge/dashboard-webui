@@ -33,7 +33,7 @@ var DropdownButton = DropdownButton || {};
 
 DropdownButton = (function () {
     'use strict';
-    
+
     function makeHtml(options) {
         var style = options.style || 'btn-primary';
         var html = `
@@ -46,7 +46,7 @@ DropdownButton = (function () {
             </ul>`;
         return html;
     }
-    
+
     /**
      * Creates the HTML for a dropdown list, and fills the items from the given list. Any previous HTML is removed.
      *
@@ -113,7 +113,7 @@ DropdownButton = (function () {
                 }
                 var li = $(`<li><a class="main-nav" href="#select-item" data-value="${value}">${label}</a></li>`)
                 $('ul', $elem).append(li);
-                if (value === preSelected) {
+                if (value == preSelected) { // jshint ignore:line
                     selection = value;
                     selectionLabel = label;
                 }
@@ -143,7 +143,7 @@ DropdownButton = (function () {
                 $('button .title', $elem).text(opts.title || options.title);
             }
         }
-        
+
         options = options || {};
         var $elem = $(elem);
         $elem.children().off();
@@ -155,14 +155,14 @@ DropdownButton = (function () {
         var selectionLabel;
 
         $elem.html(makeHtml(options));
-        
+
         return {
             selection: ()=>selection,
             clear: clearList,
             update: updateList
         }
     }
-    
+
     return {
         create: create
     }
