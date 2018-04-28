@@ -57,11 +57,12 @@
                     <!-- li role="navigation"><a class="main-nav" href="#inventory-page">Inventories</a></li -->
                 <li class="dropdown" id="idm-menu">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
-                       aria-expanded="false">IDM
+                       aria-expanded="false">Installations
                         <span class="caret"></span>
                     </a>
                     <ul class="dropdown-menu">
                         <li role="navigation"><a class="main-nav" href="#inventory-page">Inventories</a></li>
+                        <li role="navigation"><a class="main-nav" href="#installation-detail-page">Installation Detail</a>
                         <li role="navigation"><a class="main-nav" href="#installation-progress-page">Installations</a>
                         </li>
                     </ul>
@@ -170,8 +171,33 @@
             </h2>
 
             <div id='inventory-summary' class="detailtable"></div>
+
             <h2>Inventory</h2>
             <div id='inventory-detail' class="detailtable"></div>
+
+        </div>
+    </div>
+
+    <!-- Installation Detail Report -->
+    <div id="installation-detail-page" role="tabpanel" class="tab-pane fade">
+        <div class="container-fluid">
+            <h2 class="bg-primary">Installation Details
+                &nbsp;<span id="installation-detail-project-placeholder"></span>
+            </h2>
+
+            <div id='installation-details' class="detailtable"></div>
+            <label style="font-weight:normal" id="installation-details-all-holder" title="Shows every known installation to TBs in this project. Likely to be very slow.">
+                <input type="checkbox" id="installation-details-all">
+                Show all installations.
+            </label>
+            <span id="installation-details-date-chooser">
+                <span id="installation-details-years"></span>
+                <span id="installation-details-months"></span>
+                <span id="installation-details-days"></span>
+            </span>
+
+            <h2>Details <span class="btn-group" id="installation-details-timeframe"></span></h2>
+            <div id='installation-details-detail' class="detailtable"></div>
 
         </div>
     </div>
@@ -364,6 +390,7 @@ script src="scripts/3p/aws-sdk-2.5.0.min.js"></script -->
 <script src="scripts/UserFeedbackPage.js"></script>
 <script src="scripts/InstallationData.js"></script>
 <script src="scripts/InstallationPage.js"></script>
+<script src="scripts/InstallationDetailPage.js"></script>
 <script src="scripts/OverviewPage.js"></script>
 <script src="scripts/DropdownButton.js"></script>
 <script src="scripts/ProjectPicker.js"></script>

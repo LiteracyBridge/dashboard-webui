@@ -79,7 +79,7 @@ DataTable = function () {
                     var cell = '';
                     // If there's a format function, call it. Otherwise just use the data.
                     if (formatters[column]) {
-                        cell = formatters[column](row, ix);
+                        cell = formatters[column](row, ix, (row&&row[column]));
                     } else {
                         cell = row[column];
                     }

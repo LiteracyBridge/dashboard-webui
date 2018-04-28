@@ -369,6 +369,16 @@ tr.shown td.details-control {
     color: white;
 }
 
+#installation-details-timeframe {
+    font-size: .45em;
+    font-weight: 400;
+}
+
+.time-selected {
+    font-size: 1.0em;
+    font-weight: 600;
+}
+
 #installation-progress-summary .only-with-tb-count {
     display: none;
 }

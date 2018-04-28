@@ -54,10 +54,13 @@ Main = (function () {
         delayTimeout = null;
         console.log('setting wait spinner');
     }
-    function incrementWait() {
-        if (waitCount++ === 0) {
+    function incrementWait(immediate) {
+        if (waitCount++ === 0 && !immediate) {
             console.log('setting wait spinner timeout');
             delayTimeout =setTimeout(delayedSpinner, delayTime);
+        }
+        if (immediate) {
+            delayedSpinner();
         }
     }
     function decrementWait() {

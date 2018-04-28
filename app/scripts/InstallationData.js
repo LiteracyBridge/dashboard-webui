@@ -27,6 +27,51 @@ let InstallationData = function () {
         return set;
     }
 
+    let dailiesPromises = {};
+    function getTbDailiesListForProject(project) {
+        project = project.toUpperCase();
+        if (!dailiesPromises[project]) {
+            let promise = $.Deferred();
+            dailiesPromises[project] = promise;
+
+            let path = pathForProject(project) + 'dailytbs.json';
+            $.getJSON(path).done((json) => {
+                promise.resolve(json);
+            }).fail((err => {
+                promise.reject(err);
+            }));
+        }
+        return dailiesPromises[project];
+    }
+
+    let dailiesDataPromises = {};
+    function getTbDailiesDataForProject(project, year, month, day) {
+        project = project.toUpperCase();
+        let path = pathForProject(project);
+        if (year === undefined) {
+            path += project + '-tbsdeployed.csv';
+        } else {
+            path += year + '/' + month + '/' + day + '/tbsdeployed.csv';
+        }
+        if (!dailiesDataPromises[path]) {
+            let promise = $.Deferred();
+            dailiesDataPromises[path] = promise;
+
+            $.get(path).done((list) => {
+                let tbsdeployed = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
+                tbsdeployed = tbsdeployed.map((d) => {
+                    d.deployedtimestamp = moment(d.deployedtimestamp);
+                    d.newsn = d.newsn==='t';
+                    d.testing = d.testing==='t'
+                    return d;
+                });
+                promise.resolve(tbsdeployed);
+            }).fail((err => {
+                promise.reject(err);
+            }));
+        }
+        return dailiesDataPromises[path];
+    }
 
     let componentDeploymentsPromises = {};
     function getComponentDeploymentsForProject(project) {
@@ -244,6 +289,21 @@ let InstallationData = function () {
         return promise;
     }
 
+    /**
+     * This is a large and complex function. Given a deploymentNumber in a project, it combines the tbsDeployed
+     * table and the recipients table. The result is an array of deployment installation, per community. The information
+     * includes:
+     * - the recipient information for the community
+     * - a list of tbs installed in the community, with the installation timestamp, and installing agent
+     * - the average 'days to install' for all the TBs in the community
+     * - a list of Groups in the community (there may be only one)
+     *
+     * For communities with Groups, each group owns the list of its own TBs.
+     *
+     * @param project
+     * @param deploymentnumber
+     * @returns {*}
+     */
     function getInstallationStatusForDeployment(project, deploymentnumber) {
         const sameInMostGroupsOfACommunity = ['program', 'country', 'region', 'district', 'supportentity', 'model', 'language'];
         let promise = $.Deferred();
@@ -259,24 +319,28 @@ let InstallationData = function () {
             recipients = $.extend(true, [], recipients)
             tbsDeployed = $.extend(true, [], tbsDeployed)
 
-            // Bucketize the relevant tbsDeployed by recipient.
-            let installedPerRecipient = {}; // {recipientid: {talkingbookid: tbsdeployedrecord, talkingbookid: ...}, recipientid: ...
-            let duplicateInstallations = 0;
-            tbsDeployed.forEach((tbInstalled) => {
-                if (tbInstalled.deploymentnumber != deploymentnumber) { return } // jshint ignore:line
 
-                let installedThisRecipient = installedPerRecipient[tbInstalled.recipientid] || (installedPerRecipient[tbInstalled.recipientid] = {});
-                if (installedThisRecipient.hasOwnProperty(tbInstalled.talkingbookid)) {
+            // From the array of tbsDeployed, create talking books per recipient:
+            //   {recipientid: {talkingbookid: tbsdeployedrecord, talkingbookid: ...}, recipientid: ...
+            let installedPerRecipient = {};
+            let duplicateInstallations = 0;
+            tbsDeployed.forEach((singleTbDeployed) => {
+                if (singleTbDeployed.deploymentnumber != deploymentnumber) { return } // jshint ignore:line
+
+                // Get the record of TBs for this recipient, creating if first time seen.
+                let installedThisRecipient = installedPerRecipient[singleTbDeployed.recipientid] || (installedPerRecipient[singleTbDeployed.recipientid] = {});
+                // Record the (latest) installation to the Talking Book
+                if (installedThisRecipient.hasOwnProperty(singleTbDeployed.talkingbookid)) {
                     // A duplicate. Should we keep the oldest or newest? It usually doesn't matter, because, usually, they'll be in the same session.
                     // But if it was re-installed due to a problem, then it wasn't really fully available until the correction.
                     // Keep the latest one.
-                    if (tbInstalled.deployedtimestamp.isAfter(installedThisRecipient[tbInstalled.talkingbookid])) {
-                        installedThisRecipient[tbInstalled.talkingbookid] = tbInstalled;
+                    if (singleTbDeployed.deployedtimestamp.isAfter(installedThisRecipient[singleTbDeployed.talkingbookid])) {
+                        installedThisRecipient[singleTbDeployed.talkingbookid] = singleTbDeployed;
                     }
                     duplicateInstallations++;
                 } else {
                     // First time this TB was seen
-                    installedThisRecipient[tbInstalled.talkingbookid] = tbInstalled;
+                    installedThisRecipient[singleTbDeployed.talkingbookid] = singleTbDeployed;
                 }
             });
 
@@ -289,7 +353,8 @@ let InstallationData = function () {
                 });
             });
 
-            // Now add the # deployed into the recipients data.
+            // Now add the # deployed into the recipients data. Add up the number of days the installations took.
+            // Keep a tally of who and which TB-Loader performed the installations.
             recipients.forEach((recipient) => {
                 let installedThisRecipient = installedPerRecipient[recipient.recipientid];
                 recipient.num_TBsInstalled = (installedThisRecipient && Object.keys(installedThisRecipient).length) || 0;
@@ -299,9 +364,12 @@ let InstallationData = function () {
                     Object.keys(installedThisRecipient).forEach((talkingbookid) => {
                         let tbInstalledTimestamp = installedThisRecipient[talkingbookid].deployedtimestamp;
                         let tbDaysToInstall = tbInstalledTimestamp.diff(deploymentInfo.startdate, 'days');
+                        let username = installedThisRecipient[talkingbookid].username;
+                        let tbid = installedThisRecipient[talkingbookid].tbcdid;
                         days += tbDaysToInstall;
                         installedThisRecipient[talkingbookid].daystoinstall = tbDaysToInstall;
-                        recipient.tbsInstalled[talkingbookid] = {deployedtimestamp: tbInstalledTimestamp, daystoinstall: tbDaysToInstall};
+                        recipient.tbsInstalled[talkingbookid] = {deployedtimestamp: tbInstalledTimestamp,
+                            daystoinstall: tbDaysToInstall, username: username, tbcdid: tbid, tbid: tbid};
                     });
                     recipient.daystoinstall = Math.round(days/recipient.num_TBsInstalled);
                 }
@@ -326,13 +394,15 @@ let InstallationData = function () {
                     sameInMostGroupsOfACommunity.forEach((p) => {if (community[p] !== recip[p]) {community[p] = ''} });
                 } else {
                     // New community.
-                    community = $.extend({}, recip);
+                    community = $.extend(true, {}, recip);
                     community.groups = [];
                     community.numGroups = 0;
                     if (community.groupname) {
                         community.groups.push(recip);
                         community.numGroups = 1;
                         delete community.groupname;
+                        delete community.recipientid;
+                        delete community.tbsInstalled;
                     }
                     communitiesByName[communityName] = community;
                 }
@@ -370,7 +440,10 @@ let InstallationData = function () {
 
     return {
         getDeploymentsForProject: getDeploymentsForProject,
-        getInstallationStatusForDeployment: getInstallationStatusForDeployment
+        getInstallationStatusForDeployment: getInstallationStatusForDeployment,
+        getTbDailiesListForProject: getTbDailiesListForProject,
+        getTbDailiesDataForProject: getTbDailiesDataForProject,
+        getRecipientsForProject: getRecipientsForProject
     }
 
 }();

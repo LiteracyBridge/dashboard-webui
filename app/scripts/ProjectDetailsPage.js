@@ -96,7 +96,7 @@ ProjectDetailsPage = function () {
      */
     function messagePerformance(stats) {
         var options = {
-            columns: ['category_list', /*'num_categories',*/ 'language', 'title', 'format', 'duration', 'position_list', 'eff_completions'],
+            columns: ['category_list', /*'num_categories',*/ 'language', 'title', 'format', 'duration', 'position_list', 'completions'],
             headings: {
                 language: 'Language', title: 'Message Title', format: 'Format', category_list: 'Categories', num_categories: '# Categories',
                 duration: 'Duration of Message', position_list: 'Position',
@@ -456,7 +456,8 @@ ProjectDetailsPage = function () {
             heading = `#${depl.deploymentnumber}: (` + heading + ')';
         }
         $('#deployment_header_name').text(heading);
-        DataTable.create($('#deployment-summary'), [null], options);
+        // Everything is done in the formatter functions.
+        DataTable.create($('#deployment-summary'), [{}], options);
     }
 
 

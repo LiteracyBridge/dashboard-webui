@@ -96,10 +96,10 @@ InstallationPage = (function () {
         if (minScore && minScore <= ownScore-2) {ownScore--}
 
         switch (ownScore) {
-            case 4: return 'perfect';
-            case 3: return 'acceptable';
-            case 2: return 'needs-improvement';
-            default: return 'unacceptable';
+            case 4: return 'perfect';               // A+
+            case 3: return 'acceptable';            // B-
+            case 2: return 'needs-improvement';     // F
+            default: return 'unacceptable';         // F-
         }
     }
 
@@ -317,7 +317,7 @@ InstallationPage = (function () {
     }
 
 
-    function installationDetails(recipients, tbsDeployed) {
+    function installationDetails(communities, tbsDeployed) {
         // tbsDeployed: [ {talkingbookid,deployedtimestamp,project,deployment,contentpackage,community,firmware,location,coordinates,username,tbcdid,action,newsn,testing} ]
         // aggregatedRecipients: [ {affiliate,partner,program,country,region,district,community,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,language,
         //      [ groups: [ {affiliate,partner,program,country,region,district,community,group_name,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,language} ],
@@ -327,7 +327,7 @@ InstallationPage = (function () {
         let options = {
             columns: ['detailsControl', /*'program','region',*/'district', 'communityname', /*'group_name',*/
                 'num_HHs', 'num_TBs', 'num_TBsInstalled', 'percentinstalled', 'daystoinstall',
-                'supportentity', 'model', 'language'],
+                'supportentity', 'model', 'language', 'installer', 'tbid'],
             headings: {
                 detailsControl: ' ',
                 program: 'Program',
@@ -341,7 +341,9 @@ InstallationPage = (function () {
                 percentinstalled: '% Installed',
                 daystoinstall: 'Days To Install',
                 supportentity: 'Support Entity',
-                model: 'Model'
+                model: 'Model',
+                installer: 'Updated By',
+                tbid: 'TB-Loader ID'
             },
             headingClasses: {
                 detailsControl: 'sorting-disabled'
@@ -354,66 +356,103 @@ InstallationPage = (function () {
             },
             tooltips: {
                 num_TBsInstalled: 'The number of Talking Books reported to have been installed.',
-                daystoinstall: 'The average number of days before the Talking Books were installed with the Deployment'
+                daystoinstall: 'The average number of days before the Talking Books were installed with the Deployment.',
+                installer: 'Who installed the content onto the Talking Books.',
+                tbid: 'TB-Loader ID of the laptop/phone that performed the update of the Talking Books.'
             },
             formatters: {
                 detailsControl: row=>' ',
                 num_HHs: row=>NUMBER_NOTZERO(row.num_HHs),
                 num_TBs: row=>NUMBER_NOTZERO(row.num_TBs),
                 percentinstalled: row=>row.num_TBs?Math.round(row.num_TBsInstalled/row.num_TBs*100, 0):'n/a',
-                model: row=>row.model==='Group Rotation'?'Group':row.model
+                model: row=>row.model==='Group Rotation'?'Group':row.model,
             },
             datatable: {/*colReorder:{fixedColumnsLeft:1},*/ columnDefs:[{orderable: false, targets: 0}]}
         };
 
-        let table = DataTable.create($('#installation-progress-detail'), recipients, options);
+        /**
+         * Given a recipient, look at the 'tbsInstalled', and gather all the 'username' fields. If the recipient
+         * has groups, gather their username's as well.
+         * @param Either a 'community' row, with an array of recipients, or a 'recipent' row,
+         *        with a dictionary of installations.
+         * @return Object with a field per username.
+         */
+        function addInstallerInfo(recipient) {
+            let distinctUsernames = {};
+            let distinctTbids = {};
+            if (recipient.numGroups) {
+                recipient.groups.forEach((groupMember)=>{
+                    let groupInfo = addInstallerInfo(groupMember);
+                    $.extend(distinctUsernames, groupInfo.usernames);
+                    $.extend(distinctTbids, groupInfo.tbids);
+                });
+            } else {
+                Object.keys(recipient.tbsInstalled).forEach( (tb) =>  {
+                    let username = recipient.tbsInstalled[tb].username;
+                    if (username && !distinctUsernames.hasOwnProperty(username) && username.toUpperCase() !== 'UNKNOWN') {
+                        distinctUsernames[username] = 1
+                    }
+                    let tbid = recipient.tbsInstalled[tb].tbid;
+                    if (tbid && !distinctUsernames.hasOwnProperty(tbid)) {
+                        distinctTbids[tbid] = 1
+                    }
+                });
+            }
+            recipient.installer = Object.keys(distinctUsernames).join(', ');
+            recipient.tbid = Object.keys(distinctTbids).join(', ');
+            return {usernames: distinctUsernames, tbids: distinctTbids};
+        }
+
+        // Add an installer field, from the individual talking book 'username' fields.
+        communities.forEach(addInstallerInfo);
+
+        let table = DataTable.create($('#installation-progress-detail'), communities, options);
         // This says sort by community, then by model (not the other way around, as one is likely to read it).
         table.order([[options.columns.indexOf('model'),'desc'],[options.columns.indexOf('communityname'),'asc']]).draw();
 
-        /* Formatting function for row details - modify as you need */
-        function format ( rowData ) {
-            let child = [];
+        /* Formatting function for row details */
+        function formatRowsForGroups ( rowData ) {
+            let childRows = [];
             // 'rowData' is the original data object for the row
-            // child.push('<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;" class="deployment-progress-detail">'+
-            //     '<tr>'+'<td>Support Entity:</td>'+'<td>'+rowData.supportentity+'</td>'+'</tr>'+
-            //     '<tr>'+'<td>Model:</td>'+'<td>'+rowData.model+'</td>'+ '</tr>'+
-            //     '<tr>'+'<td># Groups:</td>'+'<td>'+(rowData.numGroups||'n/a')+'</td>'+'</tr>'+
-            //     '</table>');
 
             // If there are groups in the community, add a row for each.
-            if (rowData.groups) {
+            if (rowData.numGroups) {
                 // Columns for a group, with spacers, so it lines up with the main table.
-                let rowColumns = ['none', 'none', 'groupname', 'num_HHs', 'num_TBs', 'num_TBsInstalled', 'percentinstalled', 'daystoinstall', 'supportentity', 'none', 'none'];
-                let formatters = {
-                    none: row=>' ',
-                    num_HHs: row=>NUMBER_NOTZERO(row.num_HHs),
-                    num_TBs: row=>NUMBER_NOTZERO(row.num_TBs),
-                    percentinstalled: row=>Math.round(row.num_TBsInstalled/row.num_TBs*100, 0),
-                    supportentity: row=>(row.supportentity!==rowData.supportentity)?row.supportentity:''
+                let member_columns = ['spacer', 'spacer', 'groupname', 'num_HHs', 'num_TBs', 'num_TBsInstalled',
+                    'percentinstalled', 'daystoinstall', 'supportentity', 'model', 'language', 'installer', 'tbid'];
+                // Support entity, model, language: don't repeat what's at the community level, unless it's different.
+                let member_formatters = {
+                    spacer: row=>' ',
+                    num_HHs: options.formatters.num_HHS,
+                    num_TBs: options.formatters.num_TBs,
+                    percentinstalled: options.formatters.percentinstalled,
+                    supportentity: row=>(row.supportentity!==rowData.supportentity)?row.supportentity:'',
+                    model: row=>(row.model!==rowData.model)?options.formatters.model(row):'',
+                    language: row=>(row.language!==rowData.language)?row.language:''
                 };
-                let classes = options.columnClasses;
                 // Iterate over the groups.
-                rowData.groups.forEach((g)=>{
+                rowData.groups.forEach((member)=>{
+                    // Create the <tr> for the row.
                     var $tr = $('<tr class="deployment-progress-detail">');
                     // Add the <td> for every column.
-                    rowColumns.forEach((c)=>{
-                        let v= formatters[c] ? formatters[c](g) : g[c];
-                        let cl = classes[c] ? classes[c](g) : '';
+                    member_columns.forEach((columnName)=>{
+                        let v= (member_formatters[columnName] ? member_formatters[columnName](member) : member[columnName]) || '';
+                        let cl = options.columnClasses[columnName] ? options.columnClasses[columnName](member) : '';
                         var $td = $('<td>'+v+'</td>');
                         if (cl) { $td.addClass(cl) }
                         $tr.append($td)
                     });
-                    child.push($tr);
+                    childRows.push($tr);
                 });
             }
 
-            return child;
+            return childRows;
         }
 
         // Add event listener for opening and closing details
         $('#installation-progress-detail tbody').on('click', 'td.details-control', function () {
             var tr = $(this).closest('tr');
-            var rowData = recipients[$(tr).data('row-index')];
+            var rowData = communities[$(tr).data('row-index')];
             var row = table.row( tr );
 
             if ( row.child.isShown() ) {
@@ -422,8 +461,8 @@ InstallationPage = (function () {
                 tr.removeClass('shown');
             }
             else {
-                // Open this row
-                row.child( format(rowData) ).show();
+                // Open this row, providing the formatted rows that make up the sub-rows.
+                row.child( formatRowsForGroups(rowData) ).show();
                 tr.addClass('shown');
             }
         } );
