@@ -73,10 +73,11 @@ InstallationDetailPage = (function () {
         // tbsDeployed: [ {talkingbookid,recipientid,deployedtimestamp,project,deployment,contentpackage,community,firmware,location,coordinates,username,tbcdid,action,newsn,testing} ]
 
         let options = {
-            columns: ['talkingbookid', 'communityname', 'groupname', 'deployedtimestamp', 'deployment', 'contentpackage',
+            columns: ['talkingbookid', 'component', 'communityname', 'groupname', 'deployedtimestamp', 'deployment', 'contentpackage',
                 'location', 'username', 'tbcdid'],
             headings: {
                 talkingbookid: 'Talking Book',
+                component: 'Component',
                 communityname: 'Community',
                 groupname: 'Group',
                 deployedtimestamp: 'Date and Time',
@@ -94,6 +95,7 @@ InstallationDetailPage = (function () {
                 testing: 'Was the \'Testing the Deployment\' box checked on the TB-Loader?'
             },
             formatters: {
+                component: (row)=>{let recip=recipientMap[row.recipientid]; return recip&&recip.component;},
                 communityname: (row)=>{let recip=recipientMap[row.recipientid]; return recip&&recip.communityname;},
                 groupname: (row)=>{let recip=recipientMap[row.recipientid]; return recip&&recip.groupname;},
                 deployedtimestamp: (row, row_ix, cell)=>{return cell.format('Y-MM-DD HH:mma')}
