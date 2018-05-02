@@ -95,9 +95,9 @@ InstallationDetailPage = (function () {
                 testing: 'Was the \'Testing the Deployment\' box checked on the TB-Loader?'
             },
             formatters: {
-                component: (row)=>{let recip=recipientMap[row.recipientid]; return recip&&recip.component;},
-                communityname: (row)=>{let recip=recipientMap[row.recipientid]; return recip&&recip.communityname;},
-                groupname: (row)=>{let recip=recipientMap[row.recipientid]; return recip&&recip.groupname;},
+                component: (row)=>{let recip=row.recipientid&&recipientMap[row.recipientid]; return recip&&recip.component;},
+                communityname: (row)=>{let recip=row.recipientid&&recipientMap[row.recipientid]; return recip&&recip.communityname;},
+                groupname: (row)=>{let recip=row.recipientid&&recipientMap[row.recipientid]; return recip&&recip.groupname;},
                 deployedtimestamp: (row, row_ix, cell)=>{return cell.format('Y-MM-DD HH:mma')}
             },
             datatable: {colReorder: true,
