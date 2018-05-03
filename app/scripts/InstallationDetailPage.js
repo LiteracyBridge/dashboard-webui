@@ -49,9 +49,6 @@ InstallationDetailPage = (function () {
             var $projectsDropdown = $('<div>').on('selected', onProjectSelected).appendTo($elem);
             var projectsDropdown = DropdownButton.create($projectsDropdown, {title: 'Project'});
             projectsDropdown.update(options.projects, {default: options.defaultProject});
-            if (previousProject) {
-                projectSelected(previousProject);
-            }
         });
     }
 
