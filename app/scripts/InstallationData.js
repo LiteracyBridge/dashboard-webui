@@ -28,18 +28,22 @@ let InstallationData = function () {
     }
 
     let dailiesPromises = {};
+
     function getTbDailiesListForProject(project) {
         project = project.toUpperCase();
         if (!dailiesPromises[project]) {
             let promise = $.Deferred();
             dailiesPromises[project] = promise;
 
-            let path = pathForProject(project) + 'dailytbs.json';
-            $.getJSON(path).done((json) => {
-                promise.resolve(json);
-            }).fail((err => {
-                promise.reject(err);
-            }));
+            // Look for the 'tbsdaily.json' file in the project root.
+            let path = pathForProject(project) + 'tbsdaily.json';
+            $.getJSON(path)
+                .done(json=>promise.resolve(json))
+                .fail((err => {
+                    // ...but if we can't read it, try for the old 'dailytbs.json' file.
+                    let path = pathForProject(project) + 'dailytbs.json';
+                    $.getJSON(path).done(json=>promise.resolve(json)).fail(err=>promise.reject(err));
+                }));
         }
         return dailiesPromises[project];
     }
