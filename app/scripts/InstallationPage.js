@@ -71,12 +71,12 @@ InstallationPage = (function () {
         });
     }
 
-    function NUMBER_NOTZERO(number) {
+    function NUMBER_NOTZERO(number, defaultValue) {
         if (number === 0) {
-            return '';
+            return defaultValue!==undefined ? defaultValue : '';
         }
         if (number === null || number === undefined || isNaN(number)) {
-            return 'n/a';
+            return defaultValue!==undefined ? defaultValue : 'n/a';
         }
         return Number(Math.round(number)).toLocaleString();
     }
@@ -84,10 +84,12 @@ InstallationPage = (function () {
     function ratingForRecipient(recipient) {
         function score(numTbs, installed) {
             let pct = installed / numTbs;
-            if (pct >= 0.98) {return 4}
+            if (pct > 1.00)  {return 5}
+            if (pct > 0.99)  {return 4}
             if (pct >= 0.85) {return 3}
-            if (pct > 0.50) {return 2}
-            return 1
+            if (pct >= 0.50) {return 2}
+            if (pct > 0.10)  {return 1}
+            return 0
         }
         let ownScore = score(recipient.num_TBs, recipient.num_TBsInstalled);
         let groupScores = (recipient.groups && recipient.groups.map(g=>score(g.num_TBs, g.num_TBsInstalled))) || [ownScore];
@@ -96,10 +98,13 @@ InstallationPage = (function () {
         if (minScore && minScore <= ownScore-2) {ownScore--}
 
         switch (ownScore) {
+            case 5: return 'excess';                // More than should have been.
             case 4: return 'perfect';               // A+
             case 3: return 'acceptable';            // B-
             case 2: return 'needs-improvement';     // F
-            default: return 'unacceptable';         // F-
+            case 1: return 'unacceptable';          // F-
+            case 0: return 'missing';               // just missing
+            default: return 'unknown';
         }
     }
 
@@ -364,6 +369,7 @@ InstallationPage = (function () {
                 detailsControl: row=>' ',
                 num_HHs: row=>NUMBER_NOTZERO(row.num_HHs),
                 num_TBs: row=>NUMBER_NOTZERO(row.num_TBs),
+                num_TBsInstalled: row=>NUMBER_NOTZERO(row.num_TBsInstalled, 0),
                 percentinstalled: row=>row.num_TBs?Math.round(row.num_TBsInstalled/row.num_TBs*100, 0):'n/a',
                 model: row=>row.model==='Group Rotation'?'Group':row.model,
             },
@@ -423,9 +429,11 @@ InstallationPage = (function () {
                 // Support entity, model, language: don't repeat what's at the community level, unless it's different.
                 let member_formatters = {
                     spacer: row=>' ',
-                    num_HHs: options.formatters.num_HHS,
+                    num_HHs: options.formatters.num_HHs,
                     num_TBs: options.formatters.num_TBs,
+                    num_TBsInstalled: options.formatters.num_TBsInstalled,
                     percentinstalled: options.formatters.percentinstalled,
+                    daystoinstall: row=>NUMBER_NOTZERO(row.daystoinstall, ''),
                     supportentity: row=>(row.supportentity!==rowData.supportentity)?row.supportentity:'',
                     model: row=>(row.model!==rowData.model)?options.formatters.model(row):'',
                     language: row=>(row.language!==rowData.language)?row.language:''
@@ -436,7 +444,7 @@ InstallationPage = (function () {
                     var $tr = $('<tr class="deployment-progress-detail">');
                     // Add the <td> for every column.
                     member_columns.forEach((columnName)=>{
-                        let v= (member_formatters[columnName] ? member_formatters[columnName](member) : member[columnName]) || '';
+                        let v= (member_formatters[columnName] ? member_formatters[columnName](member) : member[columnName]);
                         let cl = options.columnClasses[columnName] ? options.columnClasses[columnName](member) : '';
                         var $td = $('<td>'+v+'</td>');
                         if (cl) { $td.addClass(cl) }

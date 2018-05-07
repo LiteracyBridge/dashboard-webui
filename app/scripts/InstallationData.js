@@ -262,6 +262,7 @@ let InstallationData = function () {
                     if (!(d.hasOwnProperty('deploymentnumber')) || d.deploymentnumber === '') {
                         d.deploymentnumber = deploymentNamesMap[d.deployment];
                     }
+                    d.tbcdid = (d.tbcdid||'').toLowerCase();
                     return d;
                 });
                 console.log(`Got ${tbDeployments.length} tbs deployed for ${project}.`)
@@ -287,7 +288,8 @@ let InstallationData = function () {
             getDeploymentNames(project, deploymentnumber))
             .then((tbDeployments, deploymentnames) => {
                     let names = Set(deploymentnames)
-                    promise.resolve(tbDeployments.filter(d => names.contains(d.deployment)));
+                    let filtered = tbDeployments.filter(d => names.contains(d.deployment));
+                    promise.resolve(filtered);
                 },
                 promise.reject);
         return promise;

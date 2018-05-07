@@ -351,22 +351,65 @@ tr.shown td.details-control {
     background-color: lightgoldenrodyellow; /*#f9f9f9; */
 }
 
-.table-striped > tbody > tr:nth-of-type(odd) .needs-improvement {
-    background-color: orange; /* #ffa500 */
-    color: white;
+.table-striped > tbody > tr:nth-of-type(odd) .excess,
+#installation-progress-legend .excess {
+    background-color: #ff99ff;
+    color: black;
 }
-.table-striped > tbody > tr:nth-of-type(even) .needs-improvement{
-    background-color: #ef9500; /* darkerorange */
-    color: white;
+.table-striped > tbody > tr:nth-of-type(even) .excess{
+    background-color: #e68ae6;
+    color: black;
 }
 
-.table-striped > tbody > tr:nth-of-type(odd) .unacceptable {
-    background-color: #9f0000; /* notasdarkred */
+.table-striped > tbody > tr:nth-of-type(odd) .perfect,
+#installation-progress-legend .perfect {
+    background-color: #bfffbf;
+    color: black;
+}
+.table-striped > tbody > tr:nth-of-type(even) .perfect{
+    background-color: #ace6ac;
+    color: black;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) .needs-improvement,
+#installation-progress-legend .needs-improvement {
+    background-color: #ffc766; /* #ffa500 */
+    color: black;
+}
+.table-striped > tbody > tr:nth-of-type(even) .needs-improvement{
+    background-color: #e6b15c; /* darkerorange */
+    color: black;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) .unacceptable,
+#installation-progress-legend .unacceptable {
+    background-color: #ff4d4d; /* notasdarkred */
     color: white;
 }
 .table-striped > tbody > tr:nth-of-type(even) .unacceptable {
-    background-color: darkred; /* #8b0000 */
+    background-color: #e64545; /* #8b0000 */
     color: white;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) .missing,
+#installation-progress-legend .missing {
+    background-color: #444;
+    color: white;
+}
+.table-striped > tbody > tr:nth-of-type(even) .missing {
+    background-color: #333;
+    color: white;
+}
+
+#installation-progress-legend {
+    margin-top: -5px;
+}
+
+#installation-progress-legend span {
+    border: 1px solid #ccc;
+    margin-left: 5px;
+    padding-left: 5px;
+    padding-right: 5px;
 }
 
 #installation-details-timeframe {
