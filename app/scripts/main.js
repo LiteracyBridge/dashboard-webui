@@ -133,12 +133,17 @@ Main = (function () {
         User.authenticate().done(onSignedIn);
     }
 
+    function doDeleteAccount() {
+        User.deleteAccount().then(doSignout);
+    }
+
     function init() {
         getApplicationPath();
         User.authenticate().done(onSignedIn);
         $('a[href="#signout"]').on('click', doSignout);
         $('a[href="#change-password"]').on('click', User.changePassword);
         $('a[href="#change-greeting"]').on('click', User.changeGreeting);
+        $('a[href="#delete-account"]').on('click', doDeleteAccount);
         $('a[href="#verify-email"]').on('click', User.verifyEmail);
     }
 

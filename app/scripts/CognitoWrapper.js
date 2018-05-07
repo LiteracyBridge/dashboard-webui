@@ -7,19 +7,19 @@
 /**
  * The best documentation is here: https://github.com/aws/amazon-cognito-identity-js/blob/master/README.md
  */
-var CognitoWrapper = CognitoWrapper || {};
+var CognitoWrapper;
 
 CognitoWrapper = (function () {
     'use strict';
-    
-    var REGION = 'us-west-2';
-    var IDENTITY_POOL_ID = 'us-west-2:a544b58b-8be0-46db-aece-e6fe14d29124';
-    var USER_POOL_ID = 'us-west-2_6EKGzq75p';
-    var CLIENT_ID = '5h9tg11mb73p4j2ca1oii7bhkn';
-    
-    var cognitoUser;
-    
-    var idToken;
+
+    const REGION = 'us-west-2';
+    const IDENTITY_POOL_ID = 'us-west-2:a544b58b-8be0-46db-aece-e6fe14d29124';
+    const USER_POOL_ID = 'us-west-2_6EKGzq75p';
+    const CLIENT_ID = '5h9tg11mb73p4j2ca1oii7bhkn';
+
+    let cognitoUser;
+
+    let idToken;
 
     // --------------------------------------------------------------------------------------
     // Currently unused AWS credential management. (Using CognitoWrapper only.)
@@ -34,36 +34,35 @@ CognitoWrapper = (function () {
     // });
     // --------------------------------------------------------------------------------------
     AWSCognito.config.region = REGION; //This is required to derive the endpoint
-    var userPoolData = {
+    let userPoolData = {
         UserPoolId: USER_POOL_ID, // Your user pool id here
         ClientId: CLIENT_ID // Your client id here
     };
-    
-    
+
     function signIn(options) {
-        var promise = $.Deferred();
-        var username = options.username;
-        var password = options.password;
-        
-        var authenticationData = {
+        let deferred = $.Deferred();
+        let username = options.username;
+        let password = options.password;
+
+        let authenticationData = {
             Username: username,
             Password: password,
         };
-        var authenticationDetails = new AWSCognito.CognitoIdentityServiceProvider.AuthenticationDetails(authenticationData);
-        
-        var userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
-        var userData = {
+        let authenticationDetails = new AWSCognito.CognitoIdentityServiceProvider.AuthenticationDetails(authenticationData);
+
+        let userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
+        let userData = {
             Username: username,
             Pool: userPool
         };
         cognitoUser = new AWSCognito.CognitoIdentityServiceProvider.CognitoUser(userData);
         cognitoUser.authenticateUser(authenticationDetails, {
             onSuccess: function (result) {
-                
+
                 idToken = result.idToken.getJwtToken();
                 console.log(idToken);
-                promise.resolve();
-    
+                deferred.resolve();
+
                 // --------------------------------------------------------------------------------------
                 // Currently unused AWS credential management. (Using CognitoWrapper only.)
                 //
@@ -88,157 +87,157 @@ CognitoWrapper = (function () {
                 // });
                 // --------------------------------------------------------------------------------------
             },
-            
+
             onFailure: function (err) {
-                promise.reject(err);
+                deferred.reject(err);
             },
-            
+
         });
-        
-        return promise;
+
+        return deferred.promise();
     }
-    
+
     function createAccount(options) {
-        var promise = $.Deferred();
-        
-        var userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
-        
-        var username = options.username;
-        var email = options.email;
-        var password = options.password;
-        var phone = options.phone;
-        
-        var attributeList = [];
-        
-        var dataEmail = {
+        let deferred = $.Deferred();
+
+        let userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
+
+        let username = options.username;
+        let email = options.email;
+        let password = options.password;
+        let phone = options.phone;
+
+        let attributeList = [];
+
+        let dataEmail = {
             Name: 'email',
             Value: email
         };
-        
-        var dataPhoneNumber = {
+
+        let dataPhoneNumber = {
             Name: 'phone_number',
             Value: phone
         };
-        var attributeEmail = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserAttribute(dataEmail);
-        var attributePhoneNumber = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserAttribute(dataPhoneNumber);
-        
+        let attributeEmail = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserAttribute(dataEmail);
+        let attributePhoneNumber = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserAttribute(dataPhoneNumber);
+
         attributeList.push(attributeEmail);
         attributeList.push(attributePhoneNumber);
-        
+
         userPool.signUp(username, password, attributeList, null, function (err, result) {
             if (err) {
-                promise.reject(err);
+                deferred.reject(err);
             } else {
                 cognitoUser = result.user;
-                promise.resolve(cognitoUser);
+                deferred.resolve(cognitoUser);
             }
         });
-        
-        return promise;
+
+        return deferred.promise();
     }
-    
+
     function confirmRegistration(options) {
-        var promise = $.Deferred();
-        
-        var code = options.code;
-        
-        var userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
-        var userData = {
+        let deferred = $.Deferred();
+
+        let code = options.code;
+
+        let userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
+        let userData = {
             Username: options.username,
             Pool: userPool
         };
         cognitoUser = new AWSCognito.CognitoIdentityServiceProvider.CognitoUser(userData);
-        
+
         cognitoUser.confirmRegistration(code, true, function (err, result) {
             if (err) {
-                promise.reject(err);
+                deferred.reject(err);
             } else {
-                promise.resolve(result);
+                deferred.resolve(result);
             }
         });
-        
-        return promise;
+
+        return deferred.promise();
     }
-    
+
     function forgotPassword(options) {
-        var promise = $.Deferred();
-        
-        var userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
-        var userData = {
+        let deferred = $.Deferred();
+
+        let userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
+        let userData = {
             Username: options.username,
             Pool: userPool
         };
         cognitoUser = new AWSCognito.CognitoIdentityServiceProvider.CognitoUser(userData);
-        
+
         cognitoUser.forgotPassword({
-            onSuccess: promise.resolve,
-            onFailure: promise.reject
+            onSuccess: deferred.resolve,
+            onFailure: deferred.reject
         });
-        
-        return promise;
+
+        return deferred.promise();
     }
-    
-    
+
+
     function confirmPassword(options) {
-        var promise = $.Deferred();
-        
-        var verificationCode = options.code;
-        var newPassword = options.password;
-        
-        var userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
-        var userData = {
+        let deferred = $.Deferred();
+
+        let verificationCode = options.code;
+        let newPassword = options.password;
+
+        let userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
+        let userData = {
             Username: options.username,
             Pool: userPool
         };
         cognitoUser = new AWSCognito.CognitoIdentityServiceProvider.CognitoUser(userData);
-        
+
         cognitoUser.confirmPassword(verificationCode, newPassword, {
-            onSuccess: promise.resolve,
-            onFailure: promise.reject
+            onSuccess: deferred.resolve,
+            onFailure: deferred.reject
         });
-        
-        
-        return promise;
+
+
+        return deferred.promise();
     }
-    
+
     function resendConfirmationCode(options) {
-        var promise = $.Deferred();
-        
-        var userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
-        var userData = {
+        let deferred = $.Deferred();
+
+        let userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
+        let userData = {
             Username: options.username,
             Pool: userPool
         };
         cognitoUser = new AWSCognito.CognitoIdentityServiceProvider.CognitoUser(userData);
         cognitoUser.resendConfirmationCode(function (err, result) {
             if (err) {
-                promise.reject(err);
+                deferred.reject(err);
             } else {
-                promise.resolve(result);
+                deferred.resolve(result);
             }
         });
-        
-        
-        return promise;
+
+
+        return deferred.promise();
     }
-    
-    function getCurrentUser(options) {
-        var promise = $.Deferred();
-        
-        var userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
-        var cognitoUser = userPool.getCurrentUser();
-        
+
+    function getCurrentUser() {
+        let deferred = $.Deferred();
+
+        let userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
+        let cognitoUser = userPool.getCurrentUser();
+
         if (cognitoUser !== null) {
             cognitoUser.getSession(function (err, session) {
                 if (err) {
-                    promise.reject(err);
+                    deferred.reject(err);
                     return;
                 }
                 console.log('session validity: ' + session.isValid());
                 idToken = session.idToken.getJwtToken();
                 console.log(idToken);
-                promise.resolve();
-    
+                deferred.resolve();
+
                 // --------------------------------------------------------------------------------------
                 // Currently unused AWS credential management. (Using CognitoWrapper only.)
                 //
@@ -261,34 +260,61 @@ CognitoWrapper = (function () {
                 // --------------------------------------------------------------------------------------
             });
         } else {
-            promise.reject('Not signed in.');
+            deferred.reject('Not signed in.');
         }
-        
-        return promise;
-    }
-    
-    function getEmailVerificationCode(gotCodePromise) {
-        var promise = $.Deferred();
 
-        var userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
-        var cognitoUser = userPool.getCurrentUser();
-    
+        return deferred.promise();
+    }
+
+    function deleteCurrentUser() {
+        let deferred = $.Deferred();
+
+        let userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
+        let cognitoUser = userPool.getCurrentUser();
+
+        if (cognitoUser !== null) {
+            cognitoUser.getSession(function (err, session) {
+                if (err) {
+                    deferred.reject(err);
+                    return;
+                }
+                cognitoUser.deleteUser(function (err, result) {
+                    if (err) {
+                        deferred.reject(err.message || JSON.stringify(err));
+                        return;
+                    }
+                    deferred.resolve(result);
+                });
+            });
+        } else {
+            deferred.reject('Not signed in.');
+        }
+
+        return deferred.promise();
+    }
+
+    function getEmailVerificationCode(gotCodePromise) {
+        let deferred = $.Deferred();
+
+        let userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
+        let cognitoUser = userPool.getCurrentUser();
+
         if (cognitoUser !== null) {
             cognitoUser.getSession(function (err, session) {
                 if (err) {
                     console.log('Can not get user session');
-                    promise.reject(err);
+                    deferred.reject(err);
                     return;
                 }
                 if (session.isValid()) {
                     cognitoUser.getAttributeVerificationCode('email', {
                         onSuccess: function (result) {
                             console.log('call result: ' + result);
-                            promise.resolve(result);
+                            deferred.resolve(result);
                         },
                         onFailure: function(err) {
                             console.log('call result: ', err);
-                            promise.reject(err);
+                            deferred.reject(err);
                         },
                         inputVerificationCode: function() {
                             console.log('inputVerificationCode');
@@ -301,165 +327,165 @@ CognitoWrapper = (function () {
                     });
                 } else {
                     console.log('Session is not valid');
-                    promise.reject();
+                    deferred.reject();
                 }
             });
         } else {
             console.log('User is not signed in');
-            promise.reject('Not signed in.');
+            deferred.reject('Not signed in.');
         }
-        
-        return promise;
+
+        return deferred.promise();
     }
-    
+
     function getSessionValidity() {
-        var promise = $.Deferred();
-        
-        var userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
-        var cognitoUser = userPool.getCurrentUser();
-        
+        let deferred = $.Deferred();
+
+        let userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
+        let cognitoUser = userPool.getCurrentUser();
+
         if (cognitoUser !== null) {
             cognitoUser.getSession(function (err, session) {
                 if (err) {
-                    promise.reject(err);
+                    deferred.reject(err);
                     return;
                 }
                 if (session.isValid()) {
-                    promise.resolve();
+                    deferred.resolve();
                 } else {
-                    promise.reject();
+                    deferred.reject();
                 }
-                
+
             });
         } else {
-            promise.reject('Not signed in.');
+            deferred.reject('Not signed in.');
         }
-        
-        return promise;
+
+        return deferred.promise();
     }
-    
+
     function getUserAttributes() {
-        var promise = $.Deferred();
-        
-        var userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
-        var cognitoUser = userPool.getCurrentUser();
-        
+        let deferred = $.Deferred();
+
+        let userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
+        let cognitoUser = userPool.getCurrentUser();
+
         if (cognitoUser !== null) {
             cognitoUser.getSession(function (err, session) {
                 if (err) {
-                    promise.reject(err);
+                    deferred.reject(err);
                     return;
                 }
-                
+
                 // NOTE: getSession must be called to authenticate user before calling getUserAttributes
                 cognitoUser.getUserAttributes(function (err, attributes) {
                     if (err) {
-                        promise.reject(err);
+                        deferred.reject(err);
                     } else {
                         // Add the username into the attributes.
                         attributes.push({Name: 'username', Value: cognitoUser.username});
-                        promise.resolve(attributes);
+                        deferred.resolve(attributes);
                     }
                 });
             });
         } else {
-            promise.reject('Not signed in.');
+            deferred.reject('Not signed in.');
         }
-        
-        return promise;
+
+        return deferred.promise();
     }
-    
+
     function updateUserAttributes(options) {
-        var promise = $.Deferred();
-        
-        var userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
-        var cognitoUser = userPool.getCurrentUser();
-        
+        let deferred = $.Deferred();
+
+        let userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
+        let cognitoUser = userPool.getCurrentUser();
+
         if (cognitoUser !== null) {
             cognitoUser.getSession(function (err, session) {
                 if (err) {
-                    promise.reject(err);
+                    deferred.reject(err);
                     return;
                 }
-                var attrs = options.attributes;
-                var attributeList = Object.keys(attrs).map((key) => {
+                let attrs = options.attributes;
+                let attributeList = Object.keys(attrs).map((key) => {
                     return new AWSCognito.CognitoIdentityServiceProvider.CognitoUserAttribute({
                         Name: key,
                         Value: attrs[key]
                     });
                 });
-                
+
                 cognitoUser.updateAttributes(attributeList, function (err, result) {
                     if (err) {
-                        promise.reject(err);
+                        deferred.reject(err);
                         return;
                     }
-                    promise.resolve('call result: ' + result);
+                    deferred.resolve('call result: ' + result);
                 });
             });
         } else {
-            promise.reject('Not signed in.');
+            deferred.reject('Not signed in.');
         }
-        
-        return promise;
+
+        return deferred.promise();
     }
-    
+
     function signOut() {
-        var userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
-        var cognitoUser = userPool.getCurrentUser();
-        cognitoUser && cognitoUser.signOut();
-        
+        let userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
+        let cognitoUser = userPool.getCurrentUser();
+        let ignored = cognitoUser && cognitoUser.signOut();
+
         // So that the API is consistently promise based.
-        var promise = $.Deferred();
-        promise.resolve();
-        return promise;
+        let deferred = $.Deferred();
+        deferred.resolve();
+        return deferred.promise();
     }
-    
+
     function changePassword(options) {
-        var promise = $.Deferred();
-        
-        var userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
-        var cognitoUser = userPool.getCurrentUser();
-        
+        let deferred = $.Deferred();
+
+        let userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(userPoolData);
+        let cognitoUser = userPool.getCurrentUser();
+
         if (cognitoUser !== null) {
             // NOTE: getSession must be called to authenticate user before calling getUserAttributes
             cognitoUser.getSession(function (err, session) {
                 if (err) {
-                    promise.reject(err);
+                    deferred.reject(err);
                     return;
                 }
-                
+
                 cognitoUser.changePassword(options.oldPassword, options.newPassword, function (err, result) {
                     if (err) {
-                        promise.reject(err);
+                        deferred.reject(err);
                     } else {
-                        promise.resolve(result);
+                        deferred.resolve(result);
                     }
                 });
             });
         } else {
-            promise.reject('Not signed in.');
+            deferred.reject('Not signed in.');
         }
-        
-        return promise;
+
+        return deferred.promise();
     }
-    
+
     return {
         signIn: signIn,
         createAccount: createAccount,
-        resetPassword: confirmPassword,
         confirmRegistration: confirmRegistration,
         resendConfirmationCode: resendConfirmationCode,
         forgotPassword: forgotPassword,
         confirmPassword: confirmPassword,
         getCurrentUser: getCurrentUser,
+        deleteCurrentUser: deleteCurrentUser,
         getEmailVerificationCode: getEmailVerificationCode,
         getUserAttributes: getUserAttributes,
         updateAttributes: updateUserAttributes,
         getSessionValidity: getSessionValidity,
         signOut: signOut,
         changePassword: changePassword,
-        
+
         getIdToken: () => idToken
     }
 })();
