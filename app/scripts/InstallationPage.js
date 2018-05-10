@@ -324,15 +324,15 @@ InstallationPage = (function () {
 
     function installationDetails(communities, tbsDeployed) {
         // tbsDeployed: [ {talkingbookid,deployedtimestamp,project,deployment,contentpackage,community,firmware,location,coordinates,username,tbcdid,action,newsn,testing} ]
-        // aggregatedRecipients: [ {affiliate,partner,program,country,region,district,community,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,language,
-        //      [ groups: [ {affiliate,partner,program,country,region,district,community,group_name,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,language} ],
+        // aggregatedRecipients: [ {affiliate,partner,program,country,region,district,community,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,languagecode,
+        //      [ groups: [ {affiliate,partner,program,country,region,district,community,group_name,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,languagecode} ],
         //      numGroups
         //  ]
 
         let options = {
             columns: ['detailsControl', /*'program','region',*/'district', 'communityname', /*'group_name',*/
                 'num_HHs', 'num_TBs', 'num_TBsInstalled', 'percentinstalled', 'daystoinstall',
-                'supportentity', 'model', 'language', 'installer', 'tbid'],
+                'supportentity', 'model', 'languagecode', 'installer', 'tbid'],
             headings: {
                 detailsControl: ' ',
                 program: 'Program',
@@ -425,8 +425,8 @@ InstallationPage = (function () {
             if (rowData.numGroups) {
                 // Columns for a group, with spacers, so it lines up with the main table.
                 let member_columns = ['spacer', 'spacer', 'groupname', 'num_HHs', 'num_TBs', 'num_TBsInstalled',
-                    'percentinstalled', 'daystoinstall', 'supportentity', 'model', 'language', 'installer', 'tbid'];
-                // Support entity, model, language: don't repeat what's at the community level, unless it's different.
+                    'percentinstalled', 'daystoinstall', 'supportentity', 'model', 'languagecode', 'installer', 'tbid'];
+                // Support entity, model, languagecode: don't repeat what's at the community level, unless it's different.
                 let member_formatters = {
                     spacer: row=>' ',
                     num_HHs: options.formatters.num_HHs,
@@ -436,7 +436,7 @@ InstallationPage = (function () {
                     daystoinstall: row=>NUMBER_NOTZERO(row.daystoinstall, ''),
                     supportentity: row=>(row.supportentity!==rowData.supportentity)?row.supportentity:'',
                     model: row=>(row.model!==rowData.model)?options.formatters.model(row):'',
-                    language: row=>(row.language!==rowData.language)?row.language:''
+                    languagecode: row=>(row.languagecode!==rowData.languagecode)?row.languagecode:''
                 };
                 // Iterate over the groups.
                 rowData.groups.forEach((member)=>{
@@ -485,10 +485,10 @@ InstallationPage = (function () {
 
         InstallationData.getInstallationStatusForDeployment(project, deployment).done((status)=>{
             // tbsDeployed: [ {talkingbookid,deployedtimestamp,project,deployment,contentpackage,community,firmware,location,coordinates,username,tbcdid,action,newsn,testing} ]
-            // recipients: [ {affiliate,partner,program,country,region,district,community,group_name,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,language} ]
-            // community: [ {affiliate,partner,program,country,region,district,community,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,language,
+            // recipients: [ {affiliate,partner,program,country,region,district,community,group_name,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,languagecode} ]
+            // community: [ {affiliate,partner,program,country,region,district,community,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,languagecode,
             //      num_TBsInstalled, numGroups,
-            //      groups: [ {num_TBsInstalled, affiliate,partner,program,country,region,district,community,group_name,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,language} ] }
+            //      groups: [ {num_TBsInstalled, affiliate,partner,program,country,region,district,community,group_name,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,languagecode} ] }
             // status: { communities: [ community ], tbsInstalled: [ tbsDeployed ] }
 
             installationDetails(status.communities, status.tbsInstalled);

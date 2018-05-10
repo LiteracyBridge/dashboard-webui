@@ -208,6 +208,10 @@ ProjectDetailsData = function () {
                     var categoryData = $.csv.toObjects(cat[0], {separator: ',', delimiter: '"'});
                     var messageData = $.csv.toObjects(msg[0], {separator: ',', delimiter: '"'});
 
+                    messageData = messageData.map(r=>{
+                        r.languagecode = r.languagecode || r.language;
+                        delete r.language;
+                    });
                     promise.resolve({deploymentData: deploymentData,
                         tbsDeployedData: tbsDeployedData,
                         productionData: productionData,
@@ -279,7 +283,7 @@ ProjectDetailsData = function () {
      *  .categoryData -- an array of objects like {project,deploymentnumber,cat_packages,cat_languages,category,
      *                                num_messages,duration_minutes,played_minutes,effective_completions,completions,
      *                                num_tbs}
-     *  .messageData -- an array of objects like {project,deployment,deploymentnumber,package,languagecode,language,
+     *  .messageData -- an array of objects like {project,deployment,deploymentnumber,package,languagecode,languagecode,
      *                                category,contentid,title,duration_minutes,played_minutes,played_minutes_per_tb,
      *                                effective_completions,effective_completions_per_tb,completions,num_tbs,
      *                                num_package_tbs,percent_tbs_playing}

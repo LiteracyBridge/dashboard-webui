@@ -187,7 +187,7 @@ let InstallationData = function () {
             let path = pathForProject(project) + project + '-recipients.csv';
             $.get(path).done((list) => {
                 // recipients: [ {recipientid, project, partner, communityname, groupname, affiliate, component, country,
-                //                  region, district, num_HHs, num_TBs, supportentity, model, language, coordinates} ]
+                //                  region, district, num_HHs, num_TBs, supportentity, model, languagecode, coordinates} ]
                 // LBG,UNICEF,Jirapa HH Rotation,Ghana,Upper West,Jirapa,Goziel,,Goziel,105,27,,Robert Yaw,HHR,dga
                 // LBG,UNICEF,Jirapa Groups,Ghana,Upper West,Jirapa,Ul-Tuopare,Songbaala ,Songbaala Ul-Tuopare,,2,B-00060266,Bosore Gilbert,Group Rotation,dga
                 // ...
@@ -196,6 +196,8 @@ let InstallationData = function () {
                 recipients = recipients.map((r) => {
                     r.num_HHs = 1 * r.numhouseholds;
                     r.num_TBs = 1 * r.numtbs;
+                    r.languagecode = r.languagecode || r.language;
+                    delete r.language;
                     return r;
                 });
                 console.log(`Got ${recipients.length} recipients for ${project}.`)
@@ -311,7 +313,7 @@ let InstallationData = function () {
      * @returns {*}
      */
     function getInstallationStatusForDeployment(project, deploymentnumber) {
-        const sameInMostGroupsOfACommunity = ['program', 'country', 'region', 'district', 'supportentity', 'model', 'language'];
+        const sameInMostGroupsOfACommunity = ['program', 'country', 'region', 'district', 'supportentity', 'model', 'languagecode'];
         let promise = $.Deferred();
         $.when(getRecipientsForProjectAndDeployment(project, deploymentnumber),
             getTBsDeployedForDeployment(project, deploymentnumber),
@@ -319,7 +321,7 @@ let InstallationData = function () {
             // tbsDeployed: [ {talkingbookid, recipientid, deployedtimestamp, project, deployment, contentpackage, firmware,
             //                  location, coordinates, username, tbcdid, action, newsn, testing} ]
             // recipients: [ {recipientid, project, partner, communityname, groupname, affiliate, component, country,
-            //                  region, district, num_HHs, num_TBs, supportentity, model, language, coordinates} ]
+            //                  region, district, num_HHs, num_TBs, supportentity, model, languagecode, coordinates} ]
 
             // Copy the data before modifying it, to avoid polluting the source.
             recipients = $.extend(true, [], recipients)

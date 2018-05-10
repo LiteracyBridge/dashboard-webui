@@ -96,14 +96,14 @@ ProjectDetailsPage = function () {
      */
     function messagePerformance(stats) {
         var options = {
-            columns: ['category_list', /*'num_categories',*/ 'language', 'title', 'format', 'duration', 'position_list', 'completions'],
+            columns: ['category_list', /*'num_categories',*/ 'languagecode', 'title', 'format', 'duration', 'position_list', 'completions'],
             headings: {
-                language: 'Language', title: 'Message Title', format: 'Format', category_list: 'Categories', num_categories: '# Categories',
+                languagecode: 'Language', title: 'Message Title', format: 'Format', category_list: 'Categories', num_categories: '# Categories',
                 duration: 'Duration of Message', position_list: 'Position',
                 completions: 'Times Message was Played to Completion'
             },
             tooltips: {
-                language: 'The language in which the message was recorded.',
+                languagecode: 'The language in which the message was recorded.',
                 format: 'The format of the message (song, interview, etc.), if known.',
                 duration: 'Length of the recording, in minutes.',
                 position_list: 'Position of the message in category playlist. If message was in multiple categories, a list of positions (we don\'t know which category is which position).',
@@ -147,9 +147,9 @@ ProjectDetailsPage = function () {
         };
 
         var msgStats = stats.messageData || [];
-        // Initial sort order. Sort by language, then by title.
+        // Initial sort order. Sort by languagecode, then by title.
         msgStats.sort((a, b) => {
-            var cmp = a.language.toLocaleLowerCase().localeCompare(b.language.toLocaleLowerCase());
+            var cmp = a.languagecode.toLocaleLowerCase().localeCompare(b.languagecode.toLocaleLowerCase());
             return cmp || a.title.toLocaleLowerCase().localeCompare(b.title.toLocaleLowerCase());
         });
         // If no multi-category messages, don't need the # Categories column.
@@ -339,7 +339,7 @@ ProjectDetailsPage = function () {
 
         // Sort
         categoryStats.sort((a, b) => {
-            var cmp = 0; //a.language.toLocaleLowerCase().localeCompare(b.language.toLocaleLowerCase());
+            var cmp = 0; //a.languagecode.toLocaleLowerCase().localeCompare(b.languagecode.toLocaleLowerCase());
             return cmp || a.category.toLocaleLowerCase().localeCompare(b.category.toLocaleLowerCase());
         });
 
@@ -415,15 +415,15 @@ ProjectDetailsPage = function () {
                 },
                 usage2: () => {
                     if (usage) {
-                        var language = '';
+                        var languagecode = '';
                         if (prod.num_languages > 1) {
-                            language = ` (${mostCompletions.language}) `;
+                            languagecode = ` (${mostCompletions.languagecode}) `;
                         }
                         var cell = `<p><span class="stat">${NUMBER(usage.num_completions)}</span> # times messages were listened to completion</p>
                             <p>Messages in the <span class="stat">${MINUTES(mostPlayed.duration_minutes)}</span> deployed for category
                                 <span class="stat">"${mostPlayed.category}"</span> were played for a total of
                                 <span class="stat">${MINUTES(mostPlayed.played_minutes)}</span>.</p>
-                            <p>Message <span class="stat">"${mostCompletions.title}"</span>${language} was played to completion
+                            <p>Message <span class="stat">"${mostCompletions.title}"</span>${languagecode} was played to completion
                                 <span class="stat">${NUMBER(mostCompletions.completions)}</span> times.</p>
 
               `;
