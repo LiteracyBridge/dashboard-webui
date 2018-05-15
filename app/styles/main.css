@@ -415,13 +415,12 @@ tr.shown td.details-control {
     color: white;
 }
 
-.table-striped > tbody > tr:nth-of-type(odd) .missing,
 #installation-progress-legend .missing {
-    background: linear-gradient(#333, #444);
+    background: linear-gradient(#333, #555);
     color: white;
 }
 .table-striped > tbody > tr:nth-of-type(odd) .missing{
-    background-color: #444;
+    background-color: #555;
     color: white;
 }
 .table-striped > tbody > tr:nth-of-type(even) .missing {
