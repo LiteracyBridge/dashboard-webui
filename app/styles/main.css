@@ -143,7 +143,7 @@ body {
 }
 
 .table-striped > tbody > tr:nth-of-type(even) {
-  background-color: #e7f3f9;
+  background-color: #f0f5f7;
 }
 
 p.spacer {
@@ -351,8 +351,11 @@ tr.shown td.details-control {
     background-color: lightgoldenrodyellow; /*#f9f9f9; */
 }
 
-.table-striped > tbody > tr:nth-of-type(odd) .excess,
 #installation-progress-legend .excess {
+    background: linear-gradient(#e68ae6, #ff99ff);
+    color: black;
+}
+.table-striped > tbody > tr:nth-of-type(odd) .excess{
     background-color: #ff99ff;
     color: black;
 }
@@ -361,19 +364,37 @@ tr.shown td.details-control {
     color: black;
 }
 
-.table-striped > tbody > tr:nth-of-type(odd) .perfect,
 #installation-progress-legend .perfect {
+    background: linear-gradient(#e7f3f9, white);
+}
+.table-striped > tbody > tr:nth-of-type(odd) .perfect{
+     /*background-color: #bfffbf;
+     color: black;*/
+}
+.table-striped > tbody > tr:nth-of-type(even) .perfect{
+    /*background-color: #ace6ac;
+    color: black;*/
+}
+
+#installation-progress-legend .acceptable {
+    background: linear-gradient(#ace6ac, #bfffbf);
+    color: black;
+}
+.table-striped > tbody > tr:nth-of-type(odd) .acceptable{
     background-color: #bfffbf;
     color: black;
 }
-.table-striped > tbody > tr:nth-of-type(even) .perfect{
+.table-striped > tbody > tr:nth-of-type(even) .acceptable{
     background-color: #ace6ac;
     color: black;
 }
 
-.table-striped > tbody > tr:nth-of-type(odd) .needs-improvement,
 #installation-progress-legend .needs-improvement {
-    background-color: #ffc766; /* #ffa500 */
+    background: linear-gradient(#e6b15c, #ffc766);
+    color: black;
+}
+.table-striped > tbody > tr:nth-of-type(odd) .needs-improvement{
+    background-color: #ffc766; /* #ffa500 */ /* fad201 - traffic yellow */
     color: black;
 }
 .table-striped > tbody > tr:nth-of-type(even) .needs-improvement{
@@ -381,8 +402,11 @@ tr.shown td.details-control {
     color: black;
 }
 
-.table-striped > tbody > tr:nth-of-type(odd) .unacceptable,
 #installation-progress-legend .unacceptable {
+    background: linear-gradient(#e64545, #ff4d4d);
+    color: white;
+}
+.table-striped > tbody > tr:nth-of-type(odd) .unacceptable{
     background-color: #ff4d4d; /* notasdarkred */
     color: white;
 }
@@ -393,6 +417,10 @@ tr.shown td.details-control {
 
 .table-striped > tbody > tr:nth-of-type(odd) .missing,
 #installation-progress-legend .missing {
+    background: linear-gradient(#333, #444);
+    color: white;
+}
+.table-striped > tbody > tr:nth-of-type(odd) .missing{
     background-color: #444;
     color: white;
 }
