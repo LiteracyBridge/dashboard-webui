@@ -17,6 +17,67 @@ InstallationPage = (function () {
 
     var fillDone = false;
 
+    var RATINGS = {
+        label: [
+            '0 - 20% Dead',
+            '21 - 59% Failed',
+            '60 - 84% Unacceptable',
+            '85 - 99% Acceptable',
+            '100% Great',
+            '>100% Excess'
+        ],
+        tooltip: [
+            'Is the community / group still participating in the Program?',
+            'This is a failure to meet our contractual obligations.',
+            'Unacceptable performance against contractual obligations.',
+            'Acceptable, provided there is a good rationale for missing installations.',
+            'Perfect!',
+            'An excess of Talking Books seem to have been installed. This may be fine, but needs explanation.'
+        ],
+        class: [
+            'missing',
+            'unacceptable',
+            'needs-improvement',
+            'acceptable',
+            'perfect',
+            'excess'
+        ],
+        boundaries: [20, 59, 84, 99, 100]
+    }
+
+    function buildLegend() {
+        let $legend = $('#installation-progress-legend');
+        RATINGS.label.forEach((text, ix) => {
+            let $label = $('.'+RATINGS.class[ix], $legend);
+            $label.text(text);
+            $label.addClass(RATINGS.class[ix]);
+            $label.prop('title', RATINGS.tooltip[ix]);
+            $label.tooltip();
+        })
+    }
+
+    function ratingForRecipient(recipient) {
+        function score(numTbs, installed) {
+            let pct = installed / numTbs * 100;
+            // Handles everything through 100%
+            for (let ix=0; ix<RATINGS.boundaries.length; ix++) {
+                if (pct <= RATINGS.boundaries[ix]) {
+                    return ix;
+                }
+            }
+            // Special case for > 100%. Allow 1 excess, or up to 10% excess, without highlighting.
+            return ((installed-numTbs) === 1 || pct < 110) ? 4 : 5;
+        }
+        let ownScore = score(recipient.num_TBs, recipient.num_TBsInstalled);
+        let groupScores = (recipient.groups && recipient.groups.map(g=>score(g.num_TBs, g.num_TBsInstalled))) || [ownScore];
+        let minScore = Math.min.apply(groupScores);
+        // If any group had a score two points lower, lower community score.
+        if (minScore && minScore <= ownScore-2) {ownScore--}
+
+        return RATINGS.class[ownScore];
+
+    }
+
     function formatDate(date, def) {
         if (!(date instanceof moment)) { date=moment(date) }
         if (!date.isValid() && def) {
@@ -79,33 +140,6 @@ InstallationPage = (function () {
             return defaultValue!==undefined ? defaultValue : 'n/a';
         }
         return Number(Math.round(number)).toLocaleString();
-    }
-
-    function ratingForRecipient(recipient) {
-        function score(numTbs, installed) {
-            let pct = installed / numTbs;
-            if (pct > 1.00)  {return 5}
-            if (pct > 0.99)  {return 4}
-            if (pct >= 0.85) {return 3}
-            if (pct >= 0.50) {return 2}
-            if (pct > 0.10)  {return 1}
-            return 0
-        }
-        let ownScore = score(recipient.num_TBs, recipient.num_TBsInstalled);
-        let groupScores = (recipient.groups && recipient.groups.map(g=>score(g.num_TBs, g.num_TBsInstalled))) || [ownScore];
-        let minScore = Math.min.apply(groupScores);
-        // If any group had a score two points lower, lower community score.
-        if (minScore && minScore <= ownScore-2) {ownScore--}
-
-        switch (ownScore) {
-            case 5: return 'excess';                // More than should have been.
-            case 4: return 'perfect';               // A+
-            case 3: return 'acceptable';            // B-
-            case 2: return 'needs-improvement';     // F
-            case 1: return 'unacceptable';          // F-
-            case 0: return 'missing';               // just missing
-            default: return 'unknown';
-        }
     }
 
     var progressChart;
@@ -503,6 +537,7 @@ InstallationPage = (function () {
 
     function show() {
         if (!initialized) {
+            buildLegend();
             initialized = true;
             previousProject = localStorage.getItem('installation.project') || '';
             previousDeployment = localStorage.getItem('installation.deployment') || '';

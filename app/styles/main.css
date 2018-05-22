@@ -416,7 +416,8 @@ tr.shown td.details-control {
 }
 
 #installation-progress-legend .missing {
-    background: linear-gradient(#333, #555);
+    /* This is lighter than the actual light color; otherwise too hard to see. */
+    background: linear-gradient(#333, #777);
     color: white;
 }
 .table-striped > tbody > tr:nth-of-type(odd) .missing{
@@ -430,6 +431,11 @@ tr.shown td.details-control {
 
 #installation-progress-legend {
     margin-top: -5px;
+    line-height: 1.5;
+}
+
+#installation-progress-legend span {
+    white-space: nowrap;
 }
 
 #installation-progress-legend span {
