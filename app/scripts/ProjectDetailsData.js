@@ -1,5 +1,5 @@
 /* jshint esversion:6, asi:true */
-/* global $, console, Main, User, User */
+/* global $, console, Main, User, User, moment */
 
 var ProjectDetailsData = ProjectDetailsData || {};
 
@@ -60,6 +60,70 @@ ProjectDetailsData = function () {
             });
         }
         return projectPaths;
+    }
+
+    function getFileCached(project, cache, filename, mapper) {
+        if (cache[project] === undefined) {
+            cache[project] = $.Deferred();
+
+            getProjectsAndPaths().done((paths) => {
+                // If the request was for a project we don't know about, we must fail the request.
+                if (!paths[project]) {
+                    cache[project].reject(null);
+                    return;
+                }
+                let filepath = statsPath() + paths[project] + project + '-' + filename;
+                $.get(filepath).done(function resolved(filedata) {
+                        filedata = (mapper && mapper(filedata)) || filedata;
+                        cache[project].resolve(filedata);
+                    }).fail((err) => {
+                    cache[project].reject(err);
+                });
+            }).fail((err) => {
+                cache[project].reject(err);
+            });
+        }
+        return cache[project];
+    }
+
+    /**
+     * Given a project, get the list of deployment names, with the deployment # of each one. Also includes some
+     * metadata for each deployment: startdate, enddate
+     * @param project for which to get deployments.
+     * @returns {*} A promise that resovles to a list of [{deployment:'name;name2', deploymentnumber:number},...]
+     */
+    let deploymentsInfoCache = {};
+    function getDeploymentsList(project) {
+        return getFileCached(project, deploymentsInfoCache, 'deployments.csv', (filedata)=>{
+            let csv = $.csv.toObjects(filedata, {separator: ',', delimiter: '"'});
+            csv = csv.map((d)=>{
+                d.startdatestr = d.startdate;
+                d.enddatestr = d.enddate;
+                d.startdate = moment(d.startdate);
+                d.enddate = moment(d.enddate);
+                d.deploymentnumber = 1 * d.deploymentnumber;
+                return d;
+            }).sort((a,b)=>{return a.deploymentnumber - b.deploymentnumber});
+            // Collapse into one per deployment number; accumulate all the names. Xref from names to #.
+            let xref = {};
+            let depls = [];
+            csv.forEach((d)=>{
+                xref[d.deployment] = d.deploymentnumber;
+                let existing = depls.find(existing=>existing.deploymentnumber===d.deploymentnumber);
+                if (existing) {
+                    existing.deploymentnames.push(d.deployment);
+                } else {
+                    d.deploymentnames = [d.deployment];
+                    depls.push(d);
+                }
+            });
+            // join the names together into a single string.
+            depls.forEach((d)=>{
+                d.deployment = d.deploymentnames.join(';');
+            });
+            depls.xref=xref;
+            return depls;
+        });
     }
 
     /**
@@ -208,6 +272,15 @@ ProjectDetailsData = function () {
                     var categoryData = $.csv.toObjects(cat[0], {separator: ',', delimiter: '"'});
                     var messageData = $.csv.toObjects(msg[0], {separator: ',', delimiter: '"'});
 
+                    deploymentData = deploymentData.map(d => {
+                        d.startdatestr = d.startdate;
+                        d.enddatestr = d.enddate;
+                        d.startdate = moment(d.startdate);
+                        d.enddate = moment(d.enddate);
+                        d.deploymentnumber = 1 * d.deploymentnumber;
+                        return d;
+                    }).sort((a,b)=>{return a.deploymentnumber - b.deploymentnumber});
+
                     messageData = messageData.map(r=>{
                         r.languagecode = r.languagecode || r.language;
                         delete r.language;
@@ -241,31 +314,6 @@ ProjectDetailsData = function () {
             Main.decrementWait();
             promise.resolve(Object.keys(paths));
         }, Main.decrementWait);
-        return promise;
-    }
-
-    /**
-     * Fetch a list of the Deployments (aka Content Updates) for a project. Built from getProjectData.
-     * @param project The project for which the list of Deployments is desired.
-     * @returns {*} A promise that resolves to a list of deployment names.
-     */
-    function getProjectDeploymentList(project) {
-        var promise = $.Deferred();
-        Main.incrementWait();
-
-        getProjectData(project).then((data) => {
-            var deployments = [];
-            Main.decrementWait();
-            data.deploymentData.forEach(function (element) {
-                deployments.push({
-                    deploymentname:element.deployment,
-                    deploymentnumber:element.deploymentnumber
-                });
-            });
-            deployments.sort((a,b)=>a.deploymentnumber-b.deploymentnumber);
-            promise.resolve(deployments);
-        }, Main.decrementWait);
-
         return promise;
     }
 
@@ -326,7 +374,7 @@ ProjectDetailsData = function () {
 
     return {
         getProjectList: getProjectList,
-        getProjectDeploymentList: getProjectDeploymentList,
+        getDeploymentsList: getDeploymentsList,
         getProjectDeploymentNames: getProjectDeploymentNames,
         getProjectStats: getProjectStats,
         getDeploymentDetails: getDeploymentDetails

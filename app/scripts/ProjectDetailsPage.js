@@ -1,5 +1,5 @@
 /* jshint esversion:6, asi:true */
-/* global $, console, ProjectDetailsData, DataTable, Chart, ProjectPicker */
+/* global $, console, ProjectDetailsData, DataTable, Chart, ProjectPicker, Utils */
 
 var ProjectDetailsPage = ProjectDetailsPage || {};
 
@@ -20,12 +20,15 @@ ProjectDetailsPage = function () {
 
             function getDeploymentsForProject(proj) {
                 var promise = $.Deferred();
-                ProjectDetailsData.getProjectDeploymentList(proj)
+                ProjectDetailsData.getDeploymentsList(proj)
                     .done((deploymentsList) => {
-                        // deploymentsList is a list of {deploymentname:'name', deploymentnumber: number}
+                        // deploymentsList is array [{deployment:'name;name2', deploymentnumber:number, ...}, ...]
                         deploymentsList = deploymentsList.map((elem)=>{
                             return {value: elem.deploymentnumber,
-                                label: `#${elem.deploymentnumber}: ${elem.deploymentname}`
+                                label: `#${elem.deploymentnumber}: ${Utils.formatDate(elem.startdate)} - ${Utils.formatDate(elem.enddate, 'TBD')}`,
+                                // I prefer the previous line, but some might prefer this.
+                                //label: `#${elem.deploymentnumber}: ${elem.deployment}`,
+                                tooltip: elem.deployment
                             };
                         });
                         var penultimate = deploymentsList[Math.max(0, deploymentsList.length - 2)];
@@ -158,8 +161,8 @@ ProjectDetailsPage = function () {
         }
 
         var messageTable = DataTable.create($('#message-performance'), msgStats, options);
-        // This says sort by eff_completions, then by category_list (not the other way around, as one is likely to read it).
-        messageTable.order([[options.columns.indexOf('category_list'),'asc'],[options.columns.indexOf('eff_completions'),'desc']]).draw();
+        // This says sort by completions, then by category_list (not the other way around, as one is likely to read it).
+        messageTable.order([[options.columns.indexOf('category_list'),'asc'],[options.columns.indexOf('completions'),'desc']]).draw();
     }
 
 
@@ -367,7 +370,7 @@ ProjectDetailsPage = function () {
                 deployment: () => {
                     var cell;
                     if (depl) {
-                        cell = `<p>Start date <span class="stat">${depl.startdate}</span></p>`
+                        cell = `<p>Start date <span class="stat">${depl.startdate.format('YYYY-MM-DD')}</span></p>`
                     } else {
                         cell = '<p class="stat">Deployment information unavailable.</p>';
                     }

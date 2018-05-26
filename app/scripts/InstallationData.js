@@ -116,36 +116,6 @@ let InstallationData = function () {
         return promise;
     }
 
-    let deploymentsPromises = {};
-    function getDeploymentsForProject(project) {
-        if (!deploymentsPromises[project]) {
-            deploymentsPromises[project] = $.Deferred();
-
-            let path = pathForProject(project) + project + '-deployments.csv';
-            $.get(path).done((list) => {
-                // project,deployment,deploymentnumber,startdate,enddate
-                // UNICEF-2,2017-1,1,10/1/17,12/31/17
-                // UNICEF-3,2018-2,2,1/1/18,3/31/18
-                // ...
-                let deployments = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
-                // Convert date fields to actual dates, keeping the string form as well.
-                deployments = deployments.map((d) => {
-                    d.startdatestr = d.startdate;
-                    d.enddatestr = d.enddate;
-                    d.startdate = moment(d.startdate);
-                    d.enddate = moment(d.enddate);
-                    d.deploymentnumber = 1 * d.deploymentnumber;
-                    return d;
-                }).sort((a,b)=>{return a.deploymentnumber - b.deploymentnumber});
-                console.log(`Got ${deployments.length} deployments for ${project}.`)
-                deploymentsPromises[project].resolve(deployments);
-            }).fail((err) => {
-                deploymentsPromises[project].reject(err);
-            });
-        }
-        return deploymentsPromises[project];
-    }
-
     /**
      * Gets information about a deployment for a project
      * @param project
@@ -155,7 +125,7 @@ let InstallationData = function () {
     function getDeploymentInfo(project, deploymentnumber) {
         let deployment = ('' + deploymentnumber).toUpperCase();
         let promise = $.Deferred();
-        getDeploymentsForProject(project).then((deployments)=>{
+        ProjectDetailsData.getDeploymentsList(project).then((deployments)=>{
             promise.resolve(deployments.find(d=>d.deployment.toUpperCase()===deployment || d.deploymentnumber==deploymentnumber)); // jshint ignore:line
         }, promise.reject);
         return promise;
@@ -170,9 +140,9 @@ let InstallationData = function () {
      */
     function getDeploymentNames(project, deploymentnumber) {
         let promise = $.Deferred();
-        getDeploymentsForProject(project).then((deployments)=>{
+        ProjectDetailsData.getDeploymentsList(project).then((deployments)=>{
             let result = []
-            deployments.forEach((elem, ix) => { if (elem.deploymentnumber === deploymentnumber) { result.push(elem.deployment) }})
+            deployments.forEach((elem, ix) => { if (elem.deploymentnumber === deploymentnumber) { result=result.concat(elem.deploymentnames) }})
             promise.resolve(result);
         }, promise.reject);
         return promise;
@@ -447,7 +417,6 @@ let InstallationData = function () {
     }
 
     return {
-        getDeploymentsForProject: getDeploymentsForProject,
         getInstallationStatusForDeployment: getInstallationStatusForDeployment,
         getTbDailiesListForProject: getTbDailiesListForProject,
         getTbDailiesDataForProject: getTbDailiesDataForProject,

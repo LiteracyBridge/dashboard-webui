@@ -86,6 +86,14 @@ DropdownButton = (function () {
                     return item.value;
                 }
             }
+            function getTooltip(item) {
+                let tooltip = item.tooltip;
+                if (typeof tooltip === 'string') {
+                    return tooltip;
+                } else if (typeof item === 'function') {
+                    return tooltip();
+                }
+            }
             list = list || [];
             opts = opts || {};
             $('ul', $elem).children().off();
@@ -93,36 +101,42 @@ DropdownButton = (function () {
             // If there was a previous selection, and no new default selection, try to preserve the previous selection.
             // But if there is a new default selection, ignore any previous selection. We want to allow a pre-selected
             // "no selection", so undefined, null, and empty string are all valid defaults.
-            var preSelected = opts.hasOwnProperty('default') ? opts.default : selection;
-            selection = (list.length===1) ? getValue(list[0]) : null;
-            selectionLabel = (list.length===1) ? getLabel(list[0]) : null;
+            let preSelected = opts.hasOwnProperty('default') ? opts.default : selection;
+            // If there is a single element, even if it's index isn't 0, pick it.
+            let onlyOne; list.forEach(elem=>onlyOne===undefined?onlyOne=elem:onlyOne=null);
+            selection = (onlyOne) ? getValue(onlyOne) : null;
+            selectionLabel = (onlyOne) ? getLabel(onlyOne) : null;
+            let selectionTooltip = (onlyOne) ? getTooltip(onlyOne) : null;
             list.forEach((item) => {
                 // No gaps in the list
                 if (!item) {
                     return;
                 }
-                var value, label;
-                if (typeof item === 'string') {
-                    value = label = item;
-                } else {
-                    if (!item.hasOwnProperty('value') || !item.hasOwnProperty('label')) {
-                        return;
-                    }
-                    value = item.value;
-                    label = item.label;
+                let value = getValue(item);
+                let label = getLabel(item);
+                let tooltip = getTooltip(item);
+                if (!value || !label) {
+                    return;
                 }
-                var li = $(`<li><a class="main-nav" href="#select-item" data-value="${value}">${label}</a></li>`)
-                $('ul', $elem).append(li);
+                let datatooltip = tooltip ? `data-tooltip="${tooltip}"` : '';
+                let titletooltip = tooltip ? `title="${tooltip}"` : '';
+                let $li = $(`<li ${titletooltip}><a class="main-nav" href="#select-item" ${datatooltip} data-value="${value}">${label}</a></li>`);
+                $('ul', $elem).append($li);
+                if (tooltip) {
+                    $li.tooltip();
+                }
                 if (value == preSelected) { // jshint ignore:line
                     selection = value;
                     selectionLabel = label;
+                    selectionTooltip = tooltip;
                 }
             });
             // When an item is clicked: update the title, fire the event
             $('a[href="#select-item"]', $elem).on('click', (it) => {
-                var value = $(it.target).data('value');
-                var label = $(it.target).text();
-                $('button .title', $elem).text(label);
+                let value = $(it.target).data('value');
+                let tooltip = $(it.target).data('tooltip');
+                let label = $(it.target).text();
+                $('button .title', $elem).text(label).prop('title', tooltip);
                 selection = value;
                 selectionLabel = label;
                 $elem.trigger('selected', [value]);
@@ -139,6 +153,9 @@ DropdownButton = (function () {
             if (selection) {
                 $('button .title', $elem).text(selectionLabel);
                 $elem.trigger('selected', [selection]);
+                if (selectionTooltip) {
+                    $('button .title', $elem).prop('title', selectionTooltip);
+                }
             } else {
                 $('button .title', $elem).text(opts.title || options.title);
             }

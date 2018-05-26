@@ -110,6 +110,12 @@ UserFeedbackPage = (function () {
     }
 
 
+    /**
+     * Not quite used for a tooltip. These are used for a "details" string that changes as the mouse hovers over
+     * a different slice of the pie.
+     * @param $elem
+     * @returns {Function}
+     */
     function makeCustomTooltips($elem) {
         return function (tooltip) {
             if (!tooltip) {
@@ -139,8 +145,8 @@ UserFeedbackPage = (function () {
         };
     }
 
-    var breakdownChart;
-    var breakdownData = {
+    var categorizationChart;
+    var categorizationData = {
         labels: null,
         datasets: [
             {
@@ -149,7 +155,7 @@ UserFeedbackPage = (function () {
             }
         ]
     };
-    var breakdownOptions = {
+    var categorizationOptions = {
         tooltips: {
             enabled: true,
             custom: makeCustomTooltips($('#hover-pie2'))
@@ -159,12 +165,12 @@ UserFeedbackPage = (function () {
 
     /**
      * Pie chart of details. May be "useless" or "categorized", depending on which line the user clicked.
-     * @param progressToDisplay The Progress object to display.
+     * @param categorizations The Progress object to display.
      */
-    function plotCategorizations(progressToDisplay) {
+    function plotCategorizations(categorizations) {
         var data = [];
         var labels = [];
-        var childList = progressToDisplay.getChildList();
+        var childList = categorizations.getChildList();
         childList.forEach((pp, ix) => {
             var t = pp.total();
             data.push(t)
@@ -176,34 +182,34 @@ UserFeedbackPage = (function () {
             labels.push('(No data)');
         }
 
-        var placeholder = $('#category-breakdown-placeholder');
+        var placeholder = $('#feedback-categorization-placeholder');
         $('#hover-pie2').html('');
         placeholder.unbind();
 
-        breakdownData.labels = labels;
-        breakdownData.datasets[0].data = data;
+        categorizationData.labels = labels;
+        categorizationData.datasets[0].data = data;
 
         // Make sure there are enough color values. Don't let the first also be the last.
         var palette = (data.length % cb_qualitative.length) !== 1 ? cb_qualitative : cb_qualitative_p;
-        breakdownData.datasets[0].backgroundColor = [];
-        while (breakdownData.datasets[0].backgroundColor.length < data.length) {
-            breakdownData.datasets[0].backgroundColor = breakdownData.datasets[0].backgroundColor.concat(palette);
+        categorizationData.datasets[0].backgroundColor = [];
+        while (categorizationData.datasets[0].backgroundColor.length < data.length) {
+            categorizationData.datasets[0].backgroundColor = categorizationData.datasets[0].backgroundColor.concat(palette);
         }
-        if (!breakdownChart) {
-            breakdownChart = new Chart(placeholder, {
+        if (!categorizationChart) {
+            categorizationChart = new Chart(placeholder, {
                 type: 'pie',
-                data: breakdownData,
-                options: breakdownOptions
+                data: categorizationData,
+                options: categorizationOptions
             });
         } else {
-            breakdownChart.update();
+            categorizationChart.update();
         }
 
         // Handle when the user clicks on a slice of the pie chart.
         placeholder.unbind();
         placeholder.bind('click', (evt) => {
             // If there's anything there, where the click was, drill into it.
-            var activePoints = breakdownChart.getElementsAtEvent(evt);
+            var activePoints = categorizationChart.getElementsAtEvent(evt);
             if (!activePoints || !activePoints.length) {
                 return
             }
@@ -232,10 +238,10 @@ UserFeedbackPage = (function () {
      *
      * plotDailyDetail handles actually plotting the data.
      *
-     * @param progressToDisplay The category into which to drill.
+     * @param categorizations The category into which to drill.
      * @param reset If true, make this category the new "root" category.
      */
-    function drillInto(progressToDisplay, reset) {
+    function drillInto(categorizations, reset) {
         if (reset) {
             drillStack = [];
             $('#category-breakdown .detail-stack').off('click');
@@ -243,7 +249,7 @@ UserFeedbackPage = (function () {
         }
         // If the category has only a single sub-category, and that has sub-sub-categories, display
         // the sub-category instead.
-        var children = progressToDisplay.getChildList();
+        var children = categorizations.getChildList();
         if (children.length === 1 && children[0].getChildList().length > 0) {
              drillInto(children[0]);
              return;
@@ -252,7 +258,7 @@ UserFeedbackPage = (function () {
         // Build the addition to the category name display. Note the '/' for second and subsequent levels.
         // data-index is where we'll come back to; index of the new chart in the drillStack
         var htmlstring = `<span>${(drillStack.length > 0) ? ' / ' : ''}
-            <a class="detail-stack" data-index="${drillStack.length}">${progressToDisplay.name}</a></span>`
+            <a class="detail-stack" data-index="${drillStack.length}">${categorizations.name}</a></span>`
         $('#category-breakdown').append(htmlstring);
         // When the category name is clicked, go back out to its level.
         $('#category-breakdown .detail-stack').on('click', (ev) => {
@@ -268,9 +274,9 @@ UserFeedbackPage = (function () {
                 plotDurations(drillStack[drillStack.length - 1]);
             }
         });
-        drillStack.push(progressToDisplay);
-        plotCategorizations(progressToDisplay);
-        plotDurations(progressToDisplay);
+        drillStack.push(categorizations);
+        plotCategorizations(categorizations);
+        plotDurations(categorizations);
     }
 
     var durationLabels;
@@ -294,12 +300,12 @@ UserFeedbackPage = (function () {
      * Pie chart of message lengths.
      * @param durationData: [{label:'2 seconds', data:99}, {label:'5 seconds', data:100}, ...]
      */
-    function plotDurations(progressToDisplay) {
+    function plotDurations(categorizations) {
         var placeholder = $('#message-length-placeholder');
 
-        var data = progressToDisplay.durations();
+        var data = categorizations.durations();
         if (data) {
-            var catName = progressToDisplay.fullname || progressToDisplay.name;
+            var catName = categorizations.fullname || categorizations.name;
             catName = '\'' + catName + '\'';
             $('#category-durations').text(catName);
             // Filter the non-zero values. Build a palette of the non-zer values; keeps the colors for durations consistent.
@@ -419,11 +425,11 @@ UserFeedbackPage = (function () {
             ctx.fillText('No Data', 10, 50);
         }
 
-        breakdownChart && breakdownChart.destroy();
-        breakdownChart = null;
+        categorizationChart && categorizationChart.destroy();
+        categorizationChart = null;
         $('#category-breakdown .detail-stack').off('click');
         $('#category-breakdown').empty();
-        draw('category-breakdown-placeholder');
+        draw('feedback-categorization-placeholder');
         draw('progress-placeholder');
         $('#breakdown-date').text('No Data');
     }

@@ -52,11 +52,11 @@ Main = (function () {
     function delayedSpinner() {
         $('#wait-spinner').show();
         delayTimeout = null;
-        console.log('setting wait spinner');
+        //console.log('setting wait spinner');
     }
     function incrementWait(immediate) {
         if (waitCount++ === 0 && !immediate) {
-            console.log('setting wait spinner timeout');
+            //console.log('setting wait spinner timeout');
             delayTimeout =setTimeout(delayedSpinner, delayTime);
         }
         if (immediate) {
@@ -65,14 +65,14 @@ Main = (function () {
     }
     function decrementWait() {
         if (--waitCount === 0) {
-            console.log('clearing wait spinner timeout');
+            //console.log('clearing wait spinner timeout');
             clearTimeout(delayTimeout);
             delayTimeout = null;
             $('#wait-spinner').hide();
         }
     }
     function clearWait() {
-        console.log('*clearing wait spinner timeout');
+        //console.log('*clearing wait spinner timeout');
         waitCount = 0;
         clearTimeout(delayTimeout);
         delayTimeout = null;

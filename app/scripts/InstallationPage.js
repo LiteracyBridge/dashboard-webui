@@ -2,7 +2,7 @@
  * Created by bill on 10/23/17.
  */
 /* jshint undef:true, esversion:6, asi:true */
-/* globals console, $, DataTable, Main, User, Chart, ProjectPicker, ProjectDetailsData, InstallationData, moment */
+/* globals console, $, DataTable, Main, User, Chart, ProjectPicker, ProjectDetailsData, InstallationData, Utils, moment */
 
 var InstallationPage = InstallationPage || {};
 
@@ -78,15 +78,6 @@ InstallationPage = (function () {
 
     }
 
-    function formatDate(date, def) {
-        if (!(date instanceof moment)) { date=moment(date) }
-        if (!date.isValid() && def) {
-            return def;
-        }
-        return date.format('YYYY-MM-DD');
-    }
-
-
     function fillProjects() {
         if (fillDone) {
             return;
@@ -96,13 +87,14 @@ InstallationPage = (function () {
         ProjectDetailsData.getProjectList().done((projectsList) => {
             function getDeploymentsForProject(proj) {
                 var promise = $.Deferred();
-                InstallationData.getDeploymentsForProject(proj)
+                ProjectDetailsData.getDeploymentsList(proj)
                     .done((deploymentsList) => {
                         // deploymentsList is a list of {project:'name', deployment:'name', deploymentnumber: number, startdate:'date', enddate:'date'}
                         deploymentsList = deploymentsList.map((elem) => {
                             return {
                                 value: elem.deploymentnumber,
-                                label: `#${elem.deploymentnumber}: ${formatDate(elem.startdate)} - ${formatDate(elem.enddate, 'TBD')}`
+                                label: `#${elem.deploymentnumber}: ${Utils.formatDate(elem.startdate)} - ${Utils.formatDate(elem.enddate, 'TBD')}`,
+                                tooltip: elem.deployment
                             };
                         });
                         // TODO: Find the one that best matches today's date.
@@ -229,8 +221,8 @@ InstallationPage = (function () {
 
         $('#installation-progress-deployment-number').text(status.deploymentInfo.deploymentnumber);
         $('#installation-progress-deployment-name').text(status.deploymentInfo.deployment);
-        $('#installation-progress-deployment-start').text(formatDate(status.deploymentInfo.startdate));
-        $('#installation-progress-deployment-end').text(formatDate(status.deploymentInfo.enddate, 'TBD'));
+        $('#installation-progress-deployment-start').text(Utils.formatDate(status.deploymentInfo.startdate));
+        $('#installation-progress-deployment-end').text(Utils.formatDate(status.deploymentInfo.enddate, 'TBD'));
 
         let inception = moment('2007-01-01')
         let earliest = moment('2207-12-31');  // anything will be before this far future date

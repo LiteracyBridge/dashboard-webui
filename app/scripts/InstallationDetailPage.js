@@ -2,7 +2,7 @@
  * Created by bill on 10/23/17.
  */
 /* jshint undef:true, esversion:6, asi:true */
-/* globals console, $, DropdownButton, DataTable, Main, User, Chart, ProjectPicker, ProjectDetailsData, InstallationData, moment */
+/* globals console, $, DropdownButton, DataTable, Main, User, Chart, ProjectPicker, ProjectDetailsData, InstallationData, Utils, moment */
 
 var InstallationDetailPage = InstallationDetailPage || {};
 
@@ -17,15 +17,6 @@ InstallationDetailPage = (function () {
     var fillDone = false;
 
     var recipientMap;
-
-    function formatDate(date, def) {
-        if (!(date instanceof moment)) { date=moment(date) }
-        if (!date.isValid() && def) {
-            return def;
-        }
-        return date.format('YYYY-MM-DD');
-    }
-
 
     function fillProjects() {
         if (fillDone) {
@@ -92,9 +83,9 @@ InstallationDetailPage = (function () {
                 testing: 'Was the \'Testing the Deployment\' box checked on the TB-Loader?'
             },
             formatters: {
-                component: (row)=>{let recip=row.recipientid&&recipientMap[row.recipientid]; return recip&&recip.component;},
-                communityname: (row)=>{let recip=row.recipientid&&recipientMap[row.recipientid]; return recip&&recip.communityname;},
-                groupname: (row)=>{let recip=row.recipientid&&recipientMap[row.recipientid]; return recip&&recip.groupname;},
+                component: (row)=>{let recip=row&&row.recipientid&&recipientMap[row.recipientid]; return recip&&recip.component;},
+                communityname: (row)=>{let recip=row&&row.recipientid&&recipientMap[row.recipientid]; return recip&&recip.communityname;},
+                groupname: (row)=>{let recip=row&&row.recipientid&&recipientMap[row.recipientid]; return recip&&recip.groupname;},
                 deployedtimestamp: (row, row_ix, cell)=>{return cell.format('Y-MM-DD HH:mma')}
             },
             datatable: {colReorder: true,

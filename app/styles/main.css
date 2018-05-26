@@ -180,6 +180,12 @@ p.spacer {
   }
 }
 
+.amplio-logo {
+    font-family: 'Montserrat', sans-serif !important;
+    font-size: 2em;
+    color: #3ca779 !important; /* logo color */
+}
+
 /* flot */
 
 .legend table {
@@ -290,7 +296,7 @@ p.spacer {
     max-width: 450px;
 }
 
-#category-breakdown-placeholder {
+#feedback-categorization-placeholder {
     font-size: 14px;
     line-height: 1.2em;
     border: 1px red;
