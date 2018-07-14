@@ -84,44 +84,44 @@ InstallationPage = (function () {
         }
         fillDone = true;
         var preSelectDeployment = previousDeployment;
-        ProjectDetailsData.getProjectList().done((projectsList) => {
-            function getDeploymentsForProject(proj) {
-                var promise = $.Deferred();
-                ProjectDetailsData.getDeploymentsList(proj)
-                    .done((deploymentsList) => {
-                        // deploymentsList is a list of {project:'name', deployment:'name', deploymentnumber: number, startdate:'date', enddate:'date'}
-                        deploymentsList = deploymentsList.map((elem) => {
-                            return {
-                                value: elem.deploymentnumber,
-                                label: `#${elem.deploymentnumber}: ${Utils.formatDate(elem.startdate)} - ${Utils.formatDate(elem.enddate, 'TBD')}`,
-                                tooltip: elem.deployment
-                            };
-                        });
-                        // TODO: Find the one that best matches today's date.
-                        var today = deploymentsList[0];
-                        deploymentsList.selected = preSelectDeployment || today && today.value;
-                        preSelectDeployment = null;
-                        promise.resolve(deploymentsList);
+        let projectsList = Main.getProjectList();
+
+         function getDeploymentsForProject(proj) {
+            var promise = $.Deferred();
+            ProjectDetailsData.getDeploymentsList(proj)
+                .done((deploymentsList) => {
+                    // deploymentsList is a list of {project:'name', deployment:'name', deploymentnumber: number, startdate:'date', enddate:'date'}
+                    deploymentsList = deploymentsList.map((elem) => {
+                        return {
+                            value: elem.deploymentnumber,
+                            label: `#${elem.deploymentnumber}: ${Utils.formatDate(elem.startdate)} - ${Utils.formatDate(elem.enddate, 'TBD')}`,
+                            tooltip: elem.deployment
+                        };
                     });
-                return promise;
+                    // TODO: Find the one that best matches today's date.
+                    var today = deploymentsList[0];
+                    deploymentsList.selected = preSelectDeployment || today && today.value;
+                    preSelectDeployment = null;
+                    promise.resolve(deploymentsList);
+                });
+            return promise;
+        }
+
+        var options = {
+            projects: projectsList,
+            defaultProject: previousProject,
+            getDeploymentsForProject: getDeploymentsForProject
+        };
+
+        $('#installation-progress-project-placeholder').on('selected', (evt, extra) => {
+            var project = extra.project;
+            var deployment = extra.deployment;
+            if (project && deployment) {
+                reportProject(project, deployment);
             }
-
-            var options = {
-                projects: projectsList,
-                defaultProject: previousProject,
-                getDeploymentsForProject: getDeploymentsForProject
-            };
-
-            $('#installation-progress-project-placeholder').on('selected', (evt, extra) => {
-                var project = extra.project;
-                var deployment = extra.deployment;
-                if (project && deployment) {
-                    reportProject(project, deployment);
-                }
-            });
-            ProjectPicker.add('#installation-progress-project-placeholder', options);
-
         });
+        ProjectPicker.add('#installation-progress-project-placeholder', options);
+
     }
 
     function NUMBER_NOTZERO(number, defaultValue) {

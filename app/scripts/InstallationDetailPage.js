@@ -23,24 +23,23 @@ InstallationDetailPage = (function () {
             return;
         }
         fillDone = true;
-        ProjectDetailsData.getProjectList().done((projectsList) => {
-            function onProjectSelected(evt, proj) {
-                var project = projectsDropdown.selection();
-                if (project) {
-                    projectSelected(project);
-                }
+        let projectsList = Main.getProjectList();
+        function onProjectSelected(evt, proj) {
+            var project = projectsDropdown.selection();
+            if (project) {
+                projectSelected(project);
             }
+        }
 
-            var options = {
-                projects: projectsList,
-                defaultProject: previousProject
-            };
-            var $elem = $('#installation-detail-project-placeholder');
-            $elem.empty();
-            var $projectsDropdown = $('<div>').on('selected', onProjectSelected).appendTo($elem);
-            var projectsDropdown = DropdownButton.create($projectsDropdown, {title: 'Project'});
-            projectsDropdown.update(options.projects, {default: options.defaultProject});
-        });
+        var options = {
+            projects: projectsList,
+            defaultProject: previousProject
+        };
+        var $elem = $('#installation-detail-project-placeholder');
+        $elem.empty();
+        var $projectsDropdown = $('<div>').on('selected', onProjectSelected).appendTo($elem);
+        var projectsDropdown = DropdownButton.create($projectsDropdown, {title: 'Project'});
+        projectsDropdown.update(options.projects, {default: options.defaultProject});
     }
 
     function NUMBER_NOTZERO(number) {

@@ -1,5 +1,5 @@
 /* jshint esversion:6, asi:true */
-/* global $, console, Main, User, User, moment */
+/* global $, console, Main, User, Utils, moment */
 
 var ProjectDetailsData = ProjectDetailsData || {};
 
@@ -15,76 +15,14 @@ ProjectDetailsData = function () {
         }
         return ROOT + STATS_PATH;
     }
-
     function projectsListPath() {
         return statsPath() + 'project_list.csv';
     }
-
-    // Contans a promise resoved with {project:path,...} pairs.
-    var projectPaths;
 
     // Contains per-project promise; resolved with {deploymentData:[], productionData:[], usageData:[]}
     // deploymentData is an array of DeploymentData (in random order):
     //   {project:,deployment:,deploymentnumber:,num_packages:,num_languages:,num_communities:,deployed_tbs:}
     var projectCache = {};
-
-    // Projects sometimes have multiple deployment names for the same deployment number. This is a map, by
-    // project of all those names to their respective numbers.
-    var deploymentNamesCache = {};
-
-    var deploymentDataCache = {};
-
-    /**
-     * Fetch the projectList.csv file from the server. Cached for subsequent calls.
-     * @returns {*} A promise that resolves to a hash of {project:path} like
-     *  { UWR: 'UWR/', MEDA: 'MEDA/', ... }
-     */
-    function getProjectsAndPaths() {
-        if (projectPaths === undefined) {
-            projectPaths = $.Deferred();
-
-            $.get(projectsListPath()).done((list) => {
-                // The projects list file is a .csv with data like:
-                // project,path
-                // UWR,UWR/
-                // MEDA,MEDA/
-                // ...
-                var pairs = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
-                var paths = {};
-                pairs.filter(row=>User.isViewableProject(row.project)).forEach((el) => {
-                    paths[el.project] = el.path
-                });
-                projectPaths.resolve(paths);
-            }).fail((err) => {
-                projectPaths.reject(err);
-            });
-        }
-        return projectPaths;
-    }
-
-    function getFileCached(project, cache, filename, mapper) {
-        if (cache[project] === undefined) {
-            cache[project] = $.Deferred();
-
-            getProjectsAndPaths().done((paths) => {
-                // If the request was for a project we don't know about, we must fail the request.
-                if (!paths[project]) {
-                    cache[project].reject(null);
-                    return;
-                }
-                let filepath = statsPath() + paths[project] + project + '-' + filename;
-                $.get(filepath).done(function resolved(filedata) {
-                        filedata = (mapper && mapper(filedata)) || filedata;
-                        cache[project].resolve(filedata);
-                    }).fail((err) => {
-                    cache[project].reject(err);
-                });
-            }).fail((err) => {
-                cache[project].reject(err);
-            });
-        }
-        return cache[project];
-    }
 
     /**
      * Given a project, get the list of deployment names, with the deployment # of each one. Also includes some
@@ -92,9 +30,8 @@ ProjectDetailsData = function () {
      * @param project for which to get deployments.
      * @returns {*} A promise that resovles to a list of [{deployment:'name;name2', deploymentnumber:number},...]
      */
-    let deploymentsInfoCache = {};
     function getDeploymentsList(project) {
-        return getFileCached(project, deploymentsInfoCache, 'deployments.csv', (filedata)=>{
+        return Utils.getFileCached(project, 'deployments.csv', (filedata)=>{
             let csv = $.csv.toObjects(filedata, {separator: ',', delimiter: '"'});
             csv = csv.map((d)=>{
                 d.startdatestr = d.startdate;
@@ -132,32 +69,13 @@ ProjectDetailsData = function () {
      * @returns {*} A promise that resovles to a list of [{deploymentname:'name', deploymentnumber:number},...]
      */
     function getProjectDeploymentNames(project) {
-        if (deploymentNamesCache[project] === undefined) {
-            var promise = new $.Deferred();
-            deploymentNamesCache[project] = promise;
+            let deferred = $.Deferred();
+            getDeploymentsList(project).then((list)=>{
+                let deploymentNames = list.map(d=>{return {deploymentname:d.deployment, deploymentnumber:Number(d.deploymentnumber)}});
+                deferred.resolve(deploymentNames);
 
-            getProjectsAndPaths().done((paths) => {
-                // If the request was for a project we don't know about, we must fail the request.
-                if (!paths[project]) {
-                    promise.reject(null);
-                    return;
-                }
-                var prefix = statsPath() + paths[project] + project + '-';
-                var depls = $.get(prefix + 'deployments.csv');
-                $.when(depls)
-                    .done(function resolved(deplnames) {
-                        // Parse the files.
-                        var deploymentNames = $.csv.toObjects(deplnames, {separator: ',', delimiter: '"'});
-                        deploymentNames = deploymentNames.map(d=>{return {deploymentname:d.deployment, deploymentnumber:Number(d.deploymentnumber)}});
-                        promise.resolve(deploymentNames);
-                    }).fail((err) => {
-                    promise.reject(err);
-                });
-            }).fail((err) => {
-                promise.reject(err);
-            });
-        }
-        return deploymentNamesCache[project];
+            }, deferred.reject);
+            return deferred.promise();
     }
 
     /**
@@ -166,33 +84,12 @@ ProjectDetailsData = function () {
      * @returns {*} a promise that resolves to a list of [{project,deployment,deploymentnumber,startdate,enddate,package,community,deployed_tbs},...]
      */
     function getDeploymentData(project) {
-        if (deploymentDataCache[project] === undefined) {
-            var promise = new $.Deferred();
-            deploymentDataCache[project] = promise;
+        return Utils.getFileCached(project, 'deployments_by_community.csv', (filedata) => {
+            let csv = $.csv.toObjects(filedata, {separator: ',', delimiter: '"'});
+            return {deploymentByCommunityData: csv};
+        });
 
-            getProjectsAndPaths().done((paths) => {
-                // If the request was for a project we don't know about, we must fail the request.
-                if (!paths[project]) {
-                    promise.reject(null);
-                    return;
-                }
-                var prefix = statsPath() + paths[project] + project + '-';
-                var deplByComm = $.get(prefix + 'deployments_by_community.csv');
-                $.when(deplByComm)
-                    .done(function resolved(comm) {
-                        // Parse the files.
-                        var deploymentByCommunityData = $.csv.toObjects(comm, {separator: ',', delimiter: '"'});
-
-                        promise.resolve({deploymentByCommunityData: deploymentByCommunityData});
-                    }).fail((err) => {
-                    promise.reject(err);
-                });
-            }).fail((err) => {
-                promise.reject(err);
-            });
-        }
-        return deploymentDataCache[project];
-    }
+     }
 
     /**
      * Given a project and a deployment, get deployment data for the specific deployment.
@@ -245,75 +142,50 @@ ProjectDetailsData = function () {
         var promise = new $.Deferred();
         projectCache[project] = promise;
 
-        getProjectsAndPaths().done((paths) => {
-            // If the request was for a project we don't know about, we must fail the request.
-            if (!paths[project]) {
-                promise.reject(null);
-                return;
-            }
+        var deplByDepl = $.get(Utils.pathForFile(project, 'deployments_by_deployment.csv'));
+        var tbsdDeplByDepl = $.get(Utils.pathForFile(project, 'tb_deployments_by_deployment.csv'));
+        var prodByDepl = $.get(Utils.pathForFile(project, 'production_by_deployment.csv'));
+        var usageByDepl = $.get(Utils.pathForFile(project, 'usage_by_deployment.csv'));
+        var usageByCategory = $.get(Utils.pathForFile(project, 'usage_by_package_category.csv'));
+        var usageByMessage = $.get(Utils.pathForFile(project, 'usage_by_message.csv'));
 
-            var prefix = statsPath() + paths[project] + project + '-';
-            var deplByDepl = $.get(prefix + 'deployments_by_deployment.csv');
-            var tbsdDeplByDepl = $.get(prefix + 'tb_deployments_by_deployment.csv');
-            var prodByDepl = $.get(prefix + 'production_by_deployment.csv');
-            var usageByDepl = $.get(prefix + 'usage_by_deployment.csv');
-            var usageByCategory = $.get(prefix + 'usage_by_package_category.csv');
-            var usageByMessage = $.get(prefix + 'usage_by_message.csv');
+        // Wait for all to load. TODO: handle timeouts.
+        $.when(deplByDepl, tbsdDeplByDepl, prodByDepl, usageByDepl, usageByCategory, usageByMessage)
+            .done(function resolved(depl, tbsDepl, prod, usage, cat, msg) {
+                // Parse the files.
+                // Can't refactor the options because $.csv craps on the options object.
+                var deploymentData = $.csv.toObjects(depl[0], {separator: ',', delimiter: '"'});
+                var tbsDeployedData = $.csv.toObjects(tbsDepl[0], {separator: ',', delimiter: '"'});
+                var productionData = $.csv.toObjects(prod[0], {separator: ',', delimiter: '"'});
+                var usageData = $.csv.toObjects(usage[0], {separator: ',', delimiter: '"'});
+                var categoryData = $.csv.toObjects(cat[0], {separator: ',', delimiter: '"'});
+                var messageData = $.csv.toObjects(msg[0], {separator: ',', delimiter: '"'});
 
-            // Wait for all to load. TODO: handle timeouts.
-            $.when(deplByDepl, tbsdDeplByDepl, prodByDepl, usageByDepl, usageByCategory, usageByMessage)
-                .done(function resolved(depl, tbsDepl, prod, usage, cat, msg) {
-                    // Parse the files.
-                    // Can't refactor the options because $.csv craps on the options object.
-                    var deploymentData = $.csv.toObjects(depl[0], {separator: ',', delimiter: '"'});
-                    var tbsDeployedData = $.csv.toObjects(tbsDepl[0], {separator: ',', delimiter: '"'});
-                    var productionData = $.csv.toObjects(prod[0], {separator: ',', delimiter: '"'});
-                    var usageData = $.csv.toObjects(usage[0], {separator: ',', delimiter: '"'});
-                    var categoryData = $.csv.toObjects(cat[0], {separator: ',', delimiter: '"'});
-                    var messageData = $.csv.toObjects(msg[0], {separator: ',', delimiter: '"'});
+                deploymentData = deploymentData.map(d => {
+                    d.startdatestr = d.startdate;
+                    d.enddatestr = d.enddate;
+                    d.startdate = moment(d.startdate);
+                    d.enddate = moment(d.enddate);
+                    d.deploymentnumber = 1 * d.deploymentnumber;
+                    return d;
+                }).sort((a,b)=>{return a.deploymentnumber - b.deploymentnumber});
 
-                    deploymentData = deploymentData.map(d => {
-                        d.startdatestr = d.startdate;
-                        d.enddatestr = d.enddate;
-                        d.startdate = moment(d.startdate);
-                        d.enddate = moment(d.enddate);
-                        d.deploymentnumber = 1 * d.deploymentnumber;
-                        return d;
-                    }).sort((a,b)=>{return a.deploymentnumber - b.deploymentnumber});
-
-                    messageData = messageData.map(r=>{
-                        r.languagecode = r.languagecode || r.language;
-                        delete r.language;
-                        return r;
-                    });
-                    promise.resolve({deploymentData: deploymentData,
-                        tbsDeployedData: tbsDeployedData,
-                        productionData: productionData,
-                        usageData: usageData,
-                        categoryData: categoryData,
-                        messageData: messageData
-                    });
-                }).fail((err) => {
-                promise.reject(err);
-            });
-        }).fail((err) => {
+                messageData = messageData.map(r=>{
+                    r.languagecode = r.languagecode || r.language;
+                    delete r.language;
+                    return r;
+                });
+                promise.resolve({deploymentData: deploymentData,
+                    tbsDeployedData: tbsDeployedData,
+                    productionData: productionData,
+                    usageData: usageData,
+                    categoryData: categoryData,
+                    messageData: messageData
+                });
+            }).fail((err) => {
             promise.reject(err);
         });
 
-        return promise;
-    }
-
-    /**
-     * Fetch just a list of available projects. Built from getProjectsAndPaths.
-     * @returns {*} A promise that resolves to an array of project names, like ['UWR', 'MEDA', ...] .
-     */
-    function getProjectList() {
-        var promise = $.Deferred();
-        Main.incrementWait()
-        getProjectsAndPaths().then((paths) => {
-            Main.decrementWait();
-            promise.resolve(Object.keys(paths));
-        }, Main.decrementWait);
         return promise;
     }
 
@@ -373,7 +245,6 @@ ProjectDetailsData = function () {
 
 
     return {
-        getProjectList: getProjectList,
         getDeploymentsList: getDeploymentsList,
         getProjectDeploymentNames: getProjectDeploymentNames,
         getProjectStats: getProjectStats,

@@ -690,8 +690,7 @@ UserFeedbackData = (function () {
         projectsListPromise = $.Deferred();
 
         getUserFeedbackPath().then((ufPath) => {
-        $.when($.get(projectsListPath()), ProjectDetailsData.getProjectList())
-            .then((ufProjects, projects) => {
+            $.get(projectsListPath()).then(ufProjects => {
                 // ufProjects is a file containing a list of ACM names for user-feedback projects, like:
                 // ACM-UWR-FB-2015-10
                 // ACM-UWR-FB-2016-1
@@ -700,8 +699,8 @@ UserFeedbackData = (function () {
                 // projects is a list of project names, like ['UWR', 'MEDA', ...]
 
                 var nl = /\s/
-                var ufAcmNames = ufProjects[0].split(nl); // like ['ACM-UWR-FB-2015-10', 'ACM-UWR-FB-2016-1', ...]
-                var projList = projects;
+                var ufAcmNames = ufProjects.split(nl); // like ['ACM-UWR-FB-2015-10', 'ACM-UWR-FB-2016-1', ...]
+                var projList = Main.getProjectList();
                 var result = {};
                 // For each user feedback project...
                 ufAcmNames.forEach((acmName) => {

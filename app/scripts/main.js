@@ -13,10 +13,22 @@ Main = (function () {
 
     var applicationPathPromise;
 
+    var allProjectsList;
+    var filteredProjects;
+
     /**
      * Determines the path to statistics data. Uses trial-and-error.
      */
     function getApplicationPath() {
+        function parsePaths(list) {
+            // The projects list file is a .csv with data like:
+            // project,path
+            // UWR,UWR/
+            // MEDA,MEDA/
+            // ...
+            allProjectsList = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
+        }
+
         if (!applicationPathPromise) {
             applicationPathPromise = $.Deferred();
             // We know the file 'project_list.csv' should exist in a 'data' directory. If we can find it
@@ -27,6 +39,7 @@ Main = (function () {
                 .then((data) => {
                     ROOT_PATH = '/dashboard-lb-stats/';
                     applicationPathPromise.resolve(ROOT_PATH);
+                    parsePaths(data);
                 }, (err) => {
                     // But, if we can't find the data at '/dashboard-lb-stats/...', maybe this is a test running
                     // locally on the dev's machine. In that case, try to find the data relative to where this
@@ -35,6 +48,7 @@ Main = (function () {
                         .then((data) => {
                             ROOT_PATH = '';
                             applicationPathPromise.resolve(ROOT_PATH);
+                            parsePaths(data);
                         }, (err) => {
                             applicationPathPromise.reject(err);
                         })
@@ -81,6 +95,13 @@ Main = (function () {
 
 
     function onSignedIn() {
+        function filterProjects() {
+            var paths = {};
+            allProjectsList.filter(row=>User.isViewableProject(row.project)).forEach((el) => {
+                paths[el.project] = el.path
+            });
+            filteredProjects = paths;
+        }
         function setGreeting() {
             var attributes = User.getUserAttributes();
             var greeting = attributes['custom:greeting'] || attributes.email;
@@ -92,20 +113,20 @@ Main = (function () {
         setGreeting();
 
         getApplicationPath().then(() => {
-            // Enable Bootstrap tabbing.
-            $('#main-nav a.main-nav').on('click', function (e) {
-                e.preventDefault()
-                $(this).tab('show')
-            })
-            $('#splash h3').removeClass('invisible');
+            User.getUserProperties()
+                .then(()=>{
+                    filterProjects();
+                    if (User.isAdminUser()) {
+                        $('#admin-menu').removeClass('hidden');
+                    }
+                    // Enable Bootstrap tabbing.
+                    $('#main-nav a.main-nav').on('click', function (e) {
+                        e.preventDefault()
+                        $(this).tab('show')
+                    })
+                    $('#splash h3').removeClass('invisible');
+                });
         });
-
-        User.getUserProperties()
-            .then(()=>{
-                if (User.isAdminUser()) {
-                    $('#admin-menu').removeClass('hidden');
-                }
-            });
 
         var attributes = User.getUserAttributes();
         if (attributes['email_verified'] === 'false') {
@@ -158,6 +179,9 @@ Main = (function () {
 
         incrementWait: incrementWait,
         decrementWait: decrementWait,
-        clearWait: clearWait
+        clearWait: clearWait,
+
+        getProjectPaths: ()=>{return filteredProjects;},
+        getProjectList: ()=>{return Object.keys(filteredProjects);}
     }
 })();

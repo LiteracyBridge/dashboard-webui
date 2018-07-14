@@ -11,29 +11,28 @@ InventoryPage = (function () {
     let PAGE_ID = 'inventory-page';
     let PAGE_HREF = 'a[href="#' + PAGE_ID + '"]';
     let $PAGE = $('#' + PAGE_ID);
-    
+
     var previousProject;
     var previousDeployment;
-    
+
     var fillDone = false;
-    
+
     function fillProjects() {
         if (fillDone) {
             return;
         }
         fillDone = true;
         var preSelectDeployment = previousDeployment;
-        ProjectDetailsData.getProjectList().done((projectsList) => {
-            var $elem = $('#inventory-project-placeholder');
-            $elem.empty();
-    
-            // Either a div or a span is a good element to host the DropdownButton.
-            var $projectsDropdown = $('<div>').on('selected', (evt,proj)=>{reportProject(proj);}).appendTo($elem);
-            var projectsDropdown = DropdownButton.create($projectsDropdown, {title: 'Project'});
-            projectsDropdown.update(projectsList, {default: previousProject});
-        });
+        let projectsList = Main.getProjectList();
+        var $elem = $('#inventory-project-placeholder');
+        $elem.empty();
+
+        // Either a div or a span is a good element to host the DropdownButton.
+        var $projectsDropdown = $('<div>').on('selected', (evt,proj)=>{reportProject(proj);}).appendTo($elem);
+        var projectsDropdown = DropdownButton.create($projectsDropdown, {title: 'Project'});
+        projectsDropdown.update(projectsList, {default: previousProject});
     }
-    
+
     function deploymentDetails(data) {
         var options = {
             columns: ['community', 'count'],
@@ -47,7 +46,7 @@ InventoryPage = (function () {
             datatable: {searching: true,
                 colReorder: true}
         };
-        
+
         var deplStats = data.deploymentByCommunityData || [];
         // Initial sort order. Sort by community, then by deployment number
         deplStats.sort((a, b) => {
@@ -68,27 +67,27 @@ InventoryPage = (function () {
         options.columns = options.columns.concat(depls);
         // convert back to array.
         let unPivotedArray = Object.keys(unPivoted).map(key=>unPivoted[key]);
-    
+
         DataTable.create($('#inventory-detail'), unPivotedArray, options);
-    
+
     }
-    
-    
+
+
     function reportProject(project, deployment) {
         previousProject = project;
         previousDeployment = deployment;
         localStorage.setItem('project.inventory.project', previousProject);
         localStorage.setItem('project.inventory.deployment', previousDeployment);
-        
+
         ProjectDetailsData.getDeploymentDetails(project).done((data) => {
             deploymentDetails(data);
         }).fail((err) => {
         });
-        
+
     }
-    
+
     var initialized = false;
-    
+
     function show() {
         if (!initialized) {
             initialized = true;
@@ -99,9 +98,9 @@ InventoryPage = (function () {
             fillProjects();
         }
     }
-    
+
     // Hook the tab-activated event for this tab.
     $(PAGE_HREF).on('shown.bs.tab', show)
-    
+
     return {}
 })();

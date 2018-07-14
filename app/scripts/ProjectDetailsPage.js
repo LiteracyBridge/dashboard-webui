@@ -1,5 +1,5 @@
 /* jshint esversion:6, asi:true */
-/* global $, console, ProjectDetailsData, DataTable, Chart, ProjectPicker, Utils */
+/* global $, console, Main, ProjectDetailsData, DataTable, Chart, ProjectPicker, Utils */
 
 var ProjectDetailsPage = ProjectDetailsPage || {};
 
@@ -16,44 +16,43 @@ ProjectDetailsPage = function () {
         }
         fillDone = true;
         var preSelectDeployment = previousDeployment;
-        ProjectDetailsData.getProjectList().done((list) => {
+        let list = Main.getProjectList();
 
-            function getDeploymentsForProject(proj) {
-                var promise = $.Deferred();
-                ProjectDetailsData.getDeploymentsList(proj)
-                    .done((deploymentsList) => {
-                        // deploymentsList is array [{deployment:'name;name2', deploymentnumber:number, ...}, ...]
-                        deploymentsList = deploymentsList.map((elem)=>{
-                            return {value: elem.deploymentnumber,
-                                label: `#${elem.deploymentnumber}: ${Utils.formatDate(elem.startdate)} - ${Utils.formatDate(elem.enddate, 'TBD')}`,
-                                // I prefer the previous line, but some might prefer this.
-                                //label: `#${elem.deploymentnumber}: ${elem.deployment}`,
-                                tooltip: elem.deployment
-                            };
-                        });
-                        var penultimate = deploymentsList[Math.max(0, deploymentsList.length - 2)];
-                        deploymentsList.selected = preSelectDeployment || penultimate && penultimate.value;
-                        preSelectDeployment = null;
-                        promise.resolve(deploymentsList);
+        function getDeploymentsForProject(proj) {
+            var promise = $.Deferred();
+            ProjectDetailsData.getDeploymentsList(proj)
+                .done((deploymentsList) => {
+                    // deploymentsList is array [{deployment:'name;name2', deploymentnumber:number, ...}, ...]
+                    deploymentsList = deploymentsList.map((elem)=>{
+                        return {value: elem.deploymentnumber,
+                            label: `#${elem.deploymentnumber}: ${Utils.formatDate(elem.startdate)} - ${Utils.formatDate(elem.enddate, 'TBD')}`,
+                            // I prefer the previous line, but some might prefer this.
+                            //label: `#${elem.deploymentnumber}: ${elem.deployment}`,
+                            tooltip: elem.deployment
+                        };
                     });
-                return promise;
+                    var penultimate = deploymentsList[Math.max(0, deploymentsList.length - 2)];
+                    deploymentsList.selected = preSelectDeployment || penultimate && penultimate.value;
+                    preSelectDeployment = null;
+                    promise.resolve(deploymentsList);
+                });
+            return promise;
+        }
+
+        var options = {
+            projects: list,
+            defaultProject: previousProject,
+            getDeploymentsForProject: getDeploymentsForProject
+        };
+
+        $('#details-project-placeholder').on('selected', (evt, extra) => {
+            var project = extra.project;
+            var deployment = extra.deployment;
+            if (project && deployment) {
+                reportProject(project, deployment);
             }
-
-            var options = {
-                projects: list,
-                defaultProject: previousProject,
-                getDeploymentsForProject: getDeploymentsForProject
-            };
-
-            $('#details-project-placeholder').on('selected', (evt, extra) => {
-                var project = extra.project;
-                var deployment = extra.deployment;
-                if (project && deployment) {
-                    reportProject(project, deployment);
-                }
-            });
-            ProjectPicker.add('#details-project-placeholder', options);
         });
+        ProjectPicker.add('#details-project-placeholder', options);
     }
 
     function format(str) {

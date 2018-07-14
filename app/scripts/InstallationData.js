@@ -1,22 +1,8 @@
 /* jshint esversion:6, asi:true*/
-/* global $, console, Main, User, User, moment, ProjectDetailsData */
+/* global $, console, Main, User, Utils, moment, ProjectDetailsData */
 
 let InstallationData = function () {
     'use strict';
-
-    let STATS_PATH = 'data/';
-    let ROOT;
-
-    function statsPath() {
-        if (!ROOT) {
-            ROOT = Main.getRootPath();
-        }
-        return ROOT + STATS_PATH;
-    }
-
-    function pathForProject(project) {
-        return statsPath() + project + '/';
-    }
 
     function Set(values) {
         let set = {}
@@ -27,83 +13,40 @@ let InstallationData = function () {
         return set;
     }
 
-    let dailiesPromises = {};
-
     function getTbDailiesListForProject(project) {
-        project = project.toUpperCase();
-        if (!dailiesPromises[project]) {
-            let promise = $.Deferred();
-            dailiesPromises[project] = promise;
-
-            // Look for the 'tbsdaily.json' file in the project root.
-            let path = pathForProject(project) + 'tbsdaily.json';
-            $.getJSON(path)
-                .done(json=>promise.resolve(json))
-                .fail((err => {
-                    // ...but if we can't read it, try for the old 'dailytbs.json' file.
-                    let path = pathForProject(project) + 'dailytbs.json';
-                    $.getJSON(path).done(json=>promise.resolve(json)).fail(err=>promise.reject(err));
-                }));
-        }
-        return dailiesPromises[project];
+        return Utils.getFileCached(project, 'tbsdaily.json');
     }
 
-    let dailiesDataPromises = {};
     function getTbDailiesDataForProject(project, year, month, day) {
-        project = project.toUpperCase();
-        let path = pathForProject(project);
-        if (year === undefined) {
-            path += project + '-tbsdeployed.csv';
-        } else {
-            path += year + '/' + month + '/' + day + '/tbsdeployed.csv';
-        }
-        if (!dailiesDataPromises[path]) {
-            let promise = $.Deferred();
-            dailiesDataPromises[path] = promise;
-
-            $.get(path).done((list) => {
-                let tbsdeployed = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
-                tbsdeployed = tbsdeployed.map((d) => {
-                    d.deployedtimestamp = moment(d.deployedtimestamp);
-                    d.newsn = d.newsn==='t';
-                    d.testing = d.testing==='t'
-                    return d;
-                });
-                promise.resolve(tbsdeployed);
-            }).fail((err => {
-                promise.reject(err);
-            }));
-        }
-        return dailiesDataPromises[path];
+        let name = (year === undefined) ? 'tbsdeployed.csv' : year+'/'+ month+'/'+day+'/tbsdeployed.csv';
+        return Utils.getFileCached(project, name, (list) => {
+            let tbsdeployed = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
+            tbsdeployed = tbsdeployed.map((d) => {
+                d.deployedtimestamp = moment(d.deployedtimestamp);
+                d.newsn = d.newsn==='t';
+                d.testing = d.testing==='t'
+                return d;
+            });
+            return tbsdeployed;
+        });
     }
 
-    let componentDeploymentsPromises = {};
     function getComponentDeploymentsForProject(project) {
-        project = project.toUpperCase();
-        if (!componentDeploymentsPromises[project]) {
-            let promise = $.Deferred();
-            componentDeploymentsPromises[project] = promise;
-
-            let path = pathForProject(project) + project + '-component_deployments.csv';
-            $.get(path).done((list) => {
-                // deploymentnumber,component
-                // 1,"Jirapa Groups"
-                // 1,"Jirapa HH Rotation"
-                // 2,"Jirapa Groups"
-                // 2,"NOYED-GHANA"
-                // ...
-                let componentDeployments = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
-                componentDeployments = componentDeployments.map((d) => {
-                    d.deploymentnumber = 1 * d.deploymentnumber;
-                    return d;
-                }).sort((a,b)=>{return a.deploymentnumber - b.deploymentnumber});
-                console.log(`Got ${componentDeployments.length} component deployments for ${project}.`)
-                promise.resolve(componentDeployments);
-            }).fail((err => {
-                promise.reject(err);
-            }));
-        }
-        return componentDeploymentsPromises[project];
+        return Utils.getFileCached(project, 'component_deployments.csv', (list) => {
+            // deploymentnumber,component
+            // 1,"Jirapa Groups"
+            // 1,"Jirapa HH Rotation"
+            // 2,"Jirapa Groups"
+            // 2,"NOYED-GHANA"
+            // ...
+            let componentDeployments = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
+            componentDeployments = componentDeployments.map((d) => {
+                d.deploymentnumber = 1 * d.deploymentnumber;
+                return d;
+            }).sort((a,b)=>{return a.deploymentnumber - b.deploymentnumber});
+            console.log(`Got ${componentDeployments.length} component deployments for ${project}.`)
+            return componentDeployments;
+        });
     }
 
     function getComponentsForProjectAndDeployment(project, deploymentnumber) {
@@ -118,8 +61,8 @@ let InstallationData = function () {
 
     /**
      * Gets information about a deployment for a project
-     * @param project
-     * @param deployment
+     * @param project The desired project
+     * @param deploymentnumber The desired deploymentnumber
      * @returns {*}
      */
     function getDeploymentInfo(project, deploymentnumber) {
@@ -148,35 +91,25 @@ let InstallationData = function () {
         return promise;
     }
 
-    let recipientPromises = {};
-
     function getRecipientsForProject(project) {
-        if (!recipientPromises[project]) {
-            recipientPromises[project] = $.Deferred();
-
-            let path = pathForProject(project) + project + '-recipients.csv';
-            $.get(path).done((list) => {
-                // recipients: [ {recipientid, project, partner, communityname, groupname, affiliate, component, country,
-                //                  region, district, num_HHs, num_TBs, supportentity, model, languagecode, coordinates} ]
-                // LBG,UNICEF,Jirapa HH Rotation,Ghana,Upper West,Jirapa,Goziel,,Goziel,105,27,,Robert Yaw,HHR,dga
-                // LBG,UNICEF,Jirapa Groups,Ghana,Upper West,Jirapa,Ul-Tuopare,Songbaala ,Songbaala Ul-Tuopare,,2,B-00060266,Bosore Gilbert,Group Rotation,dga
-                // ...
-                let recipients = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
-                // Convert number fields to actual numbers.
-                recipients = recipients.map((r) => {
-                    r.num_HHs = 1 * r.numhouseholds;
-                    r.num_TBs = 1 * r.numtbs;
-                    r.languagecode = r.languagecode || r.language;
-                    delete r.language;
-                    return r;
-                });
-                console.log(`Got ${recipients.length} recipients for ${project}.`)
-                recipientPromises[project].resolve(recipients);
-            }).fail((err) => {
-                recipientPromises[project].reject(err);
+        return Utils.getFileCached(project, 'recipients.csv', (list) => {
+            // recipients: [ {recipientid, project, partner, communityname, groupname, affiliate, component, country,
+            //                  region, district, num_HHs, num_TBs, supportentity, model, languagecode, coordinates} ]
+            // LBG,UNICEF,Jirapa HH Rotation,Ghana,Upper West,Jirapa,Goziel,,Goziel,105,27,,Robert Yaw,HHR,dga
+            // LBG,UNICEF,Jirapa Groups,Ghana,Upper West,Jirapa,Ul-Tuopare,Songbaala ,Songbaala Ul-Tuopare,,2,B-00060266,Bosore Gilbert,Group Rotation,dga
+            // ...
+            let recipients = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
+            // Convert number fields to actual numbers.
+            recipients = recipients.map((r) => {
+                r.num_HHs = 1 * r.numhouseholds;
+                r.num_TBs = 1 * r.numtbs;
+                r.languagecode = r.languagecode || r.language;
+                delete r.language;
+                return r;
             });
-        }
-        return recipientPromises[project];
+            console.log(`Got ${recipients.length} recipients for ${project}.`)
+            return recipients;
+        });
     }
 
     /**
@@ -214,7 +147,7 @@ let InstallationData = function () {
         if (!tbsDeployedPromises[project]) {
             tbsDeployedPromises[project] = $.Deferred();
 
-            let path = pathForProject(project) + project + '-tbsdeployed.csv';
+            let path = Utils.pathForFile(project, 'tbsdeployed.csv');
             let tbsDeployed = $.get(path);
             $.when(tbsDeployed, ProjectDetailsData.getProjectDeploymentNames(project)).done((tbList, deploymentNamesList) => {
                 let deploymentNamesMap = {};
