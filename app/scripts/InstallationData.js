@@ -4,6 +4,8 @@
 let InstallationData = function () {
     'use strict';
 
+    let csvTrue = /^(t|true|y|yes|1)$/i;
+
     function Set(values) {
         let set = {}
         values.forEach( v => set[v]=true );
@@ -23,8 +25,8 @@ let InstallationData = function () {
             let tbsdeployed = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
             tbsdeployed = tbsdeployed.map((d) => {
                 d.deployedtimestamp = moment(d.deployedtimestamp);
-                d.newsn = d.newsn==='t';
-                d.testing = d.testing==='t'
+                d.newsn = csvTrue.test(d.newsn);
+                d.testing = csvTrue.test(d.testing)
                 return d;
             });
             return tbsdeployed;
@@ -101,8 +103,8 @@ let InstallationData = function () {
             let recipients = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
             // Convert number fields to actual numbers.
             recipients = recipients.map((r) => {
-                r.num_HHs = 1 * r.numhouseholds;
-                r.num_TBs = 1 * r.numtbs;
+                r.num_HHs = Number(r.numhouseholds);
+                r.num_TBs = Number(r.numtbs);
                 r.languagecode = r.languagecode || r.language;
                 delete r.language;
                 return r;
@@ -168,6 +170,8 @@ let InstallationData = function () {
                         d.deploymentnumber = deploymentNamesMap[d.deployment];
                     }
                     d.tbcdid = (d.tbcdid||'').toLowerCase();
+                    d.newsn = csvTrue.test(d.newsn);
+                    d.testing = csvTrue.test(d.testing);
                     return d;
                 });
                 console.log(`Got ${tbDeployments.length} tbs deployed for ${project}.`)
@@ -213,9 +217,10 @@ let InstallationData = function () {
      *
      * @param project
      * @param deploymentnumber
+     * @param includeTestInstalls If true, also include test installations.
      * @returns {*}
      */
-    function getInstallationStatusForDeployment(project, deploymentnumber) {
+    function getInstallationStatusForDeployment(project, deploymentnumber, includeTestInstalls) {
         const sameInMostGroupsOfACommunity = ['program', 'country', 'region', 'district', 'supportentity', 'model', 'languagecode'];
         let promise = $.Deferred();
         $.when(getRecipientsForProjectAndDeployment(project, deploymentnumber),
@@ -229,6 +234,7 @@ let InstallationData = function () {
             // Copy the data before modifying it, to avoid polluting the source.
             recipients = $.extend(true, [], recipients)
             tbsDeployed = $.extend(true, [], tbsDeployed)
+            tbsDeployed = tbsDeployed.filter(elem => !elem.testing || includeTestInstalls );
 
 
             // From the array of tbsDeployed, create talking books per recipient:
@@ -270,9 +276,15 @@ let InstallationData = function () {
                 let installedThisRecipient = installedPerRecipient[recipient.recipientid];
                 recipient.num_TBsInstalled = (installedThisRecipient && Object.keys(installedThisRecipient).length) || 0;
                 recipient.tbsInstalled = {};
+                if (includeTestInstalls) {
+                    recipient.num_TBTestsInstalled = 0;
+                }
                 if (installedThisRecipient) {
                     let days = 0;
                     Object.keys(installedThisRecipient).forEach((talkingbookid) => {
+                        if (includeTestInstalls && installedThisRecipient[talkingbookid].testing) {
+                            recipient.num_TBTestsInstalled += 1;
+                        }
                         let tbInstalledTimestamp = installedThisRecipient[talkingbookid].deployedtimestamp;
                         let tbDaysToInstall = tbInstalledTimestamp.diff(deploymentInfo.startdate, 'days');
                         let username = installedThisRecipient[talkingbookid].username;
@@ -300,6 +312,9 @@ let InstallationData = function () {
                     community.num_HHs += recip.num_HHs;
                     community.num_TBs += recip.num_TBs;
                     community.num_TBsInstalled += recip.num_TBsInstalled;
+                    if (includeTestInstalls) {
+                        community.num_TBTestsInstalled += recip.num_TBTestsInstalled;
+                    }
                     // Common properties are almost always the same for all groups in a community. But that's not a hard requirement,
                     // so if they are different, include them only in the group details.
                     sameInMostGroupsOfACommunity.forEach((p) => {if (community[p] !== recip[p]) {community[p] = ''} });

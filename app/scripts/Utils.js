@@ -7,7 +7,7 @@
 
 var Utils = Utils || {};
 
-Utils = (function() {
+Utils = (function () {
     'use strict';
 
 
@@ -28,6 +28,7 @@ Utils = (function() {
     function pathForProject(project) {
         return statsPath() + project + '/';
     }
+
     function pathForFile(project, file) {
         let result = pathForProject(project);
         result += file;
@@ -69,12 +70,22 @@ Utils = (function() {
 
     return {
         formatDate: function formatDate(date, def) {
-            if (!(date instanceof moment)) { date=moment(date) }
+            if (!(date instanceof moment)) { date = moment(date) }
             if (!date.isValid() && def) {
                 return def;
             }
             return date.format('YYYY-MM-DD');
         },
+        formatNumber: function formatNumber(number, defaultValue) {
+            if (number === 0) {
+                return defaultValue !== undefined ? defaultValue : '';
+            }
+            if (number === null || number === undefined || isNaN(number)) {
+                return defaultValue !== undefined ? defaultValue : 'n/a';
+            }
+            return Number(Math.round(number)).toLocaleString();
+        },
+
 
         pathForFile: pathForFile,
         getFileCached: getFileCached

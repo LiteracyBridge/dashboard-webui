@@ -41,17 +41,6 @@ InstallationDetailPage = (function () {
         var projectsDropdown = DropdownButton.create($projectsDropdown, {title: 'Project'});
         projectsDropdown.update(options.projects, {default: options.defaultProject});
     }
-
-    function NUMBER_NOTZERO(number) {
-        if (number === 0) {
-            return '';
-        }
-        if (number === null || number === undefined || isNaN(number)) {
-            return 'n/a';
-        }
-        return Number(Math.round(number)).toLocaleString();
-    }
-
     /**
      * Shows tbsdeployed for some timeframe.
      * @param tbsDeployed Array of data to display.
@@ -61,7 +50,7 @@ InstallationDetailPage = (function () {
 
         let options = {
             columns: ['talkingbookid', 'component', 'communityname', 'groupname', 'deployedtimestamp', 'deployment', 'contentpackage',
-                'location', 'username', 'tbcdid'],
+                'location', 'username', 'tbcdid', 'testing'],
             headings: {
                 talkingbookid: 'Talking Book',
                 component: 'Component',
@@ -85,13 +74,14 @@ InstallationDetailPage = (function () {
                 component: (row)=>{let recip=row&&row.recipientid&&recipientMap[row.recipientid]; return recip&&recip.component;},
                 communityname: (row)=>{let recip=row&&row.recipientid&&recipientMap[row.recipientid]; return recip&&recip.communityname;},
                 groupname: (row)=>{let recip=row&&row.recipientid&&recipientMap[row.recipientid]; return recip&&recip.groupname;},
-                deployedtimestamp: (row, row_ix, cell)=>{return cell.format('Y-MM-DD HH:mma')}
+                deployedtimestamp: (row, row_ix, cell)=>{return cell.format('Y-MM-DD HH:mma')},
+                testing: (row, row_ix, cell)=>cell?'Yes':'No'
             },
             datatable: {colReorder: true,
                 searching: true,
                 //scroller: true,
                 deferRender: true,
-                paging:true, lengthMenu: [[25, 50, 100, -1], [25, 50, 100, 'All']]
+                paging:true, lengthMenu: [[100, 500, -1], [100, 500, 'All']]
             }
         };
 

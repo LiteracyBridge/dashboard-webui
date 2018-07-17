@@ -61,14 +61,6 @@ ProjectDetailsPage = function () {
         }
         return str;
     }
-
-    function NUMBER(number) {
-        if (number === null || number === undefined || isNaN(number)) {
-            return 'n/a';
-        }
-        return Number(Math.round(number)).toLocaleString();
-    }
-
     function MINUTES(number) {
         let fractions = ['', ' &frac14;', ' &frac12;', ' &frac34;'];
         if (number === null || number === undefined || isNaN(number)) {
@@ -142,7 +134,7 @@ ProjectDetailsPage = function () {
                     return MINUTES(row.duration_minutes)
                 },
                 completions: (row) => {
-                    return NUMBER(row.completions / Math.max(1, row.num_package_tbs))
+                    return Utils.formatNumber(row.completions / Math.max(1, row.num_package_tbs))
                 }
             },
             datatable: {colReorder: true}
@@ -309,7 +301,7 @@ ProjectDetailsPage = function () {
                     return `<p>${MINUTES(row.played_minutes / Math.max(1, row.pkg_tbs))} per TB</p>`
                 },
                 completed: (row, ix) => {
-                    return `<p>${NUMBER(row.completions / Math.max(1, row.pkg_tbs))} times per TB</p>`
+                    return `<p>${Utils.formatNumber(row.completions / Math.max(1, row.pkg_tbs))} times per TB</p>`
                 }
             },
             datatable: {colReorder: true}
@@ -375,10 +367,10 @@ ProjectDetailsPage = function () {
                     }
                     if (prod) {
                         var l = (prod.num_languages > 1) ? 'languages' : 'language';
-                        cell += `<p><span class="stat">${NUMBER(prod.num_messages)}</span> Messages in
-                            <span class="stat">${NUMBER(prod.num_languages)}</span> ${l}</p>
+                        cell += `<p><span class="stat">${Utils.formatNumber(prod.num_messages)}</span> Messages in
+                            <span class="stat">${Utils.formatNumber(prod.num_languages)}</span> ${l}</p>
                             <p><span class="stat">${MINUTES(prod.duration_minutes)}</span> of Messaging</p>`
-                        // `<p><span class="stat">${NUMBER(prod.num_categories)}</span> Categories</p>`
+                        // `<p><span class="stat">${Utils.formatNumber(prod.num_categories)}</span> Categories</p>`
                     } else {
                         cell += '<p class="stat">Production information unavailable.</p>'
                     }
@@ -388,14 +380,14 @@ ProjectDetailsPage = function () {
                     var cell;
 
                     if (tbsDeployed) {
-                        cell = `<p>Deployed to <span class="stat">${NUMBER(tbsDeployed.num_tbs)}</span> Talking Books.</p>`;
+                        cell = `<p>Deployed to <span class="stat">${Utils.formatNumber(tbsDeployed.num_tbs)}</span> Talking Books.</p>`;
                     } else if (depl) {
-                        cell = `<p>Deployed to <span class="stat">${NUMBER(depl.deployed_tbs)}</span> Talking Books.</p>`
+                        cell = `<p>Deployed to <span class="stat">${Utils.formatNumber(depl.deployed_tbs)}</span> Talking Books.</p>`
                     } else {
                         cell = '<p class="stat">Deployment information unavailable.</p>';
                     }
                     if (usage) {
-                        cell += `<p>Statistics from <span class="stat">${NUMBER(usage.num_tbs)}</span> Talking Books.</p>`;
+                        cell += `<p>Statistics from <span class="stat">${Utils.formatNumber(usage.num_tbs)}</span> Talking Books.</p>`;
                     } else {
                         cell += '<p> class="stat">Usage information unavailable.</p>';
                     }
@@ -407,7 +399,7 @@ ProjectDetailsPage = function () {
                     if (usage) {
                         cell = `<p><span class="stat">${MINUTES(usage.played_minutes)}</span> listened</p>`
                         if (usage.num_tbs > 0) {
-                            cell += `<p><span class="stat">${NUMBER(usage.num_tbs)}</span> Talking Books reporting statistics</p>`
+                            cell += `<p><span class="stat">${Utils.formatNumber(usage.num_tbs)}</span> Talking Books reporting statistics</p>`
                             cell += `<p>Each TB listened an average of <span class="stat">${MINUTES(usage.played_minutes / usage.num_tbs)}</span></p>`;
                         }
                     } else {
@@ -421,12 +413,12 @@ ProjectDetailsPage = function () {
                         if (prod.num_languages > 1) {
                             languagecode = ` (${mostCompletions.languagecode}) `;
                         }
-                        var cell = `<p><span class="stat">${NUMBER(usage.num_completions)}</span> # times messages were listened to completion</p>
+                        var cell = `<p><span class="stat">${Utils.formatNumber(usage.num_completions)}</span> # times messages were listened to completion</p>
                             <p>Messages in the <span class="stat">${MINUTES(mostPlayed.duration_minutes)}</span> deployed for category
                                 <span class="stat">"${mostPlayed.category}"</span> were played for a total of
                                 <span class="stat">${MINUTES(mostPlayed.played_minutes)}</span>.</p>
                             <p>Message <span class="stat">"${mostCompletions.title}"</span>${languagecode} was played to completion
-                                <span class="stat">${NUMBER(mostCompletions.completions)}</span> times.</p>
+                                <span class="stat">${Utils.formatNumber(mostCompletions.completions)}</span> times.</p>
 
               `;
                         return cell;

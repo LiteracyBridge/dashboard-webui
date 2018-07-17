@@ -123,17 +123,6 @@ InstallationPage = (function () {
         ProjectPicker.add('#installation-progress-project-placeholder', options);
 
     }
-
-    function NUMBER_NOTZERO(number, defaultValue) {
-        if (number === 0) {
-            return defaultValue!==undefined ? defaultValue : '';
-        }
-        if (number === null || number === undefined || isNaN(number)) {
-            return defaultValue!==undefined ? defaultValue : 'n/a';
-        }
-        return Number(Math.round(number)).toLocaleString();
-    }
-
     var progressChart;
     var progressConfig = {
         type: 'scatter',
@@ -348,6 +337,23 @@ InstallationPage = (function () {
     }
 
 
+    /**
+     * Builds the per-community details of the installation.
+     * @param communities
+     *
+     * Array of objects [ {affiliate: "LBG", communityname: "Didogi", component: "NOYED-GHANA", coordinates: "",
+     *                      country: "Ghana", daystoinstall: 34, district: "Karaga", groupname: "", groups: [] (0),
+     *                      languagecode: "dag", model: "HHR", numGroups: 0, num_HHs: 54, num_TBs: 14,
+     *                      num_TBsInstalled: 14, numhouseholds: "54", numtbs: "14", partner: "UNICEF",
+     *                      project: "UNICEF-2", recipientid: "b66ea8356142", region: "Northern", supportentity: "",
+     *                      tbsInstalled: {
+     *                           B-0011041A: {daystoinstall: 34, deployedtimestamp: Moment, tbcdid: "0006", tbid: "0006",
+     *                                        username: "literacybridge\\Tb"},
+     *                              . . . }
+     *                     }, . . .
+     *                   ]
+     * @param tbsDeployed
+     */
     function installationDetails(communities, tbsDeployed) {
         // tbsDeployed: [ {talkingbookid,deployedtimestamp,project,deployment,contentpackage,community,firmware,location,coordinates,username,tbcdid,action,newsn,testing} ]
         // aggregatedRecipients: [ {affiliate,partner,program,country,region,district,community,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,languagecode,
@@ -374,7 +380,8 @@ InstallationPage = (function () {
                 supportentity: 'Support Entity',
                 model: 'Model',
                 installer: 'Updated By',
-                tbid: 'TB-Loader ID'
+                tbid: 'TB-Loader ID',
+                num_TBTestsInstalled: '# Test Installs'
             },
             headingClasses: {
                 detailsControl: 'sorting-disabled'
@@ -389,18 +396,25 @@ InstallationPage = (function () {
                 num_TBsInstalled: 'The number of Talking Books reported to have been installed.',
                 daystoinstall: 'The average number of days before the Talking Books were installed with the Deployment.',
                 installer: 'Who installed the content onto the Talking Books.',
-                tbid: 'TB-Loader ID of the laptop/phone that performed the update of the Talking Books.'
+                tbid: 'TB-Loader ID of the laptop/phone that performed the update of the Talking Books.',
+                num_TBTestsInstalled: 'Number of installations to this community / group for which the installer checked ' +
+                    '"Only testing the deployment"'
             },
             formatters: {
                 detailsControl: row=>' ',
-                num_HHs: row=>NUMBER_NOTZERO(row.num_HHs),
-                num_TBs: row=>NUMBER_NOTZERO(row.num_TBs),
-                num_TBsInstalled: row=>NUMBER_NOTZERO(row.num_TBsInstalled, 0),
+                num_HHs: row=>Utils.formatNumber(row.num_HHs),
+                num_TBs: row=>Utils.formatNumber(row.num_TBs),
+                num_TBsInstalled: row=>Utils.formatNumber(row.num_TBsInstalled, 0),
                 percentinstalled: row=>row.num_TBs?Math.round(row.num_TBsInstalled/row.num_TBs*100, 0):'n/a',
                 model: row=>row.model==='Group Rotation'?'Group':row.model,
+                num_TBTestsInstalled: (row, row_ix, cell)=>Utils.formatNumber(cell)
             },
             datatable: {/*colReorder:{fixedColumnsLeft:1},*/ columnDefs:[{orderable: false, targets: 0}]}
         };
+
+        if (includeTestInstalls) {
+            options.columns.push('num_TBTestsInstalled');
+        }
 
         /**
          * Given a recipient, look at the 'tbsInstalled', and gather all the 'username' fields. If the recipient
@@ -452,6 +466,9 @@ InstallationPage = (function () {
                 // Columns for a group, with spacers, so it lines up with the main table.
                 let member_columns = ['spacer', 'spacer', 'groupname', 'num_HHs', 'num_TBs', 'num_TBsInstalled',
                     'percentinstalled', 'daystoinstall', 'supportentity', 'model', 'languagecode', 'installer', 'tbid'];
+                if (includeTestInstalls) {
+                    member_columns.push('num_TBTestsInstalled');
+                }
                 // Support entity, model, languagecode: don't repeat what's at the community level, unless it's different.
                 let member_formatters = {
                     spacer: row=>' ',
@@ -459,10 +476,11 @@ InstallationPage = (function () {
                     num_TBs: options.formatters.num_TBs,
                     num_TBsInstalled: options.formatters.num_TBsInstalled,
                     percentinstalled: options.formatters.percentinstalled,
-                    daystoinstall: row=>NUMBER_NOTZERO(row.daystoinstall, ''),
+                    daystoinstall: row=>Utils.formatNumber(row.daystoinstall, ''),
                     supportentity: row=>(row.supportentity!==rowData.supportentity)?row.supportentity:'',
                     model: row=>(row.model!==rowData.model)?options.formatters.model(row):'',
-                    languagecode: row=>(row.languagecode!==rowData.languagecode)?row.languagecode:''
+                    languagecode: row=>(row.languagecode!==rowData.languagecode)?row.languagecode:'',
+                    num_TBTestsInstalled: row=>Utils.formatNumber(row.num_TBTestsInstalled)
                 };
                 // Iterate over the groups.
                 rowData.groups.forEach((member)=>{
@@ -502,6 +520,8 @@ InstallationPage = (function () {
         } );
     }
 
+    let includeTestInstalls = false;
+
     function reportProject(project, deployment) {
         Main.incrementWait();
         previousProject = project;
@@ -509,7 +529,8 @@ InstallationPage = (function () {
         localStorage.setItem('installation.project', previousProject);
         localStorage.setItem('installation.deployment', previousDeployment);
 
-        InstallationData.getInstallationStatusForDeployment(project, deployment).done((status)=>{
+        $('#include-test-installs', $PAGE).prop('disabled', true);
+        InstallationData.getInstallationStatusForDeployment(project, deployment, includeTestInstalls).done((status)=>{
             // tbsDeployed: [ {talkingbookid,deployedtimestamp,project,deployment,contentpackage,community,firmware,location,coordinates,username,tbcdid,action,newsn,testing} ]
             // recipients: [ {affiliate,partner,program,country,region,district,community,group_name,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,languagecode} ]
             // community: [ {affiliate,partner,program,country,region,district,community,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,languagecode,
@@ -520,9 +541,14 @@ InstallationPage = (function () {
             installationDetails(status.communities, status.tbsInstalled);
             installationSummary(status);
             Main.decrementWait();
+            $('#include-test-installs', $PAGE).prop('disabled', false);
         }).fail((err)=>{
             Main.decrementWait();
         });
+    }
+
+    function refreshProject() {
+        reportProject(previousProject, previousDeployment);
     }
 
     var initialized = false;
@@ -536,6 +562,12 @@ InstallationPage = (function () {
             fillProjects();
         }
     }
+
+    $('#include-test-installs-row', $PAGE).tooltip();
+    $('#include-test-installs', $PAGE).prop('disabled', true).on('click', () => {
+        includeTestInstalls = $('#include-test-installs', $PAGE).prop('checked');
+        refreshProject();
+    });
 
     // Hook the tab-activated event for this tab.
     $(PAGE_HREF).on('shown.bs.tab', show)
