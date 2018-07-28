@@ -152,9 +152,11 @@ let InstallationData = function () {
             let path = Utils.pathForFile(project, 'tbsdeployed.csv');
             let tbsDeployed = $.get(path);
             $.when(tbsDeployed, ProjectDetailsData.getProjectDeploymentNames(project)).done((tbList, deploymentNamesList) => {
+                // Deployments, sadly, often were given multiple names. Here we have a list of them, separated by ';'
                 let deploymentNamesMap = {};
                 deploymentNamesList.forEach((elem)=> {
-                    deploymentNamesMap[elem.deploymentname] = elem.deploymentnumber;
+                    let nameList = elem.deploymentname.split(';');
+                    nameList.forEach((name)=>{deploymentNamesMap[name] = elem.deploymentnumber});
                 });
                 // The projects list file is a .csv with data like:
                 // tbsDeployed: [ {talkingbookid,deployedtimestamp,project,deployment,contentpackage,community,firmware,location,coordinates,username,tbcdid,action,newsn,testing} ]

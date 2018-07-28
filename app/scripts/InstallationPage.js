@@ -58,6 +58,7 @@ InstallationPage = (function () {
 
     function ratingForRecipient(recipient) {
         function score(numTbs, installed) {
+            if (installed===0) { return 0}
             let pct = installed / numTbs * 100;
             // Handles everything through 100%
             for (let ix=0; ix<RATINGS.boundaries.length; ix++) {
@@ -405,7 +406,7 @@ InstallationPage = (function () {
                 num_HHs: row=>Utils.formatNumber(row.num_HHs),
                 num_TBs: row=>Utils.formatNumber(row.num_TBs),
                 num_TBsInstalled: row=>Utils.formatNumber(row.num_TBsInstalled, 0),
-                percentinstalled: row=>row.num_TBs?Math.round(row.num_TBsInstalled/row.num_TBs*100, 0):'n/a',
+                percentinstalled: row=>row.num_TBs?Math.round(row.num_TBsInstalled/row.num_TBs*100, 0):'no basis',
                 model: row=>row.model==='Group Rotation'?'Group':row.model,
                 num_TBTestsInstalled: (row, row_ix, cell)=>Utils.formatNumber(cell)
             },
