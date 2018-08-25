@@ -57,8 +57,17 @@ Main = (function () {
         return applicationPathPromise;
     }
 
-    let params = new URLSearchParams(location.search.slice(1));
-    //params = new URLSearchParams('offline');
+    let initialParams = new URLSearchParams(location.search.slice(1));
+
+    function setParams(page, values) {
+        let params = new URLSearchParams();
+        Object.keys(values).forEach(k=>params.set(k, values[k]));
+        params.set('q', page);
+        let newUrl = new URL(location);
+        newUrl.search = params;
+        window.history.replaceState({}, '', newUrl);
+    }
+
 
     var waitCount = 0;
     let delayTime = 500;
@@ -125,6 +134,13 @@ Main = (function () {
                         $(this).tab('show')
                     })
                     $('#splash h3').removeClass('invisible');
+
+                    if (initialParams && initialParams.get('q')) {
+                        let tab = initialParams.get('q');
+                        if (tab) {
+                            $('#main-nav a[href="#' +tab+ '"]').tab('show');
+                        }
+                    }
                 });
         });
 
@@ -174,8 +190,9 @@ Main = (function () {
     return {
         getRootPath: ()=>{return ROOT_PATH},
 
-        getParam: (param)=>{return params.get(param)},
-        hasParam: (param)=>{return params.has(param)},
+        hasParam: ()=>false,
+        getParams: ()=>{let r=initialParams; initialParams=undefined; return r},
+        setParams: setParams,
 
         incrementWait: incrementWait,
         decrementWait: decrementWait,

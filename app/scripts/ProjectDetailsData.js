@@ -219,6 +219,8 @@ ProjectDetailsData = function () {
             // data is a hash of arrays. Need to look in each member for desired deployment.
             var result = {}
             // Look for the desired deployment or deploymentnumber. Note that the double = is intentional.
+
+            // These are looking for ONE item, thus 'find'.
             result.deploymentData = data.deploymentData.find((el) => {
                 return (el.deployment == deployment || el.deploymentnumber == deployment) // jshint ignore:line
             });
@@ -231,6 +233,8 @@ ProjectDetailsData = function () {
             result.usageData = data.usageData.find((el) => {
                 return (el.deployment == deployment || el.deploymentnumber == deployment) // jshint ignore:line
             });
+
+            // These are looking for multiple items, thus 'filter'
             result.categoryData = data.categoryData.filter((el) => {
                 return (el.deployment == deployment || el.deploymentnumber == deployment) // jshint ignore:line
             });

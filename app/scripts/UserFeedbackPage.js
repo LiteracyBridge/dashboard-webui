@@ -2,12 +2,16 @@
  * Created by bill on 3/2/17.
  */
 /* jshint undef:true, esversion:6, asi:true */
-/* globals console, $, UserFeedbackData, Chart, ProjectPicker, ProjectDetailsData, chroma */
+/* globals console, $, Main, UserFeedbackData, Chart, ProjectPicker, ProjectDetailsData, chroma */
 
 var UserFeedbackPage = UserFeedbackPage || {};
 
 UserFeedbackPage = (function () {
     'use strict';
+    let PAGE_ID = 'userfeedback-page';
+    let PAGE_HREF = 'a[href="#' + PAGE_ID + '"]';
+    let $PAGE = $('#' + PAGE_ID);
+
     var cb_diverging = ['#543005', '#8c510a', '#bf812d', '#dfc27d', '#f6e8c3', '#c7eae5', '#80cdc1', '#35978f', '#01665e', '#003c30']
     var cb_qualitative_x = ['#a6cee3', '#1f78b4', '#b2df8a', '#33a02c', '#fb9a99', '#e31a1c', '#fdbf6f', '#ff7f00', '#cab2d6', '#6a3d9a']
     var cb_sequential = ['#ffffd9', '#edf8b1', '#c7e9b4', '#7fcdbb', '#41b6c4', '#1d91c0', '#225ea8', '#253494', '#081d58']
@@ -22,9 +26,12 @@ UserFeedbackPage = (function () {
     var cb_diverging_8 = ['#b2182b','#d6604d','#f4a582','#fddbc7','#d1e5f0','#92c5de','#4393c3','#2166ac'];
 
     var previousProject, previousDeployment;
+    let previousAcmName = '';
     var projectsListPromise;
 
     var projectsFilled = false;
+
+    let $withUncategorized = $('#feedback-with-uncategorized');
 
     function fillProjects() {
         if (!projectsListPromise) {
@@ -434,8 +441,6 @@ UserFeedbackPage = (function () {
         $('#breakdown-date').text('No Data');
     }
 
-    var initialized = '';
-
     function plotAll(withUncategorized, acmName) {
         let durationsPromise = UserFeedbackData.getDurations(acmName);
 
@@ -473,37 +478,64 @@ UserFeedbackPage = (function () {
 
 
     function reportFeedback(project, deployment, acmName) {
-        if (initialized === acmName) {
+        if (previousAcmName === acmName) {
             return;
         }
-        initialized = acmName;
-        previousProject = project;
-        previousDeployment = deployment;
-        localStorage.setItem('userfeedback.project', previousProject);
-        localStorage.setItem('userfeedback.deployment', previousDeployment);
+        previousAcmName = acmName;
 
         UserFeedbackData.getProjectName(acmName).done(data => {
             $('#project-name').text(data);
         });
 
-        let $withUncategorized = $('#feedback-with-uncategorized');
         $withUncategorized.on('click', () => {
             plotAll($withUncategorized.prop('checked'), acmName);
+            persistState();
         });
         plotAll($withUncategorized.prop('checked'), acmName);
+
+        previousProject = project;
+        previousDeployment = deployment;
+        persistState();
     }
 
+    function persistState() {
+        if (previousProject && previousDeployment) {
+            localStorage.setItem('userfeedback.project', previousProject);
+            localStorage.setItem('userfeedback.deployment', previousDeployment);
+            Main.setParams(PAGE_ID, {p: previousProject, d: previousDeployment, u: $withUncategorized.prop('checked')});
+        }
+    }
+    function restoreState() {
+        let params = Main.getParams();
+        if (params) {
+            previousProject = params.get('p') || '';
+            previousDeployment = params.get('d') || '';
+            let valStr = params.get('u');
+            let val = false;
+            try { val = JSON.parse(valStr); } catch(x) {}
+            let withUncategorized = val;
+            $withUncategorized.prop('checked', withUncategorized);
+        } else {
+            previousProject = localStorage.getItem('userfeedback.project') || '';
+            previousDeployment = localStorage.getItem('userfeedback.deployment') || '';
+        }
+    }
+
+    let initialized = false;
     function init() {
-        fillProjects();
+        if (!initialized) {
+            initialized = true;
+            restoreState();
+            fillProjects();
+        } else {
+            persistState();
+        }
     }
-
-    previousProject = localStorage.getItem('userfeedback.project') || '';
-    previousDeployment = localStorage.getItem('userfeedback.deployment') || '';
 
     // Hook the tab-activated/deactivated events for this tab.
     // $('a[href="#userfeedback-page"]').on('hidden.bs.tab', function (e) {
     // })
-    $('a[href="#userfeedback-page"]').on('shown.bs.tab', init)
+    $(PAGE_HREF).on('shown.bs.tab', init)
 
     return {};
 })();

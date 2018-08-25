@@ -120,7 +120,7 @@ DropdownButton = (function () {
                 }
                 let datatooltip = tooltip ? `data-tooltip="${tooltip}"` : '';
                 let titletooltip = tooltip ? `title="${tooltip}"` : '';
-                let $li = $(`<li ${titletooltip}><a class="main-nav" href="#select-item" ${datatooltip} data-value="${value}">${label}</a></li>`);
+                let $li = $(`<li ${titletooltip}><a class="main-nav" ${datatooltip} data-value="${value}">${label}</a></li>`);
                 $('ul', $elem).append($li);
                 if (tooltip) {
                     $li.tooltip();
@@ -132,7 +132,7 @@ DropdownButton = (function () {
                 }
             });
             // When an item is clicked: update the title, fire the event
-            $('a[href="#select-item"]', $elem).on('click', (it) => {
+            $('a', $elem).on('click', (it) => {
                 let value = $(it.target).data('value');
                 let tooltip = $(it.target).data('tooltip');
                 let label = $(it.target).text();

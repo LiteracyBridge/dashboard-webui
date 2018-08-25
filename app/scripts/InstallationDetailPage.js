@@ -252,7 +252,7 @@ InstallationDetailPage = (function () {
             month = Object.keys(dailiesList[year]).sort().pop();
         }
         if (month) {
-            day = dailiesList[year][month].slice(-1).pop(); // sort to get an array it is safe to mutate.
+            day = dailiesList[year][month].slice(-1).pop(); // sort to get an array that is safe to mutate.
         }
         onProjectDetailsChosen();
     }
@@ -263,8 +263,6 @@ InstallationDetailPage = (function () {
      */
     function projectSelected(project) {
         Main.incrementWait();
-        previousProject = project;
-        localStorage.setItem('installation.detail.project', previousProject);
 
         let recipientsPromise = InstallationData.getRecipientsForProject(project);
         let dailiesPromise = InstallationData.getTbDailiesListForProject(project);
@@ -276,18 +274,37 @@ InstallationDetailPage = (function () {
             Main.decrementWait();
             fillDailiesList(project, dailiesList);
 
+            previousProject = project;
+            persistState();
         }).fail((err)=>{
             Main.decrementWait();
         });
+
+    }
+
+    function persistState() {
+        if (previousProject) {
+            localStorage.setItem('installation.detail.project', previousProject);
+            Main.setParams(PAGE_ID, {p: previousProject});
+        }
+    }
+    function restoreState() {
+        let params = Main.getParams();
+        if (params) {
+            previousProject = params.get('p') || '';
+        } else {
+            previousProject = localStorage.getItem('installation.detail.project') || '';
+        }
     }
 
     var initialized = false;
-
     function show() {
         if (!initialized) {
             initialized = true;
-            previousProject = localStorage.getItem('installation.detail.project') || '';
+            restoreState();
             fillProjects();
+        } else {
+            persistState();
         }
     }
 

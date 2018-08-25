@@ -124,6 +124,8 @@ InstallationPage = (function () {
         ProjectPicker.add('#installation-progress-project-placeholder', options);
 
     }
+
+
     var progressChart;
     var progressConfig = {
         type: 'scatter',
@@ -189,11 +191,12 @@ InstallationPage = (function () {
             }
         }
     };
+
     function installationSummary(status) {
         let $summary = $('#installation-progress-summary');
         let basis = status.summary.num_TBs;
         if (!basis) {
-            basis = status.tbsInstalled.length;
+            basis = status.tbsInstalled && status.tbsInstalled.length || 1;
             $summary.removeClass('has-tb-count');
         } else {
             $summary.addClass('has-tb-count');
@@ -262,7 +265,20 @@ InstallationPage = (function () {
         let start = status.deploymentInfo.startdate.clone();
         let dailyInstalls = [];
         let span = status.deploymentInfo.enddate.diff(start, 'days');
-        status.tbsInstalled.forEach((oneTbInstallation, ix) => {
+        let tbsInstalled = [];
+        status.communities.forEach(community => {
+            if (community.tbsInstalled) {
+                let tbs = Object.keys(community.tbsInstalled).map(talkingbookid=>community.tbsInstalled[talkingbookid]);
+                tbsInstalled = tbsInstalled.concat(tbs);
+            }
+            if (community.groups) {
+                community.groups.forEach(group => {
+                    let tbs = Object.keys(group.tbsInstalled).map(talkingbookid=>group.tbsInstalled[talkingbookid]);
+                    tbsInstalled = tbsInstalled.concat(tbs)
+                });
+            }
+        });
+        tbsInstalled.forEach((oneTbInstallation, ix) => {
             if (oneTbInstallation.deployedtimestamp.isBefore(earliest)) { earliest = oneTbInstallation.deployedtimestamp}
             if (oneTbInstallation.deployedtimestamp.isAfter(latest)) { latest = oneTbInstallation.deployedtimestamp}
 
@@ -336,6 +352,38 @@ InstallationPage = (function () {
         // Update summary with deployment ranges.
 
     }
+    /**
+     * Given a recipient, look at the 'tbsInstalled', and gather all the 'username' fields. If the recipient
+     * has groups, gather their username's as well.
+     * @param Either a 'community' row, with an array of recipients, or a 'recipent' row,
+     *        with a dictionary of installations.
+     * @return Object with a field per username.
+     */
+    function addInstallerInfo(recipient) {
+        let distinctUsernames = {};
+        let distinctTbids = {};
+        if (recipient.numGroups) {
+            recipient.groups.forEach((groupMember)=>{
+                let groupInfo = addInstallerInfo(groupMember);
+                $.extend(distinctUsernames, groupInfo.usernames);
+                $.extend(distinctTbids, groupInfo.tbids);
+            });
+        } else {
+            Object.keys(recipient.tbsInstalled).forEach( (tb) =>  {
+                let username = recipient.tbsInstalled[tb].username;
+                if (username && !distinctUsernames.hasOwnProperty(username) && username.toUpperCase() !== 'UNKNOWN') {
+                    distinctUsernames[username] = 1
+                }
+                let tbid = recipient.tbsInstalled[tb].tbid;
+                if (tbid && !distinctUsernames.hasOwnProperty(tbid)) {
+                    distinctTbids[tbid] = 1
+                }
+            });
+        }
+        recipient.installer = Object.keys(distinctUsernames).join(', ');
+        recipient.tbid = Object.keys(distinctTbids).join(', ');
+        return {usernames: distinctUsernames, tbids: distinctTbids};
+    }
 
 
     /**
@@ -353,10 +401,8 @@ InstallationPage = (function () {
      *                              . . . }
      *                     }, . . .
      *                   ]
-     * @param tbsDeployed
      */
-    function installationDetails(communities, tbsDeployed) {
-        // tbsDeployed: [ {talkingbookid,deployedtimestamp,project,deployment,contentpackage,community,firmware,location,coordinates,username,tbcdid,action,newsn,testing} ]
+    function installationDetails(communities) {
         // aggregatedRecipients: [ {affiliate,partner,program,country,region,district,community,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,languagecode,
         //      [ groups: [ {affiliate,partner,program,country,region,district,community,group_name,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,languagecode} ],
         //      numGroups
@@ -417,38 +463,6 @@ InstallationPage = (function () {
             options.columns.push('num_TBTestsInstalled');
         }
 
-        /**
-         * Given a recipient, look at the 'tbsInstalled', and gather all the 'username' fields. If the recipient
-         * has groups, gather their username's as well.
-         * @param Either a 'community' row, with an array of recipients, or a 'recipent' row,
-         *        with a dictionary of installations.
-         * @return Object with a field per username.
-         */
-        function addInstallerInfo(recipient) {
-            let distinctUsernames = {};
-            let distinctTbids = {};
-            if (recipient.numGroups) {
-                recipient.groups.forEach((groupMember)=>{
-                    let groupInfo = addInstallerInfo(groupMember);
-                    $.extend(distinctUsernames, groupInfo.usernames);
-                    $.extend(distinctTbids, groupInfo.tbids);
-                });
-            } else {
-                Object.keys(recipient.tbsInstalled).forEach( (tb) =>  {
-                    let username = recipient.tbsInstalled[tb].username;
-                    if (username && !distinctUsernames.hasOwnProperty(username) && username.toUpperCase() !== 'UNKNOWN') {
-                        distinctUsernames[username] = 1
-                    }
-                    let tbid = recipient.tbsInstalled[tb].tbid;
-                    if (tbid && !distinctUsernames.hasOwnProperty(tbid)) {
-                        distinctTbids[tbid] = 1
-                    }
-                });
-            }
-            recipient.installer = Object.keys(distinctUsernames).join(', ');
-            recipient.tbid = Object.keys(distinctTbids).join(', ');
-            return {usernames: distinctUsernames, tbids: distinctTbids};
-        }
 
         // Add an installer field, from the individual talking book 'username' fields.
         communities.forEach(addInstallerInfo);
@@ -521,17 +535,71 @@ InstallationPage = (function () {
         } );
     }
 
+    function extraneousRecipientDetails(status) {
+        if (status.extraneousRecipients.length === 0) {
+            $('#installation-progress-extraneous').hide();
+            $('#installation-progress-extraneous-detail').hide();
+            return;
+        }
+
+        let numExtraneousDeployments = status.extraneousRecipients
+            .reduce( (accum, recip) => {
+                return accum + Object.keys(recip.tbsInstalled).length
+            }, 0);
+        $('#installation-progress-extraneous-deployments').text(numExtraneousDeployments);
+        $('#installation-progress-extraneous-recipients').text(status.extraneousRecipients.length);
+        $('#installation-progress-extraneous').show();
+        $('#installation-progress-extraneous-detail').show();
+
+        let options = {
+            columns: ['communityname', 'num_TBsInstalled', 'daystoinstall', 'supportentity', 'installer', 'tbid'],
+            headings: {
+                communityname: 'Community / Group<',
+                num_TBsInstalled: '# Installed',
+                daystoinstall: 'Days To Install',
+                supportentity: 'Support Entity',
+                installer: 'Updated By',
+                tbid: 'TB-Loader ID',
+                num_TBTestsInstalled: '# Test Installs'
+            },
+            headingClasses: {
+                detailsControl: 'sorting-disabled'
+            },
+            tooltips: {
+                num_TBsInstalled: 'The number of Talking Books reported to have been installed.',
+                daystoinstall: 'The average number of days before the Talking Books were installed with the Deployment.',
+                installer: 'Who installed the content onto the Talking Books.',
+                tbid: 'TB-Loader ID of the laptop/phone that performed the update of the Talking Books.',
+                num_TBTestsInstalled: 'Number of installations to this community / group for which the installer checked ' +
+                    '"Only testing the deployment"'
+            },
+            formatters: {
+                num_TBsInstalled: row=>Utils.formatNumber(row.num_TBsInstalled, 0),
+                num_TBTestsInstalled: (row, row_ix, cell)=>Utils.formatNumber(cell)
+            },
+            datatable: {/*colReorder:{fixedColumnsLeft:1},*/ columnDefs:[{orderable: false, targets: 0}]}
+        };
+
+        if (includeTestInstalls) {
+            options.columns.push('num_TBTestsInstalled');
+        }
+
+        // Add an installer field, from the individual talking book 'username' fields.
+        status.extraneousRecipients.forEach(addInstallerInfo);
+
+        let table = DataTable.create($('#installation-progress-extraneous-table'), status.extraneousRecipients, options);
+    }
+
     let includeTestInstalls = false;
 
     function reportProject(project, deployment) {
         Main.incrementWait();
-        previousProject = project;
-        previousDeployment = deployment;
-        localStorage.setItem('installation.project', previousProject);
-        localStorage.setItem('installation.deployment', previousDeployment);
 
         $('#include-test-installs', $PAGE).prop('disabled', true);
-        InstallationData.getInstallationStatusForDeployment(project, deployment, includeTestInstalls).done((status)=>{
+        let options = {
+            includeTestInstalls: includeTestInstalls
+        }
+        InstallationData.getInstallationStatusForDeployment(project, deployment, options).done((status)=>{
             // tbsDeployed: [ {talkingbookid,deployedtimestamp,project,deployment,contentpackage,community,firmware,location,coordinates,username,tbcdid,action,newsn,testing} ]
             // recipients: [ {affiliate,partner,program,country,region,district,community,group_name,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,languagecode} ]
             // community: [ {affiliate,partner,program,country,region,district,community,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,languagecode,
@@ -539,28 +607,57 @@ InstallationPage = (function () {
             //      groups: [ {num_TBsInstalled, affiliate,partner,program,country,region,district,community,group_name,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,languagecode} ] }
             // status: { communities: [ community ], tbsInstalled: [ tbsDeployed ] }
 
-            installationDetails(status.communities, status.tbsInstalled);
+            installationDetails(status.communities);
             installationSummary(status);
+            extraneousRecipientDetails(status);
             Main.decrementWait();
             $('#include-test-installs', $PAGE).prop('disabled', false);
+
+            previousProject = project;
+            previousDeployment = deployment;
+            persistState();
         }).fail((err)=>{
             Main.decrementWait();
         });
+
     }
 
     function refreshProject() {
         reportProject(previousProject, previousDeployment);
     }
 
-    var initialized = false;
+    function persistState() {
+        if (previousProject && previousDeployment) {
+            localStorage.setItem('installation.project', previousProject);
+            localStorage.setItem('installation.deployment', previousDeployment);
+            Main.setParams(PAGE_ID, {p: previousProject, d: previousDeployment, t: includeTestInstalls});
+        }
+    }
+    function restoreState() {
+        let params = Main.getParams();
+        if (params) {
+            previousProject = params.get('p') || '';
+            previousDeployment = params.get('d') || '';
+            let valStr = params.get('t');
+            let val = false;
+            try { val = JSON.parse(valStr); } catch(x) {}
+            includeTestInstalls = val;
+            $('#include-test-installs', $PAGE).prop('checked', includeTestInstalls);
+        } else {
+            previousProject = localStorage.getItem('installation.project') || '';
+            previousDeployment = localStorage.getItem('installation.deployment') || '';
+        }
+    }
 
+    var initialized = false;
     function show() {
         if (!initialized) {
             buildLegend();
             initialized = true;
-            previousProject = localStorage.getItem('installation.project') || '';
-            previousDeployment = localStorage.getItem('installation.deployment') || '';
+            restoreState();
             fillProjects();
+        } else {
+            persistState();
         }
     }
 

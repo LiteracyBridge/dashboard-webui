@@ -74,28 +74,43 @@ InventoryPage = (function () {
 
 
     function reportProject(project, deployment) {
-        previousProject = project;
-        previousDeployment = deployment;
-        localStorage.setItem('project.inventory.project', previousProject);
-        localStorage.setItem('project.inventory.deployment', previousDeployment);
-
         ProjectDetailsData.getDeploymentDetails(project).done((data) => {
             deploymentDetails(data);
+
+            previousProject = project;
+            previousDeployment = deployment;
+            persistState();
         }).fail((err) => {
         });
-
     }
 
-    var initialized = false;
+    function persistState() {
+        if (previousProject && previousDeployment) {
+            localStorage.setItem('project.inventory.project', previousProject);
+            localStorage.setItem('project.inventory.deployment', previousDeployment);
+            Main.setParams(PAGE_ID, {p: previousProject, d: previousDeployment});
+        }
+    }
+    function restoreState() {
+        let params = Main.getParams();
+        if (params) {
+            previousProject = params.get('p') || '';
+            previousDeployment = params.get('d') || '';
+        } else {
+            previousProject = localStorage.getItem('project.inventory.project') || '';
+            previousDeployment = localStorage.getItem('project.inventory.deployment') || '';
+        }
+    }
 
+    let initialized = false;
     function show() {
         if (!initialized) {
             initialized = true;
-            previousProject = localStorage.getItem('project.inventory.project') || '';
-            // Todo: remove after 2017-09
-            localStorage.removeItem('project.inventory.update');
-            previousDeployment = localStorage.getItem('project.inventory.deployment') || '';
+            restoreState();
+            let params = Main.getParams();
             fillProjects();
+        } else {
+            persistState();
         }
     }
 

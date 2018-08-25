@@ -5,6 +5,9 @@ var ProjectDetailsPage = ProjectDetailsPage || {};
 
 ProjectDetailsPage = function () {
     'use strict';
+    let PAGE_ID = 'project-details-page';
+    let PAGE_HREF = 'a[href="#' + PAGE_ID + '"]';
+    let $PAGE = $('#' + PAGE_ID);
 
     var previousProject, previousDeployment;
 
@@ -361,7 +364,7 @@ ProjectDetailsPage = function () {
                 deployment: () => {
                     var cell;
                     if (depl) {
-                        cell = `<p>Start date <span class="stat">${depl.startdate.format('YYYY-MM-DD')}</span></p>`
+                        cell = `<p>Start date <span class="stat">${depl.startdate&&depl.startdate.format('YYYY-MM-DD')||'n/a'}</span></p>`
                     } else {
                         cell = '<p class="stat">Deployment information unavailable.</p>';
                     }
@@ -455,31 +458,51 @@ ProjectDetailsPage = function () {
     }
 
 
+    function persistState() {
+        if (previousProject && previousDeployment) {
+            localStorage.setItem('project.details.project', previousProject);
+            localStorage.setItem('project.details.deployment', previousDeployment);
+            Main.setParams(PAGE_ID, {p: previousProject, d: previousDeployment});
+        }
+    }
+    function restoreState() {
+        let params = Main.getParams();
+        if (params) {
+            previousProject = params.get('p') || '';
+            previousDeployment = params.get('d') || '';
+        } else {
+            previousProject = localStorage.getItem('project.details.project') || '';
+            previousDeployment = localStorage.getItem('project.details.deployment') || '';
+        }
+    }
+
+
     function reportProject(project, deployment) {
         previousProject = project;
         previousDeployment = deployment;
-        localStorage.setItem('project.details.project', previousProject);
-        localStorage.setItem('project.details.deployment', previousDeployment);
         ProjectDetailsData.getProjectStats(project, deployment).then((stats) => {
             deploymentSummary(stats);
             deploymentPerformance(stats);
             messagePerformance(stats);
+            persistState();
         });
     }
 
-    function init() {
-        fillProjects();
+    let initialized = false;
+    function show() {
+        if (!initialized) {
+            initialized = true;
+            restoreState();
+            fillProjects();
+        } else {
+            persistState();
+        }
     }
-
-    previousProject = localStorage.getItem('project.details.project') || '';
-    // Todo: remove after 2017-09
-    localStorage.removeItem('project.details.update');
-    previousDeployment = localStorage.getItem('project.details.deployment') || '';
 
     // Hook the tab-activated event for this tab.
     // $('a[href="#project-details-page"]').on('hidden.bs.tab', function (e) {
     // });
-    $('a[href="#project-details-page"]').on('shown.bs.tab', init);
+    $(PAGE_HREF).on('shown.bs.tab', show);
 
     return {}
 }();

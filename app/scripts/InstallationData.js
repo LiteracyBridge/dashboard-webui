@@ -219,92 +219,106 @@ let InstallationData = function () {
      *
      * @param project
      * @param deploymentnumber
-     * @param includeTestInstalls If true, also include test installations.
+     * @param options: an object that may include the following:
+     *     includeTestInstalls: If true, also include test installations.
      * @returns {*}
      */
-    function getInstallationStatusForDeployment(project, deploymentnumber, includeTestInstalls) {
+    function getInstallationStatusForDeployment(project, deploymentnumber, options) {
+        options = options || {}
         const sameInMostGroupsOfACommunity = ['program', 'country', 'region', 'district', 'supportentity', 'model', 'languagecode'];
         let promise = $.Deferred();
         $.when(getRecipientsForProjectAndDeployment(project, deploymentnumber),
             getTBsDeployedForDeployment(project, deploymentnumber),
-            getDeploymentInfo(project, deploymentnumber)).then((recipients, tbsDeployed, deploymentInfo) => {
+            getDeploymentInfo(project, deploymentnumber)).then((allRecipients, tbsDeployed, deploymentInfo) => {
             // tbsDeployed: [ {talkingbookid, recipientid, deployedtimestamp, project, deployment, contentpackage, firmware,
             //                  location, coordinates, username, tbcdid, action, newsn, testing} ]
             // recipients: [ {recipientid, project, partner, communityname, groupname, affiliate, component, country,
             //                  region, district, num_HHs, num_TBs, supportentity, model, languagecode, coordinates} ]
 
             // Copy the data before modifying it, to avoid polluting the source.
-            recipients = $.extend(true, [], recipients)
+            let recipients = $.extend(true, [], allRecipients).filter( recip => recip.partner && recip.affiliate && recip.component);
             tbsDeployed = $.extend(true, [], tbsDeployed)
-            tbsDeployed = tbsDeployed.filter(elem => !elem.testing || includeTestInstalls );
+            tbsDeployed = tbsDeployed.filter(elem => !elem.testing || options.includeTestInstalls );
 
 
-            // From the array of tbsDeployed, create talking books per recipient:
+            // From the array of tbsDeployed, create lists of talking books installed per recipient:
             //   {recipientid: {talkingbookid: tbsdeployedrecord, talkingbookid: ...}, recipientid: ...
             let installedPerRecipient = {};
             let duplicateInstallations = 0;
-            tbsDeployed.forEach((singleTbDeployed) => {
-                if (singleTbDeployed.deploymentnumber != deploymentnumber) { return } // jshint ignore:line
+            tbsDeployed.forEach((singleTbDeployment) => {
+                if (singleTbDeployment.deploymentnumber != deploymentnumber) { return } // jshint ignore:line
 
                 // Get the record of TBs for this recipient, creating if first time seen.
-                let installedThisRecipient = installedPerRecipient[singleTbDeployed.recipientid] || (installedPerRecipient[singleTbDeployed.recipientid] = {});
+                let installedThisRecipient = installedPerRecipient[singleTbDeployment.recipientid] || (installedPerRecipient[singleTbDeployment.recipientid] = {});
                 // Record the (latest) installation to the Talking Book
-                if (installedThisRecipient.hasOwnProperty(singleTbDeployed.talkingbookid)) {
+                if (installedThisRecipient.hasOwnProperty(singleTbDeployment.talkingbookid)) {
                     // A duplicate. Should we keep the oldest or newest? It usually doesn't matter, because, usually, they'll be in the same session.
                     // But if it was re-installed due to a problem, then it wasn't really fully available until the correction.
                     // Keep the latest one.
-                    if (singleTbDeployed.deployedtimestamp.isAfter(installedThisRecipient[singleTbDeployed.talkingbookid])) {
-                        installedThisRecipient[singleTbDeployed.talkingbookid] = singleTbDeployed;
+                    if (singleTbDeployment.deployedtimestamp.isAfter(installedThisRecipient[singleTbDeployment.talkingbookid])) {
+                        installedThisRecipient[singleTbDeployment.talkingbookid] = singleTbDeployment;
                     }
                     duplicateInstallations++;
                 } else {
                     // First time this TB was seen
-                    installedThisRecipient[singleTbDeployed.talkingbookid] = singleTbDeployed;
+                    installedThisRecipient[singleTbDeployment.talkingbookid] = singleTbDeployment;
                 }
             });
 
-            // tbsInstalled is like tbsDeployed, but without any duplicate installations to the same TB.
-            let tbsInstalled = [];
-            Object.keys(installedPerRecipient).forEach((recipientid) => {
+            // All tb deployment events have been organized by recipient. Compute some per-recipient data. NOTE: this
+            // also includes extraneous recipients.
+            Object.keys(installedPerRecipient).forEach(recipientid => {
                 let installedThisRecipient = installedPerRecipient[recipientid];
-                Object.keys(installedThisRecipient).forEach((talkingbookid) => {
-                    tbsInstalled.push(installedThisRecipient[talkingbookid]);
+                let talkingbookids = Object.keys(installedThisRecipient);
+                installedThisRecipient.num_TBsInstalled = (installedThisRecipient && Object.keys(installedThisRecipient).length) || 0;
+                installedThisRecipient.tbsInstalled = {};
+                if (options.includeTestInstalls) {
+                    installedThisRecipient.num_TBTestsInstalled = 0;
+                }
+                let days = 0;
+                talkingbookids.forEach((talkingbookid) => {
+                    if (options.includeTestInstalls && installedThisRecipient[talkingbookid].testing) {
+                        installedThisRecipient.num_TBTestsInstalled += 1;
+                    }
+                    let tbInstalledTimestamp = installedThisRecipient[talkingbookid].deployedtimestamp;
+                    let tbDaysToInstall = tbInstalledTimestamp.diff(deploymentInfo.startdate, 'days');
+                    installedThisRecipient[talkingbookid].daystoinstall = tbDaysToInstall;
+                    installedThisRecipient[talkingbookid].tbid = installedThisRecipient[talkingbookid].tbcdid;
+                    // move installation event from installedThisRecipient to installedThisRecipient.tbsInstalled
+                    installedThisRecipient.tbsInstalled[talkingbookid] = installedThisRecipient[talkingbookid];
+                    delete installedThisRecipient[talkingbookid];
+                    days += tbDaysToInstall;
                 });
+                installedThisRecipient.daystoinstall = Math.round(days/installedThisRecipient.num_TBsInstalled);
             });
 
-            // Now add the # deployed into the recipients data. Add up the number of days the installations took.
+            // Add the TBs installed-per-recipient to the recipient records as recipient.tbsInstalled = {tbid: {}, ...}
+            // Note the number of days the installations took.
             // Keep a tally of who and which TB-Loader performed the installations.
             recipients.forEach((recipient) => {
                 let installedThisRecipient = installedPerRecipient[recipient.recipientid];
-                recipient.num_TBsInstalled = (installedThisRecipient && Object.keys(installedThisRecipient).length) || 0;
+                recipient.num_TBsInstalled = 0;
                 recipient.tbsInstalled = {};
-                if (includeTestInstalls) {
+                if (options.includeTestInstalls) {
                     recipient.num_TBTestsInstalled = 0;
                 }
                 if (installedThisRecipient) {
-                    let days = 0;
-                    Object.keys(installedThisRecipient).forEach((talkingbookid) => {
-                        if (includeTestInstalls && installedThisRecipient[talkingbookid].testing) {
-                            recipient.num_TBTestsInstalled += 1;
-                        }
-                        let tbInstalledTimestamp = installedThisRecipient[talkingbookid].deployedtimestamp;
-                        let tbDaysToInstall = tbInstalledTimestamp.diff(deploymentInfo.startdate, 'days');
-                        let username = installedThisRecipient[talkingbookid].username;
-                        let tbid = installedThisRecipient[talkingbookid].tbcdid;
-                        days += tbDaysToInstall;
-                        installedThisRecipient[talkingbookid].daystoinstall = tbDaysToInstall;
-                        recipient.tbsInstalled[talkingbookid] = {deployedtimestamp: tbInstalledTimestamp,
-                            daystoinstall: tbDaysToInstall, username: username, tbcdid: tbid, tbid: tbid};
-                    });
-                    recipient.daystoinstall = Math.round(days/recipient.num_TBsInstalled);
+                    if (options.includeTestInstalls) {
+                        recipient.numTBTestsInstalled = installedThisRecipient;
+                    }
+                    recipient.num_TBsInstalled = installedThisRecipient.num_TBsInstalled;
+                    recipient.tbsInstalled = installedThisRecipient.tbsInstalled;
+                    recipient.daystoinstall = installedThisRecipient.daystoinstall;
+
+                    // Remove this recipient's installations from installedPerRecipient. When this loop is done, any
+                    // remaining are for recipients not in this project/program.
+                    delete installedPerRecipient[recipient.recipientid];
                 }
             });
 
             // Aggregate the communities' groups into one line, keeping the details.
             let communitiesByName = {};
             recipients.forEach((recip) => {
-                // Only examine those that should have TBs. TODO: really?
-                //if (recip.num_TBs === 0 && recip.num_TBsInstalled === 0) { return }
 
                 let communityName = recip.communityname;
                 let community = communitiesByName[communityName];
@@ -314,7 +328,7 @@ let InstallationData = function () {
                     community.num_HHs += recip.num_HHs;
                     community.num_TBs += recip.num_TBs;
                     community.num_TBsInstalled += recip.num_TBsInstalled;
-                    if (includeTestInstalls) {
+                    if (options.includeTestInstalls) {
                         community.num_TBTestsInstalled += recip.num_TBTestsInstalled;
                     }
                     // Common properties are almost always the same for all groups in a community. But that's not a hard requirement,
@@ -336,10 +350,10 @@ let InstallationData = function () {
                 }
             });
             // Turn it back to an array.
-            let aggregated = Object.keys(communitiesByName).map(name => communitiesByName[name]);
+            let communitiesList = Object.keys(communitiesByName).map(name => communitiesByName[name]);
 
             // Now get daystoinstall for the communities with multiple groups.
-            aggregated.forEach((community)=>{
+            communitiesList.forEach((community)=>{
                 if (community.numGroups) {
                     let days = 0;
                     community.groups.forEach((group)=>{
@@ -351,14 +365,32 @@ let InstallationData = function () {
                 }
             });
 
+            let extraneousRecipients = Object.keys(installedPerRecipient).map(recipientid => {
+                // the intalledPerRecipient already has a tbsInstalled (map of talkingbookids to deployment events)
+                // and daystoinstall, and possibly a num_TBTestsInstalled; Just add the recipientid, and we're good.
+                let extraneousRecipient = installedPerRecipient[recipientid];
+                extraneousRecipient.recipientid = recipientid;
+                let recipient = allRecipients.find(elem => elem.recipientid===recipientid);
+                // If we can get the community name, do so, otherwise just use the recipientid.
+                extraneousRecipient.communityname = recipient ? recipient.communityname : recipientid;
+                extraneousRecipient.supportentity = recipient ? recipient.supportentity : '';
+                return extraneousRecipient;
+            });
+
             let summary = {
-                num_TBs: aggregated.reduce((s,v)=>{return s+v.num_TBs}, 0),
-                num_TBsInstalled: aggregated.reduce((s,v)=>{return s+v.num_TBsInstalled}, 0),
-                num_communities: aggregated.length,
-                num_groups: aggregated.reduce((s,v)=>{return s+(v.numGroups||0)}, 0)
+                num_TBs: communitiesList.reduce((s,v)=>{return s+v.num_TBs}, 0),
+                num_TBsInstalled: communitiesList.reduce((s,v)=>{return s+v.num_TBsInstalled}, 0),
+                num_communities: communitiesList.length,
+                num_groups: communitiesList.reduce((s,v)=>{return s+(v.numGroups||0)}, 0)
             };
 
-            promise.resolve({communities: aggregated, tbsInstalled: tbsInstalled, deploymentInfo: deploymentInfo, summary: summary});
+            let result = {
+                communities: communitiesList,
+                deploymentInfo: deploymentInfo,
+                extraneousRecipients: extraneousRecipients,
+                summary: summary
+            };
+            promise.resolve(result);
         }, (err) => {
             promise.reject(err);
         });

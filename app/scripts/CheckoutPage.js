@@ -246,8 +246,8 @@ CheckoutPage = (function () {
         }
         
     }
-    
-    function onTabActivated() {
+
+    function show() {
         refreshData();
     }
     
@@ -258,7 +258,7 @@ CheckoutPage = (function () {
     });
     
     // Hook the tab-activated event for this tab.
-    $(PAGE_HREF).on('shown.bs.tab', onTabActivated)
+    $(PAGE_HREF).on('shown.bs.tab', show)
     
     return {};
 })();

@@ -242,6 +242,10 @@
                         <h4>
                             Installations found <span id="installation-progress-deployment-range"></span>.
                         </h4>
+                        <h4 id="installation-progress-extraneous">
+                            Found <span id="installation-progress-extraneous-deployments"></span> deployments for
+                            <span id="installation-progress-extraneous-recipients"></span> recipients not in the Program Specification.
+                        </h4>
                     </div>
                     <div class="col-sm-5 installation-progress-timing-wrapper">
                         <div class="h3">Installation Progress Over Time</div>
@@ -261,6 +265,11 @@
                 <span class="excess">&gt; 100%</span>
             </h5>
             <div id='installation-progress-detail' class="detailtable"></div>
+            <div id='installation-progress-extraneous-detail'>
+                <h2 title="These are installations in which the Community selected in the TB-Loader was not one of the communities defined in the Program Specification. Although the right information may well have gotten to the right recipients at the right time, this limits our ability to produce accurate reports on the deployment.">
+                    Deployments to Community/Groups not in the Program Specification</h2>
+                <div id='installation-progress-extraneous-table' class="detailtable"></div>
+            </div>
 
         </div>
     </div>

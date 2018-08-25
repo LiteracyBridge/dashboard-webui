@@ -8,6 +8,10 @@ var OverviewPage = OverviewPage || {};
 
 OverviewPage = (function () {
     'use strict'
+    let PAGE_ID = 'overview-page';
+    let PAGE_HREF = 'a[href="#' + PAGE_ID + '"]';
+    let $PAGE = $('#' + PAGE_ID);
+
     let DATA_PATH = 'data/'
     var ROOT;
 
@@ -90,10 +94,12 @@ OverviewPage = (function () {
             initSummaryTable('usage_dashboard.csv', '#usage-container');
             initSummaryTable('deployment_dashboard.csv', '#deployment-container');
         }
+
+        Main.setParams(PAGE_ID, {});
     }
 
     // Hook the tab-activated event for this tab.
-    $('a[href="#overview-page"]').on('shown.bs.tab', show)
+    $(PAGE_HREF).on('shown.bs.tab', show)
 
     return {}
 })();
