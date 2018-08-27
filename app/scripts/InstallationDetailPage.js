@@ -92,6 +92,14 @@ InstallationDetailPage = (function () {
     }
 
     /**
+     * Clears the didplayed data, to avoid confusion.
+     */
+    function clearData() {
+        $('#installation-details-detail').empty();
+        $('#installation-details-timeframe').empty();
+    }
+
+    /**
      * Shows a given subset of the tbsdeployed for the project.
      * @param project The project.
      * @param year If present, show tbsdeployed for year-month-day.
@@ -158,6 +166,8 @@ InstallationDetailPage = (function () {
             if (year) {
                 $(`[data-year="${year}"]`).addClass('time-selected');
                 onYearChosen();
+            } else {
+                clearData();
             }
         }
         /**
@@ -188,6 +198,8 @@ InstallationDetailPage = (function () {
             if (month) {
                 $(`[data-month="${month}"]`).addClass('time-selected');
                 onMonthChosen();
+            } else {
+                clearData();
             }
         }
         /**
@@ -215,6 +227,8 @@ InstallationDetailPage = (function () {
             if (day) {
                 $(`[data-day="${day}"]`).addClass('time-selected');
                 onDayChosen();
+            } else {
+                clearData();
             }
         }
 

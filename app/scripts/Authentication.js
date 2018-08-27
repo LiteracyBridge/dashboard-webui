@@ -134,7 +134,7 @@ User = (function () {
     var changePasswordHtml = `<div class="auth-dialog">
     <form class="panel panel-default">
         <div class="panel-heading">
-            <h2 class="panel-title">Create New Account</h2>
+            <h2 class="panel-title">Change Password</h2>
         </div>
         <div class="panel-body container-fluid">
             <div>
@@ -795,7 +795,7 @@ User = (function () {
         fixTabOrdering($dialog);
 
         var options = {
-            title: 'ACM Utility Change Password',
+            title: 'Dashboard Change Password',
             message: $dialog,
             closable: true,
             draggable: true,
@@ -850,7 +850,7 @@ User = (function () {
         fixTabOrdering($dialog);
 
         var options = {
-            title: 'ACM Utility Create New Account',
+            title: 'Dashboard Create New Account',
             message: $dialog,
             closable: true,
             draggable: true,
@@ -1001,7 +1001,7 @@ User = (function () {
         fixTabOrdering($dialog);
 
         var options = {
-            title: 'ACM Utility Sign In',
+            title: 'Dashboard Sign In',
             message: $dialog,
             closable: false,
             draggable: true,
