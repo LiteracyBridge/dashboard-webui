@@ -31,7 +31,7 @@ ProjectDetailsPage = function () {
                             label: `#${elem.deploymentnumber}: ${Utils.formatDate(elem.startdate)} - ${Utils.formatDate(elem.enddate, 'TBD')}`,
                             // I prefer the previous line, but some might prefer this.
                             //label: `#${elem.deploymentnumber}: ${elem.deployment}`,
-                            tooltip: elem.deployment
+                            //tooltip: elem.deployment
                         };
                     });
                     var penultimate = deploymentsList[Math.max(0, deploymentsList.length - 2)];
@@ -133,6 +133,7 @@ ProjectDetailsPage = function () {
 
                     return $div;
                 },
+                languagecode: (row) => row.language || row.languagecode,
                 duration: (row) => {
                     return MINUTES(row.duration_minutes)
                 },

@@ -172,7 +172,6 @@ ProjectDetailsData = function () {
 
                 messageData = messageData.map(r=>{
                     r.languagecode = r.languagecode || r.language;
-                    delete r.language;
                     return r;
                 });
                 promise.resolve({deploymentData: deploymentData,

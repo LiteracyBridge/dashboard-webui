@@ -96,7 +96,7 @@ InstallationPage = (function () {
                         return {
                             value: elem.deploymentnumber,
                             label: `#${elem.deploymentnumber}: ${Utils.formatDate(elem.startdate)} - ${Utils.formatDate(elem.enddate, 'TBD')}`,
-                            tooltip: elem.deployment
+                            //tooltip: elem.deployment
                         };
                     });
                     // TODO: Find the one that best matches today's date.

@@ -261,6 +261,11 @@ p.spacer {
   opacity: 0.80;
 }
 
+ul.dropdown-menu > li > a:hover {
+    color: white;
+    background-color: #337ab7;
+}
+
 .demo-container {
     box-sizing: border-box;
     /*width: 850px;*/
