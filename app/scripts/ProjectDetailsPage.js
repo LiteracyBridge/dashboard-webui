@@ -222,6 +222,13 @@ ProjectDetailsPage = function () {
             ;
         }
 
+        if (categoryData.length < 2) {
+            $('#durations-radar').addClass('hidden')
+            return;
+        } else {
+            $('#durations-radar').removeClass('hidden')
+        }
+
         // A given category may appear multiple times (in different languages).  So, take an array of categoryData objects,
         // and make a hash of them, indexed by category name, adding the counts into the objects in the hash.
         var catDataHash = {};
@@ -482,10 +489,18 @@ ProjectDetailsPage = function () {
         previousProject = project;
         previousDeployment = deployment;
         ProjectDetailsData.getProjectStats(project, deployment).then((stats) => {
-            deploymentSummary(stats);
-            deploymentPerformance(stats);
-            messagePerformance(stats);
-            persistState();
+            if (stats.deploymentData) {
+                $('#project-details-page .have_data').removeClass('hidden');
+                $('#project-details-page .have_no_data').addClass('hidden');
+
+                deploymentSummary(stats);
+                deploymentPerformance(stats);
+                messagePerformance(stats);
+                persistState();
+            } else {
+                $('#project-details-page .have_no_data').removeClass('hidden');
+                $('#project-details-page .have_data').addClass('hidden');
+            }
         });
     }
 

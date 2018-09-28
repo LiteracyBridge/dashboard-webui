@@ -449,6 +449,7 @@ InstallationPage = (function () {
             },
             formatters: {
                 detailsControl: row=>' ',
+                groupname: row=>{return row&&(row.groupname||('SE:'+row.supportentity))},
                 num_HHs: row=>Utils.formatNumber(row.num_HHs),
                 num_TBs: row=>Utils.formatNumber(row.num_TBs),
                 num_TBsInstalled: row=>Utils.formatNumber(row.num_TBsInstalled, 0),
@@ -487,6 +488,7 @@ InstallationPage = (function () {
                 // Support entity, model, languagecode: don't repeat what's at the community level, unless it's different.
                 let member_formatters = {
                     spacer: row=>' ',
+                    groupname: row=>{return row&&(row.groupname||('SE:'+row.supportentity))},
                     num_HHs: options.formatters.num_HHs,
                     num_TBs: options.formatters.num_TBs,
                     num_TBsInstalled: options.formatters.num_TBsInstalled,
@@ -607,16 +609,27 @@ InstallationPage = (function () {
             //      groups: [ {num_TBsInstalled, affiliate,partner,program,country,region,district,community,group_name,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,languagecode} ] }
             // status: { communities: [ community ], tbsInstalled: [ tbsDeployed ] }
 
-            installationDetails(status.communities);
-            installationSummary(status);
-            extraneousRecipientDetails(status);
-            Main.decrementWait();
-            $('#include-test-installs', $PAGE).prop('disabled', false);
+            if (status.summary.num_TBsInstalled) {
+                $('#installation-progress-page .have_data').removeClass('hidden');
+                $('#installation-progress-page .have_no_data').addClass('hidden');
 
-            previousProject = project;
-            previousDeployment = deployment;
-            persistState();
+                installationDetails(status.communities);
+                installationSummary(status);
+                extraneousRecipientDetails(status);
+                $('#include-test-installs', $PAGE).prop('disabled', false);
+
+                previousProject = project;
+                previousDeployment = deployment;
+                persistState();
+
+            } else {
+                $('#installation-progress-page .have_no_data').removeClass('hidden');
+                $('#installation-progress-page .have_data').addClass('hidden');
+            }
+            Main.decrementWait();
         }).fail((err)=>{
+            $('#installation-progress-page .have_no_data').removeClass('hidden');
+            $('#installation-progress-page .have_data').addClass('hidden');
             Main.decrementWait();
         });
 

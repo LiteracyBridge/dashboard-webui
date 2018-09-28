@@ -65,6 +65,7 @@ InstallationDetailPage = (function () {
                 testing: 'Test?'
             },
             tooltips: {
+                groupname: 'The group\'s name, or Support Entity\'s name, if there is no group. Support Entity names are prefixed with SE:.',
                 location: 'Where did the updater indicate they were, during the installation?',
                 tbcdid: 'The TB-Loader id of the laptop or phone that performed the installation.',
                 deployedtimestamp: 'When was this Talking Book installed? Time is in UTC.',
@@ -73,7 +74,7 @@ InstallationDetailPage = (function () {
             formatters: {
                 component: (row)=>{let recip=row&&row.recipientid&&recipientMap[row.recipientid]; return recip&&recip.component;},
                 communityname: (row)=>{let recip=row&&row.recipientid&&recipientMap[row.recipientid]; return recip&&recip.communityname;},
-                groupname: (row)=>{let recip=row&&row.recipientid&&recipientMap[row.recipientid]; return recip&&recip.groupname;},
+                groupname: (row)=>{let recip=row&&row.recipientid&&recipientMap[row.recipientid]; return recip&&(recip.groupname||('SE:'+recip.supportentity));},
                 deployedtimestamp: (row, row_ix, cell)=>{return cell.format('Y-MM-DD HH:mma')},
                 testing: (row, row_ix, cell)=>cell?'Yes':'No'
             },
