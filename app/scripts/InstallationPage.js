@@ -151,7 +151,7 @@ InstallationPage = (function () {
                         callback: function (value, index, values) {
                             return value;
                         },
-                        autoSkip: false,
+                        autoSkip: true,
                         maxRotation: 0
                     },
                     scaleLabel: {

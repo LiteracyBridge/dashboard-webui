@@ -222,7 +222,7 @@ ProjectDetailsPage = function () {
             ;
         }
 
-        if (categoryData.length < 2) {
+        if (categoryData.length <= 2) {
             $('#durations-radar').addClass('hidden')
             return;
         } else {
@@ -400,7 +400,7 @@ ProjectDetailsPage = function () {
                     if (usage) {
                         cell += `<p>Statistics from <span class="stat">${Utils.formatNumber(usage.num_tbs)}</span> Talking Books.</p>`;
                     } else {
-                        cell += '<p> class="stat">Usage information unavailable.</p>';
+                        cell += '<p class="stat">Usage information unavailable.</p>';
                     }
 
                     return cell;
