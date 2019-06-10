@@ -189,6 +189,8 @@ CheckoutPage = (function () {
             var row = data[$(ev.currentTarget).parent().data('row-index')];
             confirmUncheckout2(row);
         });
+
+        Main.setParams(PAGE_ID, {uf: includeUserFeedback?'t':'f'});
     }
     
     /**
@@ -248,6 +250,12 @@ CheckoutPage = (function () {
     }
 
     function show() {
+        let params = Main.getParams();
+        if (params) {
+            let uf = params.get('uf') || 'f'
+            includeUserFeedback = uf.toLowerCase().startsWith('t')
+            $('#include-user-feedback', $PAGE).prop('checked', includeUserFeedback)
+        }
         refreshData();
     }
     

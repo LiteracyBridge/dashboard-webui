@@ -497,3 +497,7 @@ tr.shown td.details-control {
 .installation-progress-timing-wrapper canvas {
     max-height: 200px;
 }
+
+.column-selector {
+    margin-right: 15px;
+}

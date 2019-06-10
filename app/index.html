@@ -69,6 +69,9 @@
                     </ul>
                 </li>
 
+                <li role="navigation"><a class="main-nav" href="#usage-details-page">Usage</a>
+                </li>
+
                 <li role="navigation"><a class="main-nav" href="#userfeedback-page">User
                     Feedback</a>
                 </li>
@@ -119,7 +122,7 @@
     <!-- The equivalent of a splash screen. Note that there is no navigation to this page -->
     <div id="splash" role="tabpanel" class="tab-pane fade in active">
         <div id="welcome" class="container-fluid">
-            <h2 class="bg-primary text-center">Welcome to the Literacy Bridge Dashboard.</h2>
+            <h2 class="bg-primary text-center">Welcome to the Amplio Analytics Dashboard.</h2>
             <h3 class="bg-info text-center invisible fade-in">Choose a function from the list above.</h3>
         </div>
         <img class="img-responsive center-block" src="images/slide2.jpg"/>
@@ -289,6 +292,47 @@
         </div>
     </div>
 
+    <!-- Usage Details Report -->
+    <div id="usage-details-page" role="tabpanel" class="tab-pane fade">
+        <div class="container-fluid">
+            <h2 class="bg-primary">Usage
+                &nbsp;<span id="usage-details-project-placeholder"></span>
+            </h2>
+
+            <div class="have_data">
+
+                <div id="usage-details-selection">
+
+                </div>
+
+                <div>
+                <button id="usage-refresh" class="btn btn-default btn-large" style="border-radius:4px"
+                        type="button">
+                    <i class="glyphicon glyphicon-refresh"></i>
+                </button>
+
+                <label style="font-weight:normal">
+                    <input type="checkbox" id="limit-by-deployment">
+                    Limit queries to a single deployment, for faster performance<span id="limit-by-deployment-prompt"></span>
+                </label>
+                    &nbsp;&nbsp;&nbsp;
+                    <button id="usage-test-query" class="btn btn-info btn-large hidden" style="border-radius:4px"
+                            type="button">
+                        Test
+                    </button>
+                </div>
+
+                <h2>Usage</h2>
+                <div id="usage-table" class="detailtable"></div>
+            </div>
+
+            <div class="have_no_data">
+                <h3>No data is available for this project and deployment.</h3>
+            </div>
+
+        </div>
+    </div>
+
     <!-- User Feedback Report -->
     <div id="userfeedback-page" role="tabpanel" class="tab-pane fade">
         <div class="container-fluid">
@@ -422,16 +466,18 @@ script src="scripts/3p/aws-sdk-2.5.0.min.js"></script -->
 
 <!-- script src="scripts/3p/palette.js"></script -->
 <script src="scripts/3p/chroma.js"></script>
-<script src="scripts/3p/datatables.min.js"></script>
+<script src="scripts/3p/datatables.js"></script>
 <script src="scripts/3p/bootstrap-dialog.js"></script>
 <script src="scripts/DataTable.js"></script>
 <script src="scripts/CognitoWrapper.js"></script>
 <script src="scripts/Authentication.js"></script>
 <script src="scripts/main.js"></script>
+<script src="scripts/StatisticsData.js"></script>
 <script src="scripts/CheckoutPage.js"></script>
 <script src="scripts/ProjectDetailsData.js"></script>
 <script src="scripts/ProjectDetailsPage.js"></script>
 <script src="scripts/InventoryPage.js"></script>
+<script src="scripts/UsageDetailsPage.js"></script>
 <script src="scripts/UserFeedbackData.js"></script>
 <script src="scripts/UserFeedbackPage.js"></script>
 <script src="scripts/InstallationData.js"></script>

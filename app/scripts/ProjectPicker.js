@@ -42,8 +42,8 @@ ProjectPicker = (function ProjectPicker() {
         var $projectsDropdown = $('<div>').on('selected', onProjectSelected).appendTo($elem);
         var $deploymentsDropdown = $('<span>').on('selected', onDeploymentSelected).appendTo($elem);
         
-        var deploymentsDropdown = DropdownButton.create($deploymentsDropdown, {title: 'No Deployments'});
-        var projectsDropdown = DropdownButton.create($projectsDropdown, {title: 'Project'});
+        var deploymentsDropdown = DropdownButton.create($deploymentsDropdown, $.extend({title: 'No Deployments'}, options));
+        var projectsDropdown = DropdownButton.create($projectsDropdown, $.extend({title: 'Project'}, options));
         projectsDropdown.update(options.projects, {default: options.defaultProject});
         
     }

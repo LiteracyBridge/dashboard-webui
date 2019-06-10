@@ -1,5 +1,5 @@
 /* jshint esversion:6, asi:true */
-/* global $, console, Main, ProjectDetailsData, DataTable, Chart, ProjectPicker, Utils */
+/* global $, User, CognitoWrapper,console, Main, ProjectDetailsData, DataTable, Chart, ProjectPicker, Utils */
 
 var ProjectDetailsPage = ProjectDetailsPage || {};
 

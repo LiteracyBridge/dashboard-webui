@@ -16,6 +16,21 @@ Main = (function () {
     var allProjectsList;
     var filteredProjects;
 
+    // Map page names to a short code, and back. Add to the list. Do not reuse letters.
+    let shortToLong = {
+        'a': 'installation-detail-page',
+        'b': 'installation-progress-page',
+        'c': 'inventory-page',
+        'd': 'overview-page',
+        'e': 'project-details-page',
+        'f': 'usage-details-page',
+        'g': 'userfeedback-page',
+        'h': 'checkout-page'
+    }
+    let longToShort = {}
+    Object.keys(shortToLong).forEach(k=>longToShort[shortToLong[k]]=k)
+
+
     /**
      * Determines the path to statistics data. Uses trial-and-error.
      */
@@ -57,12 +72,15 @@ Main = (function () {
         return applicationPathPromise;
     }
 
+    // slice off the leading ? or #
     let initialParams = new URLSearchParams(location.search.slice(1));
+    let initialHash = location.hash.slice(1)
 
     function setParams(page, values) {
         let params = new URLSearchParams();
         Object.keys(values).forEach(k=>params.set(k, values[k]));
-        params.set('q', page);
+        let shortPage = longToShort[page] || page
+        params.set('q', shortPage);
         let newUrl = new URL(location);
         newUrl.search = params;
         window.history.replaceState({}, '', newUrl);
@@ -123,7 +141,7 @@ Main = (function () {
 
         getApplicationPath().then(() => {
             User.getUserProperties()
-                .then(()=>{
+                .then(() => {
                     filterProjects();
                     if (User.isAdminUser()) {
                         $('#admin-menu').removeClass('hidden');
@@ -137,15 +155,18 @@ Main = (function () {
 
                     if (initialParams && initialParams.get('q')) {
                         let tab = initialParams.get('q');
+                        let longPage = shortToLong[tab] || tab;
                         if (tab) {
-                            $('#main-nav a[href="#' +tab+ '"]').tab('show');
+                            $('#main-nav a[href="#' + longPage + '"]').tab('show');
                         }
+                    } else if (initialHash) {
+                        $('#main-nav a[href="#' + initialHash + '"]').tab('show');
                     }
                 });
         });
 
         var attributes = User.getUserAttributes();
-        if (attributes['email_verified'] === 'false') {
+        if (attributes.email_verified === 'false') {
             $('li.verify-email').removeClass('hidden');
         }
 
@@ -188,6 +209,7 @@ Main = (function () {
 
     // Services that are global can be exposed here.
     return {
+        getApplicationPath: ()=>applicationPathPromise,
         getRootPath: ()=>{return ROOT_PATH},
 
         hasParam: ()=>false,

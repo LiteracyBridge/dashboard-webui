@@ -93,11 +93,11 @@ User = (function () {
                 <input id="newpassword" type="password" class="password newpassword form-control"
                        placeholder="Passw0rd!"
                        aria-describedby="basic-addon1"
-                       autocorrect="off" autocapitalize="none">
+                       autocorrect="off" autocapitalize="none" autocomplete="new-password">
                 <input id="newpassword2" type="password" class="password newpassword form-control"
                        placeholder="Repeat Passw0rd!"
                        aria-describedby="basic-addon1"
-                       autocorrect="off" autocapitalize="none">
+                       autocorrect="off" autocapitalize="none" autocomplete="new-password">
                 <span>
                     <input type="checkbox" id="show-password" class="nested-tab">
                     <label for="show-password" class="light-checkbox"> Show password</label>
@@ -198,7 +198,7 @@ User = (function () {
         <div class="panel-body container-fluid">
             <div>
                 <input id="confirmation-code"  type="text" class="form-control" placeholder="Confirmation code"
-                       aria-describedby="basic-addon1" autofocus autocorrect="off" autocapitalize="none">
+                       aria-describedby="basic-addon1" autofocus autocomplete="off" autocorrect="off" autocapitalize="none">
             </div>
         </div>
         <div class="panel-body container-fluid no-pad-top">
@@ -226,11 +226,11 @@ User = (function () {
             <input id="newpassword"  type="password" class="password newpassword form-control"
                    placeholder="Passw0rd!"
                    aria-describedby="basic-addon1" autofocus
-                   autocorrect="off" autocapitalize="none">
+                   autocorrect="off" autocapitalize="none" autocomplete="new-password">
             <input id="newpassword2"  type="password" class="password newpassword form-control"
                    placeholder="Repeat Passw0rd!"
                    aria-describedby="basic-addon1"
-                   autocorrect="off" autocapitalize="none">
+                   autocorrect="off" autocapitalize="none" autocomplete="new-password">
 
             <span>
                 <input type="checkbox" id="show-password" class="nested-tab">

@@ -112,7 +112,7 @@ DataTable = function () {
             table = $('table', container).DataTable(tableOptions);
             // HACK! Safari 12603.1.30.0.34 has a bug that puts the search box in the left half. This can fix it,
             // but it is very ugly. I hope Apple fixes it soon.
-            $($('.col-sm-6', container)[0]).append($('<p>&nbsp;</p>'))
+            //$($('.col-sm-6', container)[0]).append($('<p>&nbsp;</p>'))
         }
         return table;
     }

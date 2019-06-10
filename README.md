@@ -1,6 +1,6 @@
-#Literacy Bridge Dashboard
+#Amplio Analytics Dashboard
 
-Simple implementation of a dashboard for Literacy Bridge deployment and 
+Simple implementation of a dashboard for Amplio deployment and 
 usage statistics.
 
 Features:
