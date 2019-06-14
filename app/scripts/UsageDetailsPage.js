@@ -217,6 +217,23 @@ UsageDetailsPage = function () {
                 return data;
             }
         },
+        played_seconds: {
+            heading: 'Time Played',
+            tooltip: 'How long in total was the message played? ',
+            formatter: row => Utils.formatSeconds(row.played_seconds),
+            selection: 'implicit',
+            render: function ( data, type, row ) {
+                // If display or filter data is requested, format as a nice time string
+                if ( type === 'display' || type === 'filter' ) {
+                    return Utils.formatSeconds(row.played_seconds)
+                }
+
+                // Otherwise the data type requested (`type`) is type detection or
+                // sorting data, for which we want to use the integer, so just return
+                // that, unaltered
+                return data;
+            }
+        },
         completions: {
             heading: 'Completions',
             tooltip: 'How many times was the message played to completion?',
