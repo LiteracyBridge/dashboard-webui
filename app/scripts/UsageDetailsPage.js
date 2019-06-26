@@ -501,6 +501,10 @@ UsageDetailsPage = function () {
         return deferred.promise()
     }
 
+    function get3() {
+        console.log('test fn')
+    }
+
     function refreshProject(project, deployment, columns) {
         previousProject = project;
         previousDeployment = deployment;
@@ -541,7 +545,7 @@ UsageDetailsPage = function () {
             let user = User.getUserAttributes()
             if (user && user.email && user.email.startsWith('bill@amplio')) {
                 $('#usage-test-query').on('click', () => {
-                    get2()
+                    get3()
                 })
             } else {
                 $('#usage-test-query').hide()

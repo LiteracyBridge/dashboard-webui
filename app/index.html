@@ -2,14 +2,14 @@
 <html lang="">
 <head>
     <meta charset="utf-8">
-    <meta name="description" content="">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta content="" name="description">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
     <title>Dashboard</title>
 
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link href="apple-touch-icon.png" rel="apple-touch-icon">
 
     <!-- link rel="icon" type="image/x-icon" href="images/talking_book_64.png"/ -->
-    <link rel="icon" type="image/x-icon" href="favicon.ico"/>
+    <link href="favicon.ico" rel="icon" type="image/x-icon"/>
 
     <!-- build:css styles/vendor.css -->
     <!-- bower:css -->
@@ -19,31 +19,27 @@
 
 
     <!-- build:css styles/main.css -->
-    <link rel="stylesheet" href="styles/main.css">
-    <link rel="stylesheet" href="styles/datatables.min.css"/>
-    <link rel="stylesheet" href="styles/bootstrap-dialog.css">
+    <link href="styles/main.css" rel="stylesheet">
+    <link href="styles/datatables.min.css" rel="stylesheet"/>
+    <link href="styles/bootstrap-dialog.css" rel="stylesheet">
     <!-- endbuild -->
 
     <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
 
 </head>
 <body>
-<!--[if IE]>
-<p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade
-    your browser</a> to improve your experience.</p>
-<![endif]-->
+<!--[if IE]><p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a
+    href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p><![endif]-->
 
 <!-- Nav bar for application -->
-<nav id="main-nav" class="navbar navbar-default navbar-fixed-top">
+<nav class="navbar navbar-default navbar-fixed-top" id="main-nav">
     <div class="container-fluid">
         <!-- Brand and toggle get grouped for better mobile display -->
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
-                    data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
+            <button aria-expanded="false" class="navbar-toggle collapsed" data-target="#bs-example-navbar-collapse-1"
+                    data-toggle="collapse" type="button">
+                <span class="sr-only">Toggle navigation</span> <span class="icon-bar"></span> <span
+                class="icon-bar"></span> <span class="icon-bar"></span>
             </button>
             <a class="navbar-brand amplio-logo" href="#">Amplio</a>
         </div>
@@ -57,13 +53,13 @@
                 <li role="navigation"><a class="main-nav" href="#project-details-page">Details</a>
                     <!-- li role="navigation"><a class="main-nav" href="#inventory-page">Inventories</a></li -->
                 <li class="dropdown" id="idm-menu">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
-                       aria-expanded="false">Installations
-                        <span class="caret"></span>
-                    </a>
+                    <a aria-expanded="false" aria-haspopup="true" class="dropdown-toggle" data-toggle="dropdown"
+                       href="#"
+                       role="button">Installations <span class="caret"></span> </a>
                     <ul class="dropdown-menu">
                         <li role="navigation"><a class="main-nav" href="#inventory-page">Inventories</a></li>
-                        <li role="navigation"><a class="main-nav" href="#installation-detail-page">Installation Detail</a>
+                        <li role="navigation"><a class="main-nav" href="#installation-detail-page">Installation
+                            Detail</a>
                         <li role="navigation"><a class="main-nav" href="#installation-progress-page">Installations</a>
                         </li>
                     </ul>
@@ -72,16 +68,16 @@
                 <li role="navigation"><a class="main-nav" href="#usage-details-page">Usage</a>
                 </li>
 
-                <li role="navigation"><a class="main-nav" href="#userfeedback-page">User
-                    Feedback</a>
+                <li role="navigation"><a class="main-nav" href="#userfeedback-page">User Feedback</a>
                 </li>
+
+                <li role="navigation"><a class="main-nav" href="#program-specification-page">ProgSpec</a></li>
 
                 <!-- Admin dropdown menu. Hidden except for admins -->
                 <li class="dropdown hidden" id="admin-menu">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
-                       aria-expanded="false">Admin
-                        <span class="caret"></span>
-                    </a>
+                    <a aria-expanded="false" aria-haspopup="true" class="dropdown-toggle" data-toggle="dropdown"
+                       href="#"
+                       role="button">Admin <span class="caret"></span> </a>
                     <ul class="dropdown-menu">
                         <li><a class="main-nav" href="#checkout-page">ACMs</a></li>
                         <li><a class="main-nav" href="#users-page">Users</a></li>
@@ -93,17 +89,16 @@
             <!-- Authentication stuff -->
             <ul class="nav navbar-nav navbar-right">
                 <li class="dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
-                       aria-expanded="false">
-                        <span id="greeting">Attempting signin...</span>
-                        <span class="caret"></span>
-                    </a>
+                    <a aria-expanded="false" aria-haspopup="true" class="dropdown-toggle" data-toggle="dropdown"
+                       href="#"
+                       role="button"> <span id="greeting">Attempting signin...</span> <span
+                        class="caret"></span> </a>
                     <ul class="dropdown-menu">
                         <li><a id="menu-change-greeting">Greeting...</a></li>
                         <li><a id="menu-change-password">Change password...</a></li>
                         <li><a id="menu-delete-account">Delete account...</a></li>
                         <li class="hidden verify-email"><a id="menu-verify-email">Confirm email...</a></li>
-                        <li role="separator" class="divider"></li>
+                        <li class="divider" role="separator"></li>
                         <li><a id="menu-signout">Sign out</a></li>
                     </ul>
                 </li>
@@ -113,15 +108,15 @@
 </nav>
 
 
-<ul id="main-tabs" class="nav nav-tabs" style="visibility:hidden; height:12px">
+<ul class="nav nav-tabs" id="main-tabs" style="visibility:hidden; height:12px">
     <!-- li role="presentation" class="active>"><a href="#overview" data-toggle="tab">Overview</a></li -->
-    <li role="presentation"><a href="#checkout-page" data-toggle="tab">Checkouts</a></li>
+    <li role="presentation"><a data-toggle="tab" href="#checkout-page">Checkouts</a></li>
 </ul>
 
 <div class="tab-content">
     <!-- The equivalent of a splash screen. Note that there is no navigation to this page -->
-    <div id="splash" role="tabpanel" class="tab-pane fade in active">
-        <div id="welcome" class="container-fluid">
+    <div class="tab-pane fade in active" id="splash" role="tabpanel">
+        <div class="container-fluid" id="welcome">
             <h2 class="bg-primary text-center">Welcome to the Amplio Analytics Dashboard.</h2>
             <h3 class="bg-info text-center invisible fade-in">Choose a function from the list above.</h3>
         </div>
@@ -129,7 +124,7 @@
     </div>
 
     <!-- Overview Report -->
-    <div id="overview-page" role="tabpanel" class="tab-pane fade">
+    <div class="tab-pane fade" id="overview-page" role="tabpanel">
         <div class="container-fluid">
             <h2 class="bg-primary">Overview</h2>
             <p>Simple dashboard for ACM usage and deployment statistics. Created on <span id="report_date">server</span>.
@@ -137,14 +132,14 @@
 
 
             <h2>Usage</h2>
-            <div id='usage-container' class='usage detailtable'></div>
+            <div class='usage detailtable' id='usage-container'></div>
             <h2>Deployment</h2>
-            <div id='deployment-container' class='deployment detailtable'></div>
+            <div class='deployment detailtable' id='deployment-container'></div>
         </div>
     </div>
 
     <!-- Details Report -->
-    <div id="project-details-page" role="tabpanel" class="tab-pane fade">
+    <div class="tab-pane fade" id="project-details-page" role="tabpanel">
         <div class="container-fluid">
             <h2 class="bg-primary">Details
                 &nbsp;<span id="details-project-placeholder"></span>
@@ -152,20 +147,20 @@
 
             <div class="have_data">
 
-            <h2 id='deployment_header'>Deployment <span id='deployment_header_name'></span> at a glance.</h2>
-            <div id='deployment-summary' class="detailtable"></div>
-            <h2>Deployment Performance By Categories</h2>
-            <div class="row deployment-performance">
-                <div id='durations-radar' class="col-md-5">
-                    <canvas></canvas>
+                <h2 id='deployment_header'>Deployment <span id='deployment_header_name'></span> at a glance.</h2>
+                <div class="detailtable" id='deployment-summary'></div>
+                <h2>Deployment Performance By Categories</h2>
+                <div class="row deployment-performance">
+                    <div class="col-md-5" id='durations-radar'>
+                        <canvas></canvas>
+                    </div>
+                    <!-- div id='completions-radar' class="col-md-3">
+                        <canvas></canvas>
+                    </div -->
+                    <div class="col-md-7 detailtable" id='deployment-performance-chart'></div>
                 </div>
-                <!-- div id='completions-radar' class="col-md-3">
-                    <canvas></canvas>
-                </div -->
-                <div id='deployment-performance-chart' class="col-md-7 detailtable"></div>
-            </div>
-            <h2>Message Performance</h2>
-            <div id='message-performance' class="detailtable"></div>
+                <h2>Message Performance</h2>
+                <div class="detailtable" id='message-performance'></div>
 
             </div>
             <div class="have_no_data">
@@ -176,46 +171,45 @@
     </div>
 
     <!-- Inventories Report -->
-    <div id="inventory-page" role="tabpanel" class="tab-pane fade">
+    <div class="tab-pane fade" id="inventory-page" role="tabpanel">
         <div class="container-fluid">
             <h2 class="bg-primary">Inventories
                 &nbsp;<span id="inventory-project-placeholder"></span>
             </h2>
 
-            <div id='inventory-summary' class="detailtable"></div>
+            <div class="detailtable" id='inventory-summary'></div>
 
             <h2>Inventory</h2>
-            <div id='inventory-detail' class="detailtable"></div>
+            <div class="detailtable" id='inventory-detail'></div>
 
         </div>
     </div>
 
     <!-- Installation Detail Report -->
-    <div id="installation-detail-page" role="tabpanel" class="tab-pane fade">
+    <div class="tab-pane fade" id="installation-detail-page" role="tabpanel">
         <div class="container-fluid">
             <h2 class="bg-primary">Installation Details
                 &nbsp;<span id="installation-detail-project-placeholder"></span>
             </h2>
 
-            <div id='installation-details' class="detailtable"></div>
-            <label style="font-weight:normal" id="installation-details-all-holder" title="Shows every known installation to TBs in this project. Likely to be very slow.">
-                <input type="checkbox" id="installation-details-all">
-                Show all installations.
-            </label>
-            <span id="installation-details-date-chooser">
+            <div class="detailtable" id='installation-details'></div>
+            <label id="installation-details-all-holder" style="font-weight:normal"
+                   title="Shows every known installation to TBs in this project. Likely to be very slow."> <input
+                id="installation-details-all" type="checkbox"> Show all installations. </label> <span
+            id="installation-details-date-chooser">
                 <span id="installation-details-years"></span>
                 <span id="installation-details-months"></span>
                 <span id="installation-details-days"></span>
             </span>
 
             <h2>Details <span class="btn-group" id="installation-details-timeframe"></span></h2>
-            <div id='installation-details-detail' class="detailtable"></div>
+            <div class="detailtable" id='installation-details-detail'></div>
 
         </div>
     </div>
 
     <!-- Installation Report -->
-    <div id="installation-progress-page" role="tabpanel" class="tab-pane fade">
+    <div class="tab-pane fade" id="installation-progress-page" role="tabpanel">
         <div class="container-fluid">
             <h2 class="bg-primary">Deployment Installation Summary
                 &nbsp;<span id="installation-progress-project-placeholder"></span>
@@ -224,64 +218,62 @@
             <div class="have_data">
 
                 <div class="row">
-                <div class="col-md-12">
-                    <div class="input-group" id="include-test-installs-row"
-                         title='Include installations for which the installer clicked "Only testing the deployment"'>
-                        <label style="font-weight:normal">
-                            <input type="checkbox" id="include-test-installs" value="option1">
-                            Include testing installations
-                        </label>
-                    </div><!-- /input-group -->
-                </div><!-- /.col-lg-6 -->
-            </div>
+                    <div class="col-md-12">
+                        <div class="input-group" id="include-test-installs-row"
+                             title='Include installations for which the installer clicked "Only testing the deployment"'>
+                            <label style="font-weight:normal"> <input id="include-test-installs" type="checkbox"
+                                                                      value="option1"> Include testing installations
+                            </label>
+                        </div><!-- /input-group -->
+                    </div><!-- /.col-lg-6 -->
+                </div>
 
-            <div id='installation-progress-summary'>
-                <div class="row">
-                    <div class="col-sm-4">
-                        <h3>
-                            The Deployment has been installed to
-                            </br><span id="installation-num-tbs-installed"></span>
-                                <span class="only-with-tb-count"> of <span id="installation-num-tbs"></span></span>
-                                Talking Books
-                                <span class="only-with-tb-count"> (<span id="installation-pct-tbs-installed"></span>%)</span>
-                            </br>in <span id="installation-num-communities"></span>
-                                communities<span class="only-with-group-count"></br> and <span id="installation-num-groups"></span> groups</span>.
-                        </h3>
-                        <h4>
-                            Deployment #<span id="installation-progress-deployment-number"></span>, '<span id="installation-progress-deployment-name"></span>',
-                            </br>from <span id="installation-progress-deployment-start"></span> to <span id="installation-progress-deployment-end"></span>.
-                        </h4>
-                        <h4>
-                            Installations found <span id="installation-progress-deployment-range"></span>.
-                        </h4>
-                        <h4 id="installation-progress-extraneous">
-                            Found <span id="installation-progress-extraneous-deployments"></span> deployments for
-                            <span id="installation-progress-extraneous-recipients"></span> recipients not in the Program Specification.
-                        </h4>
-                    </div>
-                    <div class="col-sm-5 installation-progress-timing-wrapper">
-                        <div class="h3">Installation Progress Over Time</div>
-                        <div class="no-tb-count-warning"><p>Graph based on actual install count, not project
-                            specification.</p></div>
-                        <canvas id="installation-progress-timing"></canvas>
+                <div id='installation-progress-summary'>
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <h3>
+                                The Deployment has been installed to</br><span
+                                id="installation-num-tbs-installed"></span> <span class="only-with-tb-count"> of <span
+                                id="installation-num-tbs"></span></span> Talking Books <span class="only-with-tb-count"> (<span
+                                id="installation-pct-tbs-installed"></span>%)</span></br>in <span
+                                id="installation-num-communities"></span> communities<span
+                                class="only-with-group-count"></br> and <span id="installation-num-groups"></span> groups</span>.
+                            </h3>
+                            <h4>
+                                Deployment #<span id="installation-progress-deployment-number"></span>, '<span
+                                id="installation-progress-deployment-name"></span>',</br>from <span
+                                id="installation-progress-deployment-start"></span> to <span
+                                id="installation-progress-deployment-end"></span>.
+                            </h4>
+                            <h4>
+                                Installations found <span id="installation-progress-deployment-range"></span>.
+                            </h4>
+                            <h4 id="installation-progress-extraneous">
+                                Found <span id="installation-progress-extraneous-deployments"></span> deployments for
+                                <span id="installation-progress-extraneous-recipients"></span> recipients not in the
+                                Program Specification.
+                            </h4>
+                        </div>
+                        <div class="col-sm-5 installation-progress-timing-wrapper">
+                            <div class="h3">Installation Progress Over Time</div>
+                            <div class="no-tb-count-warning"><p>Graph based on actual install count, not project
+                                specification.</p></div>
+                            <canvas id="installation-progress-timing"></canvas>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <h2>Deployment Installation Details by Community & Group</h2>
-            <h5 id="installation-progress-legend">Legend:
-                <span class="missing">0 - 10%</span>
-                <span class="unacceptable">11 - 49%</span>
-                <span class="needs-improvement">50 - 84%</span>
-                <span class="acceptable">85 - 99%</span>
-                <span class="perfect">100%</span>
-                <span class="excess">&gt; 100%</span>
-            </h5>
-            <div id='installation-progress-detail' class="detailtable"></div>
-            <div id='installation-progress-extraneous-detail'>
-                <h2 title="These are installations in which the Community selected in the TB-Loader was not one of the communities defined in the Program Specification. Although the right information may well have gotten to the right recipients at the right time, this limits our ability to produce accurate reports on the deployment.">
-                    Deployments to Community/Groups not in the Program Specification</h2>
-                <div id='installation-progress-extraneous-table' class="detailtable"></div>
-            </div>
+                <h2>Deployment Installation Details by Community & Group</h2>
+                <h5 id="installation-progress-legend">Legend: <span class="missing">0 - 10%</span> <span
+                    class="unacceptable">11 - 49%</span> <span class="needs-improvement">50 - 84%</span> <span
+                    class="acceptable">85 - 99%</span> <span class="perfect">100%</span> <span
+                    class="excess">&gt; 100%</span>
+                </h5>
+                <div class="detailtable" id='installation-progress-detail'></div>
+                <div id='installation-progress-extraneous-detail'>
+                    <h2 title="These are installations in which the Community selected in the TB-Loader was not one of the communities defined in the Program Specification. Although the right information may well have gotten to the right recipients at the right time, this limits our ability to produce accurate reports on the deployment.">
+                        Deployments to Community/Groups not in the Program Specification</h2>
+                    <div class="detailtable" id='installation-progress-extraneous-table'></div>
+                </div>
 
             </div>
             <div class="have_no_data">
@@ -293,7 +285,7 @@
     </div>
 
     <!-- Usage Details Report -->
-    <div id="usage-details-page" role="tabpanel" class="tab-pane fade">
+    <div class="tab-pane fade" id="usage-details-page" role="tabpanel">
         <div class="container-fluid">
             <h2 class="bg-primary">Usage
                 &nbsp;<span id="usage-details-project-placeholder"></span>
@@ -306,24 +298,23 @@
                 </div>
 
                 <div>
-                <button id="usage-refresh" class="btn btn-default btn-large" style="border-radius:4px"
-                        type="button">
-                    <i class="glyphicon glyphicon-refresh"></i>
-                </button>
+                    <button class="btn btn-default btn-large" id="usage-refresh" style="border-radius:4px"
+                            type="button">
+                        <i class="glyphicon glyphicon-refresh"></i>
+                    </button>
 
-                <label style="font-weight:normal">
-                    <input type="checkbox" id="limit-by-deployment">
-                    Limit queries to a single deployment, for faster performance<span id="limit-by-deployment-prompt"></span>
-                </label>
+                    <label style="font-weight:normal"> <input id="limit-by-deployment" type="checkbox"> Limit queries to
+                        a single deployment, for faster performance<span id="limit-by-deployment-prompt"></span>
+                    </label>
                     &nbsp;&nbsp;&nbsp;
-                    <button id="usage-test-query" class="btn btn-info btn-large hidden" style="border-radius:4px"
+                    <button class="btn btn-info btn-large" id="usage-test-query" style="border-radius:4px"
                             type="button">
                         Test
                     </button>
                 </div>
 
                 <h2>Usage</h2>
-                <div id="usage-table" class="detailtable"></div>
+                <div class="detailtable" id="usage-table"></div>
             </div>
 
             <div class="have_no_data">
@@ -334,15 +325,13 @@
     </div>
 
     <!-- User Feedback Report -->
-    <div id="userfeedback-page" role="tabpanel" class="tab-pane fade">
+    <div class="tab-pane fade" id="userfeedback-page" role="tabpanel">
         <div class="container-fluid">
             <h2 class="bg-primary form-inline">Breakdown as of <span id="breakdown-date"></span>
                 &nbsp;<span id="uf-project-placeholder"></span>
             </h2>
-            <label style="font-weight:normal">
-                <input type="checkbox" id="feedback-with-uncategorized">
-                Include uncategorized feedback
-            </label>
+            <label style="font-weight:normal"> <input id="feedback-with-uncategorized" type="checkbox"> Include
+                uncategorized feedback </label>
 
             <div class="row">
                 <div class="col-sm-1">&nbsp;</div>
@@ -359,7 +348,7 @@
                 </div>
             </div>
 
-            <div id="categorization-progress-view" class="row">
+            <div class="row" id="categorization-progress-view">
                 <h2 class="bg-primary">Categorization Progress for <span id="project-name">User Feedback</span></h2>
                 <h5 class="bg-default"><em>Progress in User Feedback Processing.</em></h5>
 
@@ -367,7 +356,7 @@
                 <div class="col-sm-7">
                     <div class="demo-container">
                         <h3>Progress Over Time</h3>
-                        <canvas id="progress-placeholder" class="progress-placeholder"></canvas>
+                        <canvas class="progress-placeholder" id="progress-placeholder"></canvas>
                         <h4 id="clickdata"></h4>
                     </div>
                 </div>
@@ -376,20 +365,85 @@
         </div>
     </div>
 
+    <!-- Program Specification Validation -->
+    <div class="tab-pane fade" id="program-specification-page" role="tabpanel">
+        <div class="container-fluid">
+            <h2 class="bg-primary">Program Specification Validator</h2>
+            <div id="progspec-input" class="progspec-validation">
+                <div>
+                    <p>What is the name of the project to which this Program Specification applies?</p>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12 col-sm-12 col-12">
+                        <div class="input-group">
+                            <span class="input-group-addon" id="basic-addon1">Project Name:</span> <input
+                            aria-describedby="basic-addon1" class="form-control" id="progspec-project-name" placeholder="Name"
+                            type="text">
+                        </div>
+                    </div>
+                </div><!-- /.row -->
+                <div>
+                    <p>Drag and drop the Program Specification .xlsx file on the box below. Or click the "Browse" button
+                        and choose the file on your computer.</p>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12 col-sm-12 col-12">
+                        <form class="input-group input-group-lg">
+                            <label class="input-group-btn">
+                            <span class="btn btn-primary btn">
+                                Browse for file&hellip; <input id="progspec-file" single style="display: none;"
+                                                               type="file">
+                            </span> </label> <input class="form-control" id="progspec-filename" placeholder="Drop .xlsx file here..." readonly
+                                                    type="text">
+                        </form>
+                    </div>
+                </div><!-- /.row -->
+                <div>
+                    <p>When you are ready, click the "Validate..." button to validate the Program Specification.</p>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12 col-sm-12 col-12">
+                        <div class="input-group">
+                            <label class="input-group-btn">
+                                <button class="btn btn-success disabled" id="progspec-validate" style="border-radius:4px"
+                                        type="button">
+                                    Validate&hellip;
+                                </button>
+                            </label>
+                        </div>
+                    </div>
+                </div><!-- /.row -->
+            </div>
+            <div id="progspec-validate-results" class="hidden progspec-validation">
+                <div>
+                    <h4>Results of validation:</h4>
+                </div>
+                <div class="row">
+                    <div id="progspec-validate-issues" class="col-lg-12 col-sm-12 col-12">
+
+                    </div>
+                </div><!-- /.row -->
+            </div>
+            <div id="progspec-validate-results-no-issues" class="hidden progspec-validation">
+                <div>
+                    <h4>Results of validation: No issues found!</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Checkouts Report -->
-    <div id="checkout-page" role="tabpanel" class="tab-pane fade">
+    <div class="tab-pane fade" id="checkout-page" role="tabpanel">
         <div class="container-fluid">
             <h2 class="bg-primary">ACM Checkout Status</h2>
 
             <div class="row">
                 <div class="col-md-12">
                     <div class="input-group">
-                        <label style="font-weight:normal">
-                            <input type="checkbox" id="include-user-feedback" value="option1">
-                            Include User Feedback ACMs
-                        </label>
+                        <label style="font-weight:normal"> <input id="include-user-feedback" type="checkbox"
+                                                                  value="option1"> Include User Feedback ACMs </label>
                         <span class="input-group-btn">
-                        <button id="refresh-checkout-list" class="btn btn-primary btn-large" style="border-radius:4px"
+                        <button class="btn btn-primary btn-large" id="refresh-checkout-list" style="border-radius:4px"
                                 type="button">
                             <i class="glyphicon glyphicon-refresh"></i>
                         </button>
@@ -398,13 +452,13 @@
                 </div><!-- /.col-lg-6 -->
             </div>
 
-            <div id="checkout-page-container" class="detailtable"></div>
+            <div class="detailtable" id="checkout-page-container"></div>
         </div>
     </div>
 </div>
 
 <!-- Wait spinner -->
-<div id="wait-spinner" class="modal" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+<div aria-labelledby="myModalLabel" class="modal" id="wait-spinner" role="dialog" tabindex="-1">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-body">
@@ -483,6 +537,7 @@ script src="scripts/3p/aws-sdk-2.5.0.min.js"></script -->
 <script src="scripts/InstallationData.js"></script>
 <script src="scripts/InstallationPage.js"></script>
 <script src="scripts/InstallationDetailPage.js"></script>
+<script src="scripts/ProgramSpecificationPage.js"></script>
 <script src="scripts/OverviewPage.js"></script>
 <script src="scripts/DropdownButton.js"></script>
 <script src="scripts/ProjectPicker.js"></script>

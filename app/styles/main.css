@@ -242,7 +242,7 @@ p.spacer {
 /* Wait spinner */
 #wait-spinner .modal-dialog {
   height: 50px; /* Any value displays as the same size, but this centers the box in the window */
-  width: 62px; /* this value gets the spinner centered in the box */
+  width: 62px !important; /* this value gets the spinner centered in the box */
   position: absolute;
   left: 0;
   right: 0;
@@ -501,3 +501,27 @@ tr.shown td.details-control {
 .column-selector {
     margin-right: 15px;
 }
+
+/* File drop target */
+#progspec-filename.over {
+    border: 2px dashed #000;
+}
+
+div.progspec-validation {
+    border: 2px solid darkgrey;
+    border-radius:6px;
+    background: aliceblue;
+    padding: 8px;
+    margin-top: 2rem;
+}
+div#progspec-validate-results,
+div#progspec-validate-results-no-issues {
+    background: floralwhite;
+}
+#progspec-validate-issues p {
+    margin:0;
+}
+#progspec-validate-issues p:nth-child(3n+1) {
+    background: cornsilk;
+}
+
