@@ -16,6 +16,8 @@ Main = (function () {
     var allProjectsList;
     var filteredProjects;
 
+    let PAGE_PARAM = 'pp';
+
     // Map page names to a short code, and back. Add to the list. Do not reuse letters.
     let shortToLong = {
         'a': 'installation-detail-page',
@@ -78,9 +80,12 @@ Main = (function () {
 
     function setParams(page, values) {
         let params = new URLSearchParams();
-        Object.keys(values).forEach(k=>params.set(k, values[k]));
+        Object.keys(values).forEach(k=>{
+            if (k===PAGE_PARAM) {throw('parameter collision');}
+            params.set(k, values[k]);
+        });
         let shortPage = longToShort[page] || page
-        params.set('q', shortPage);
+        params.set(PAGE_PARAM, shortPage);
         let newUrl = new URL(location);
         newUrl.search = params;
         window.history.replaceState({}, '', newUrl);
@@ -153,8 +158,8 @@ Main = (function () {
                     })
                     $('#splash h3').removeClass('invisible');
 
-                    if (initialParams && initialParams.get('q')) {
-                        let tab = initialParams.get('q');
+                    if (initialParams && (initialParams.get(PAGE_PARAM) || initialParams.get('q'))) {
+                        let tab = initialParams.get(PAGE_PARAM) || initialParams.get('q');
                         let longPage = shortToLong[tab] || tab;
                         if (tab) {
                             $('#main-nav a[href="#' + longPage + '"]').tab('show');

@@ -1,5 +1,5 @@
 /* jshint esversion:6, asi:true */
-/* global $, DataTable, StatisticsData, User, CognitoWrapper,console, Main, ProjectDetailsData, DataTable, Chart, ProjectPicker, Utils */
+/* global $, DataTable, StatisticsData, User, CognitoWrapper,console, Main, ProjectDetailsData, DataTable, Chart, DropdownButton, ProjectPicker, Utils */
 
 var UsageDetailsPage = UsageDetailsPage || {};
 
@@ -9,18 +9,40 @@ UsageDetailsPage = function () {
     let PAGE_HREF = 'a[href="#' + PAGE_ID + '"]';
     let $PAGE = $('#' + PAGE_ID);
 
-    let $limitByDeployment = $('#limit-by-deployment')
+    let queries = [{
+        title: 'Usage by Playlist Category',
+        querySpecs: ['deploymentnumber', 'category', 'completions,sum', 'played_seconds,sum']
+    }, {
+        title: 'Usage by District', querySpecs: ['deploymentnumber', 'district', 'completions,sum', 'played_seconds,sum']
+    }, {
+        title: 'Usage by Message', querySpecs: ['deploymentnumber', 'title', 'completions,sum', 'played_seconds,sum']
+    }, {
+        title: 'Usage by Message in District',
+        querySpecs: ['deploymentnumber', 'district', 'title', 'completions,sum', 'played_seconds,sum']
+    }, {
+        title: 'Usage by Language in District',
+        querySpecs: ['deploymentnumber', 'district', 'language', 'completions,sum', 'played_seconds,sum']
+    }, {
+        title: 'Usage by Playlist Category in District',
+        querySpecs: ['deploymentnumber', 'district', 'category', 'completions,sum', 'played_seconds,sum']
+    }];
 
-    var previousProject, previousDeployment, previousColumns;
+
+    let $limitByDeployment = $('#limit-by-deployment');
+
+    var currentProject, currentDeployment, currentQuerySpecs;
 
     var fillDone = false;
+
+    // The pull-down selector for queries.
+    let querySelect;
 
     function fillProjects() {
         if (fillDone) {
             return;
         }
         fillDone = true;
-        var preSelectDeployment = previousDeployment;
+        var preSelectDeployment = currentDeployment;
         let list = Main.getProjectList();
 
         function getDeploymentsForProject(proj) {
@@ -47,7 +69,7 @@ UsageDetailsPage = function () {
 
         var options = {
             projects: list,
-            defaultProject: previousProject,
+            defaultProject: currentProject,
             getDeploymentsForProject: getDeploymentsForProject
         };
 
@@ -63,262 +85,100 @@ UsageDetailsPage = function () {
 
 
     function clearState() {
-        localStorage.removeItem('usage.details.project')
-        localStorage.removeItem('usage.details.deployment')
+        localStorage.removeItem('usage.details.project');
+        localStorage.removeItem('usage.details.deployment');
+        localStorage.removeItem('usage.details.columns');
+        localStorage.removeItem('usage.details.query');
+        localStorage.removeItem('usage.details.limitDeployments');
     }
 
     function persistState() {
-        if (previousProject && previousDeployment) {
-            let previousColumns = selectedColumnsToMask()
-            let limitDeployments = $limitByDeployment.prop('checked')
-            localStorage.setItem('usage.details.project', previousProject);
-            localStorage.setItem('usage.details.deployment', previousDeployment);
-            localStorage.setItem('usage.details.columns', previousColumns)
-            localStorage.setItem('usage.details.limitDeployments', limitDeployments)
-            Main.setParams(PAGE_ID, {p: previousProject, d: previousDeployment, c: previousColumns, l: limitDeployments?'t':'f'});
+        if (currentProject && currentDeployment) {
+            let previousColumns = '';
+            let limitDeployments = $limitByDeployment.prop('checked');
+            let queryString = currentQuerySpecs.map(qs=>qs.toString()).join(';');
+            localStorage.setItem('usage.details.project', currentProject);
+            localStorage.setItem('usage.details.deployment', currentDeployment);
+            localStorage.setItem('usage.details.query', queryString);
+            localStorage.setItem('usage.details.limitDeployments', limitDeployments);
+            Main.setParams(PAGE_ID, {p: currentProject, d: currentDeployment, q: queryString, l: limitDeployments?'t':'f'});
         }
     }
 
     function restoreState() {
-        var previousColumns, limitDeployments
+        var previousColumns, limitDeployments;
         let params = Main.getParams();
+        let queryString = '';
         if (params) {
-            previousProject = params.get('p') || '';
-            previousDeployment = params.get('d') || '';
-            previousColumns = params.get('c')
+            currentProject = params.get('p') || '';
+            currentDeployment = params.get('d') || '';
+            queryString = params.get('q');
             limitDeployments = params.get('l')
         } else {
-            previousProject = localStorage.getItem('usage.details.project') || '';
-            previousDeployment = localStorage.getItem('usage.details.deployment') || '';
-            previousColumns = localStorage.getItem('usage.details.deployment')
+            currentProject = localStorage.getItem('usage.details.project') || '';
+            currentDeployment = localStorage.getItem('usage.details.deployment') || '';
+            queryString = localStorage.getItem('usage.details.deployment');
             limitDeployments = localStorage.getItem('usage.details.limitDeployments')
         }
-        if (previousColumns !== undefined) {
-            maskToSelectedColumns(previousColumns)
-        } else {
-            selectDefaultColumns()
-        }
-        // if not some variant on 'f', turn on the limiter.
-        limitDeployments = !(limitDeployments||'t').toLowerCase().startsWith('f')
-        $limitByDeployment.prop('checked', limitDeployments)
+        let queryItems = (queryString || '').split(';');
+        currentQuerySpecs = $('#usage-query-selection').usageQueryBuilder('parse', queryItems);
 
-        if (previousProject && previousDeployment || !limitDeployments) {
-            refreshProject(previousProject, previousDeployment)
-        }
+        restoreQuerySelection();
+        // Do something with the restored state...
     }
 
-
-    var columnSpecs = {
-        deploymentnumber: {
-            heading: 'Depl #',
-            selection: 'default'
-        },
-        deployment: {
-            heading: 'Deployment'
-        },
-        startdate: {
-            heading: 'Deployment Start',
-            tooltip: 'The date on which the Deployment was scheduled to start.',
-            selection: 'default'
-        },
-
-        contentpackage: {
-            heading: 'Content Package'
-        },
-        languagecode: {
-            heading: 'Language Code',
-            tooltip: 'ISO 639-3 code for the language.'
-        },
-        language: {
-            heading: 'Language',
-            tooltip: 'Name of the language. Note that a language can have many names.'
-        },
-
-        country: {
-            heading: 'Country'
-        },
-        region: {
-            heading: 'Region',
-            tooltip: 'Geo-Political organization unit smaller than a Country, but larger than a District.'
-        },
-        district: {
-            heading: 'District',
-            tooltip: 'Geo-Political organization unit larger than a community, but smaller than a Region.'
-        },
-        communityname: {
-            heading: 'Community'
-        },
-        groupname: {
-            heading: 'Group',
-            tooltip: 'The name of a group or club within a Community. A group typically receives 1, 2, or 3 Talking Books.'
-        },
-        agent: {
-            heading: 'Agent',
-            tooltip: 'The name of the Community Agent, Health Worker or Volunteer, or other individual who receives the Talking Book.'
-        },
-        talkingbookid: {
-            heading: 'TB SRN',
-            tooltip: 'The unique identifier of an individual Talking Book'
-        },
-        category: {
-            heading: 'Category',
-            tooltip: 'In what category was the message published?'
-        },
-        contentid: {
-            heading: 'Content Id',
-            tooltip: 'The unique id of the message, in a particular language.'
-        },
-        title: {
-            heading: 'Message',
-            tooltip: 'The title of the message.',
-            selection: 'default'
-        },
-        format: {
-            heading: 'Format',
-            tooltip: 'When known, the format of the message, such as drama, song, or interview.',
-            selection: 'default'
-        },
-        duration_seconds: {
-            heading: 'Duration',
-            tooltip: 'Length of the message in seconds.',
-            formatter: row => Utils.formatSeconds(row.duration_seconds),
-            selection: 'default',
-            render: function(data, type, row) {
-                if (type==='display' || type==='filter') {
-                    return Utils.formatSeconds(row.duration_seconds)
-                }
-                return data
-            }
-        },
-        position: {
-            heading: 'Position',
-            tooltip: 'The position of the message within its playlist. Position \'1\' is the first message in the playlist.'
-        },
-
-        timestamp: {
-            heading: 'Collection Time',
-            tooltip: 'When were the statistics in this line collected?'
-        },
-
-        played_minutes: {
-            heading: 'Minutes Played',
-            tooltip: 'How many minutes, total, was the message played?',
-            formatter: row => Utils.formatMinutes(row.played_minutes),
-            selection: 'implicit',
-            render: function ( data, type, row ) {
-                // If display or filter data is requested, format as a nice time string
-                if ( type === 'display' || type === 'filter' ) {
-                    return Utils.formatMinutes(row.played_minutes)
-                }
-
-                // Otherwise the data type requested (`type`) is type detection or
-                // sorting data, for which we want to use the integer, so just return
-                // that, unaltered
-                return data;
-            }
-        },
-        played_seconds: {
-            heading: 'Time Played',
-            tooltip: 'How long in total was the message played? ',
-            formatter: row => Utils.formatSeconds(row.played_seconds),
-            selection: 'implicit',
-            render: function ( data, type, row ) {
-                // If display or filter data is requested, format as a nice time string
-                if ( type === 'display' || type === 'filter' ) {
-                    return Utils.formatSeconds(row.played_seconds)
-                }
-
-                // Otherwise the data type requested (`type`) is type detection or
-                // sorting data, for which we want to use the integer, so just return
-                // that, unaltered
-                return data;
-            }
-        },
-        completions: {
-            heading: 'Completions',
-            tooltip: 'How many times was the message played to completion?',
-            selection: 'implicit'
+    function restoreQuerySelection() {
+        function equalQueries(q1, q2) {
+            if (q1.length !== q2.length) {return false;}
+            return q1.every((q,ix)=>{
+                return q.toString()===q2[ix].toString();
+            });
         }
-    }
-
-    function buildColumnSelectors() {
-        let $div = $('#usage-details-selection')
-        Object.keys(columnSpecs).forEach(columnName => {
-            let columnSpec = columnSpecs[columnName];
-            if (columnSpec.selection === 'implicit') {
-                return
+        let $selection = $('#usage-query-selection');
+        queries.some((q,ix)=>{
+            // Convert string-form query specs to object form.
+            let testQuerySpecs = $selection.usageQueryBuilder('parse', q.querySpecs);
+            if (equalQueries(currentQuerySpecs, testQuerySpecs)) {
+                querySelect.setSelection({value:ix});
+                return true; // stops looking
             }
-            let text = columnSpec.heading || columnName;
-            let label = $(`<label class="column-selector"><input type="checkbox" class="${columnName}">${text} </label>`)
-            $div.append(label)
-            if (columnSpec.selection === 'default') {
-                let $checkbox = $('.' + columnName, $div)
-                $checkbox.prop('checked', true)
+        });
+    }
+
+    function initializeQueries() {
+        let $select = $('#usage-query-selection');
+        querySelect = DropdownButton.create($select, {title:'Choose query', style:'btn-success'});
+
+        let queryChoices = [];
+        queries.forEach((q,ix)=>queryChoices.push({value:ix, label: queries[ix].title}));
+        queryChoices.push({separator:true});
+        queryChoices.push({value:-1, label:'Custom Query'});
+        querySelect.update(queryChoices);
+
+        // Attach listeners.
+
+        // Selected query was changed.
+        $select.on('selected', () => {
+            let qIx = querySelect.selection();
+            let q = qIx >= 0 ? queries[qIx] : 'no query';
+            console.log(q)
+        });
+
+        // Refresh button clicked.
+        $('#usage-execute-query').on('click', ()=>{
+            let qIx = querySelect.selection();
+            if (qIx >= 0) {
+                let q = queries[qIx];
+                let querySpecs = $select.usageQueryBuilder('parse', q.querySpecs);
+                refreshProject(currentProject, currentDeployment, querySpecs);
             }
-        })
-    }
+        });
 
-    function selectDefaultColumns() {
-        let $div = $('#usage-details-selection')
-        Object.keys(columnSpecs).forEach(columnName => {
-            let columnSpec = columnSpecs[columnName];
-            let $checkbox = $('.' + columnName, $div)
-            $checkbox.prop('checked', columnSpec.selection === 'default')
-        })
-        $limitByDeployment.prop('checked', true)
-    }
+        // Customize button clicked.
+        $('#usage-customize-query').on('click', ()=>{
+            CognitoWrapper.handleSessionExpiry();
+        });
 
-    function getSelectedColumns() {
-        let result = []
-        let $div = $('#usage-details-selection')
-        Object.keys(columnSpecs).forEach(columnName => {
-            let columnSpec = columnSpecs[columnName];
-            let $checkbox = $('.' + columnName, $div)
-            if ($checkbox.prop('checked')) {result.push(columnName)}
-        })
-        return result
-    }
-
-    function selectedColumnsToMask() {
-        let $div = $('#usage-details-selection')
-        let columnNames = Object.keys(columnSpecs)
-        let selectedIndices = []
-        for (let ix = 0; ix < columnNames.length; ix++) {
-            if ($('.' + columnNames[ix], $div).prop('checked')) {
-                selectedIndices.push(ix)
-            }
-        }
-
-        var bits = ''
-        Object.keys(columnSpecs).forEach(columnName => {
-            let columnSpec = columnSpecs[columnName];
-            let $checkbox = $('.' + columnName, $div)
-            bits += ($checkbox.prop('checked')) ? '1' : '0'
-        })
-        while (bits.length % 4 !== 0) {
-            bits += '0'
-        }
-        let numeric = Number.parseInt(bits, 2)
-        return numeric.toString(16)
-    }
-
-    function maskToSelectedColumns(hex) {
-        let $div = $('#usage-details-selection')
-        let numeric = Number.parseInt(hex, 16)
-        let bits = numeric.toString(2)
-        let bitarray = bits.split('')
-
-        let restoredIndices = []
-        for (let ix = 0; ix < bitarray.length; ix++) {
-            if (bitarray[ix] === '1') {
-                restoredIndices.push(ix)
-            }
-        }
-        Object.keys(columnSpecs).forEach(columnName => {
-            let columnSpec = columnSpecs[columnName];
-            let $checkbox = $('.' + columnName, $div)
-            $checkbox.prop('checked', bitarray.shift() === '1')
-        })
     }
 
     /**
@@ -327,43 +187,54 @@ UsageDetailsPage = function () {
      * configure the column descriptors
      * @returns [{data: string, title: string}, ...]
      */
-    function columnOptions(usageData) {
+    function columnOptions(querySpecs, usageData) {
         // Examine the first object. For every member, look at columnSpecs to see what we know about it.
-        let columns = Object.keys(usageData[0]).map(key => {
-            let name = columnSpecs[key].heading || key
-            var tip = columnSpecs[key].tooltip
+        // let columns = Object.keys(usageData[0]).map(key => {
+        //     let name = columnSpecs[key].heading || key
+        //     var tip = columnSpecs[key].tooltip
+        //     tip = tip ? '<img class="question no-click" src="images/question16.png" title="' + tip + '"/>' : ''
+        //     var titleText = `<div><span>${name}</span>${tip}</div>`
+        //     let col = { data: key, title: titleText }
+        //     if (columnSpecs[key].render) { col.render = columnSpecs[key].render}
+        //     return col
+        // })
+        let dataNames = Object.keys(usageData[0]);
+        let columns = querySpecs.map((qs,ix)=>{
+            let name = qs.columnDef.heading;
+            var tip = qs.tooltip;
             tip = tip ? '<img class="question no-click" src="images/question16.png" title="' + tip + '"/>' : ''
             var titleText = `<div><span>${name}</span>${tip}</div>`
-            let col = { data: key, title: titleText }
-            if (columnSpecs[key].render) { col.render = columnSpecs[key].render}
+            let col = { data: dataNames[ix], title: titleText }
+            if (qs.columnDef.render) { col.render = qs.columnDef.render}
             return col
-        })
+        });
         return columns
     }
+
 
     /**
      * Builds a table with details about the messages in the deployment.
      * @param stats An object with a {messageData} member.
      */
-    function makeUsageTable(stats) {
+    function makeUsageTable(querySpecs, stats) {
         let usageData = stats.data || [];
-        let columns = columnOptions(usageData)
+        let columns = columnOptions(querySpecs, usageData);
 
-        var buttonMap = [] // will be computed just before export
-        let filename = 'DashboardCustom'
+        var buttonMap = []; // will be computed just before export
+        let filename = 'DashboardCustom';
         let exportOptions = {
             format: {
                 body: function (data, row, column, node) {
-                    let originalData = usageData[row][buttonMap[column]]
+                    let originalData = usageData[row][buttonMap[column]];
                     return originalData
                 }
             }
-        }
+        };
 
         let excelButton = {   extend: 'excelHtml5',
             'action': function (e, dt, button, config) {
                 // Cache the button order map before  starting the export.
-                buttonMap = table2.colReorder.order().map(ix=>columns[ix].data)
+                buttonMap = table2.colReorder.order().map(ix=>columns[ix].data);
                 // Call the original action function
                 $.fn.dataTable.ext.buttons.excelHtml5.action.call(this, e, dt, button, config);
             },
@@ -372,20 +243,20 @@ UsageDetailsPage = function () {
             filename: () => {
                 return $('input', $input).val() || 'Usage-Statistics'
             }
-        }
+        };
         let copyButton = {   extend: 'copyHtml5',
             'action': function (e, dt, button, config) {
                 // Cache the button order map before  starting the export.
-                buttonMap = table2.colReorder.order().map(ix=>columns[ix].data)
+                buttonMap = table2.colReorder.order().map(ix=>columns[ix].data);
                 // Call the original action function
                 $.fn.dataTable.ext.buttons.copyHtml5.action.call(this, e, dt, button, config);
             },
             exportOptions: exportOptions
-        }
+        };
         let csvButton = {   extend: 'csvHtml5',
             'action': function (e, dt, button, config) {
                 // Cache the button order map before  starting the export.
-                buttonMap = table2.colReorder.order().map(ix=>columns[ix].data)
+                buttonMap = table2.colReorder.order().map(ix=>columns[ix].data);
                 // Call the original action function
                 $.fn.dataTable.ext.buttons.csvHtml5.action.call(this, e, dt, button, config);
             },
@@ -393,8 +264,8 @@ UsageDetailsPage = function () {
             filename: () => {
                 return $('input', $input).val() || 'Usage-Statistics'
             }
-        }
-        let buttons = [excelButton]
+        };
+        let buttons = [excelButton];
 
         let tableOptions = {
             colReorder: true,
@@ -405,23 +276,23 @@ UsageDetailsPage = function () {
             buttons: buttons,
             data: usageData,
             columns: columns
-        }
+        };
 
         // Make a fresh container to contain the table.
-        let $container = $('#usage-table')
+        let $container = $('#usage-table');
         $container.empty();
         let classes = 'table table-condensed table-bordered'+(usageData.length?' table-striped':'');
         $container.html('<table class="' + classes + '">');
 
         // And make the table.
-        let table2 = $('table', $container).DataTable(tableOptions)
+        let table2 = $('table', $container).DataTable(tableOptions);
         // Attach the buttons to the UI.
-        let $input = $('<label><input style="height:100%;" class="form-control input-sm" placeholder="Filename" aria-controls="DataTables_Table_1"></label>')
-        let $buttons = table2.buttons().container()
-        $buttons.append($input)
+        let $input = $('<label><input style="height:100%;" class="form-control input-sm" placeholder="Filename" aria-controls="DataTables_Table_1"></label>');
+        let $buttons = table2.buttons().container();
+        $buttons.append($input);
         $buttons.appendTo($('.col-sm-6:eq(0)', table2.table().container()));
         // Make the tooltips active, and suppress clicks on the images.
-        $('.no-click', $container).tooltip()
+        $('.no-click', $container).tooltip();
         $('.no-click', $container).on('click', () => {
             return false
         })
@@ -435,12 +306,8 @@ UsageDetailsPage = function () {
         if (deployment && deployment>0 && $limitByDeployment.prop('checked')) {
             $('#limit-by-deployment-prompt').text(` (Deployment ${deployment})`)
         } else {
-            deployment = undefined
+            deployment = undefined;
             $('#limit-by-deployment-prompt').text('')
-        }
-
-        if (!columns || columns.length === 0) {
-            columns = getSelectedColumns()
         }
 
         var deferred = $.Deferred();
@@ -449,18 +316,18 @@ UsageDetailsPage = function () {
                 if (result.errorMessage) {
                     deferred.reject(result.errorMessage);
                 } else {
-                    let data = result.data
-                    let resolution = {data: data, columns: columns}
+                    let data = result.data;
+                    let resolution = {data: data, columns: columns};
                     deferred.resolve(resolution);
                 }
             })
-            .fail(deferred.reject)
+            .fail(deferred.reject);
 
         return deferred.promise()
     }
 
     function get2() {
-        let url = 'https://y06knefb5j.execute-api.us-west-2.amazonaws.com/Devo'
+        let url = 'https://y06knefb5j.execute-api.us-west-2.amazonaws.com/Devo';
         var deferred = $.Deferred();
 
         var user = User.getUserAttributes();
@@ -477,16 +344,16 @@ UsageDetailsPage = function () {
                 Authorization: CognitoWrapper.getIdToken(),
                 'Accept': 'application/json'
             }
-        }
+        };
 
         $.ajax(request)
             .done((result) => {
-                console.log(result)
+                console.log(result);
                 if (result.errorMessage) {
                     deferred.reject(result.errorMessage);
                 } else {
-                    let projects = result.result.values
-                    console.log(projects)
+                    let projects = result.result.values;
+                    console.log(projects);
                     // latestData = result.result;
                     // usageStats = $.csv.toObjects(latestData, {separator: ',', delimiter: '"'});
                     // latestTimestamp = Date.now();
@@ -494,7 +361,7 @@ UsageDetailsPage = function () {
                 }
             })
             .fail((err) => {
-                console.log(err)
+                console.log(err);
                 deferred.reject(err)
             });
 
@@ -505,10 +372,10 @@ UsageDetailsPage = function () {
         console.log('test fn')
     }
 
-    function refreshProject(project, deployment, columns) {
-        previousProject = project;
-        previousDeployment = deployment;
-        previousColumns = columns;
+    function refreshProject(project, deployment, querySpecs) {
+        if (!querySpecs || !querySpecs.length) {return;}
+        let columns = querySpecs.map(qs=>qs.query);
+
         Main.incrementWait();
         getUsage(project, deployment, columns).then((stats) => {
             let haveData = stats.data !== undefined;
@@ -516,8 +383,11 @@ UsageDetailsPage = function () {
                 $('#usage-details-page .have_data').removeClass('hidden');
                 $('#usage-details-page .have_no_data').addClass('hidden');
 
-                makeUsageTable(stats);
+                makeUsageTable(querySpecs, stats);
 
+                currentProject = project;
+                currentDeployment = deployment;
+                currentQuerySpecs = querySpecs;
                 persistState();
 
             } else {
@@ -531,10 +401,15 @@ UsageDetailsPage = function () {
     }
 
     function reportProject(project, deployment) {
-        if (project!==previousProject) {
+        if (project!==currentProject) {
             $limitByDeployment.prop('checked', true)
         }
-        refreshProject(project, deployment)
+        if (!currentQuerySpecs || !currentQuerySpecs.length) {
+            currentProject = project;
+            currentDeployment = deployment;
+            return;
+        }
+        refreshProject(project, deployment, currentQuerySpecs)
     }
 
     let initialized = false;
@@ -542,7 +417,7 @@ UsageDetailsPage = function () {
     function show() {
         if (!initialized) {
             initialized = true;
-            let user = User.getUserAttributes()
+            let user = User.getUserAttributes();
             if (user && user.email && user.email.startsWith('bill@amplio')) {
                 $('#usage-test-query').on('click', () => {
                     get3()
@@ -551,19 +426,15 @@ UsageDetailsPage = function () {
                 $('#usage-test-query').hide()
             }
 
-            buildColumnSelectors()
-            restoreState()
-            clearState()
+            initializeQueries();
+
+            restoreState();
+            clearState();
             fillProjects()
         } else {
             persistState();
         }
     }
-
-    $('#usage-refresh').on('click', () => {
-        let columns = getSelectedColumns()
-        refreshProject(previousProject, previousDeployment, columns)
-    })
 
     // Hook the tab-activated event for this tab.
     $(PAGE_HREF).on('shown.bs.tab', show);

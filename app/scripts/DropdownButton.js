@@ -65,6 +65,13 @@ DropdownButton = (function () {
      *   update() : updates the list, and, optionally, the default selection.
      */
     function create(elem, options) {
+        function getValue(item) {
+            if (typeof item === 'string') {
+                return item;
+            } else {
+                return item.value;
+            }
+        }
         function clearList() {
             $('ul', $elem).children().off();
             $('ul', $elem).empty();
@@ -72,18 +79,18 @@ DropdownButton = (function () {
             selection = null;
         }
         function updateList(list, opts) {
+            function isSeparator(item) {
+                if (typeof item === 'string') {
+                    return false;
+                } else {
+                    return (item.separator && true) || false;
+                }
+            }
             function getLabel(item) {
                 if (typeof item === 'string') {
                     return item;
                 } else {
                     return item.label;
-                }
-            }
-            function getValue(item) {
-                if (typeof item === 'string') {
-                    return item;
-                } else {
-                    return item.value;
                 }
             }
             function getTooltip(item) {
@@ -112,6 +119,12 @@ DropdownButton = (function () {
                 if (!item) {
                     return;
                 }
+                if (isSeparator(item)) {
+                    let $li = $('<li class="divider" role="separator"></li>');
+                    $('ul', $elem).append($li);
+                    return;
+                }
+
                 let value = getValue(item);
                 let label = getLabel(item);
                 let tooltip = getTooltip(item);
@@ -161,6 +174,11 @@ DropdownButton = (function () {
             }
         }
 
+        function setSelection(newSelection) {
+            let $item = $('li', $elem).find(`[data-value=${getValue(newSelection)}]`);
+            $item.trigger('click');
+        }
+
         options = options || {};
         var $elem = $(elem);
         $elem.children().off();
@@ -176,7 +194,8 @@ DropdownButton = (function () {
         return {
             selection: ()=>selection,
             clear: clearList,
-            update: updateList
+            update: updateList,
+            setSelection: setSelection
         }
     }
 

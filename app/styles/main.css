@@ -525,3 +525,13 @@ div#progspec-validate-results-no-issues {
     background: cornsilk;
 }
 
+#usage-execute-query, #usage-customize-query, #usage-query-selection button {
+    border-radius: 0 !important;
+}
+
+#usage-details-page-header {
+    margin-bottom: 0 !important;
+}
+#usage-details-page-query {
+    margin-top: 0 !important;
+}
