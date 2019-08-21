@@ -11,7 +11,7 @@ let UsageQueryBuilder = function () {
             result.columnname = defs.columnname || result.name;
             result.type = defs.type || 'string';
             result.heading = defs.heading || result.name;
-            result.tooltip = defs.tooltip || result.heading;
+            // result.tooltip = defs.tooltip || result.heading;
             if (defs.hasOwnProperty('aggregation')) {
                 if (defs.aggregation) {
                     result.aggregation = defs.aggregation;
@@ -19,13 +19,20 @@ let UsageQueryBuilder = function () {
             } else {
                 result.aggregation = 'count';
             }
-            ['render', 'formatter'].forEach(prop => {
+            ['render', 'formatter', 'tooltip'].forEach(prop => {
                 if (defs.hasOwnProperty(prop)) {
                     result[prop] = defs[prop]
                 }
             });
             if (result.aggregation) {
-                result.aggregateTooltip = defs.aggregateTooltip || (defs.aggregation + ' of ' + result.tooltip)
+                // Very English-centric: forming a plural by addng 's'.
+                let lastCh = result.heading[result.heading.length-1];
+                let base = defs.aggregateBase || (result.heading + (lastCh!=='s'?'s':''));
+                result.aggregateBase = base;
+                let tipAggr = {count:'Count',sum:'Sum'}[result.aggregation];
+                let headAggr = {count:'#',sum:'Total'}[result.aggregation];
+                result.aggregateTooltip = defs.aggregateTooltip || (tipAggr + ' of ' + base);
+                result.aggregateHeading = defs.aggregateHeading || (headAggr + ' ' + base);
             }
             return result;
         }
@@ -33,49 +40,44 @@ let UsageQueryBuilder = function () {
         let columnDefsArray = [ColumnDef({
             name: 'deploymentnumber',
             heading: 'Deployment #',
-            selection: 'default',
-            aggregateTooltip: 'Count of deployment numbers',
+            aggregateBase: 'Deployments',
         }), ColumnDef({
             name: 'deployment',
             heading: 'Deployment',
-            aggregateTooltip: 'Count of deployments',
         }), ColumnDef({
             name: 'startdate',
             heading: 'Deployment Start',
             tooltip: 'The date on which the Deployment was scheduled to start.',
             type: 'date',
-            aggregateTooltip: 'Count of start dates',
+            aggregateBase: 'Start Dates',
         }), ColumnDef({
             name: 'contentpackage',
             heading: 'Content Package',
-            aggregateTooltip: 'Count of content packages',
         }), ColumnDef({
             name: 'languagecode',
             heading: 'Language Code',
             tooltip: 'ISO 639-3 code for the language.',
-            aggregateTooltip: 'Count of language codes',
+            aggregateBase: 'ISO 639-3 Codes',
         }), ColumnDef({
             name: 'language',
             heading: 'Language',
             tooltip: 'Name of the language. Note that a language can have many names.',
-            aggregateTooltip: 'Count of languages',
         }), ColumnDef({
             name: 'country',
             heading: 'Country',
-            aggregateTooltip: 'Count of countries',
+            aggregateBase: 'Countries',
         }), ColumnDef({
             name: 'region',
             heading: 'Region',
             tooltip: 'Geo-Political organization unit smaller than a Country, but larger than a District.',
-            aggregateTooltip: 'Count of regions',
         }), ColumnDef({
             name: 'district',
             heading: 'District',
             tooltip: 'Geo-Political organization unit larger than a community, but smaller than a Region.',
-            aggregateTooltip: 'Count of districts',
         }), ColumnDef({
             name: 'communityname',
             heading: 'Community',
+            aggregateBase: 'Communities',
             aggregateTooltip: 'Count of communities (by name)',
         }), ColumnDef({
             name: 'groupname',
@@ -91,12 +93,13 @@ let UsageQueryBuilder = function () {
             name: 'talkingbookid',
             heading: 'TB',
             tooltip: 'The unique identifier of an individual Talking Book',
-            aggregateTooltip: 'Count of Talking Books',
+            aggregateBase: 'Talking Books',
         }), ColumnDef({
             name: 'category',
             heading: 'Category',
             tooltip: 'In what playlist category was the message published?',
             type: 'string',
+            aggregateBase: 'Playlist Categories',
             aggregateTooltip: 'Count of playlist categories',
         }), ColumnDef({
             name: 'contentid',
@@ -107,13 +110,14 @@ let UsageQueryBuilder = function () {
             name: 'title',
             heading: 'Message',
             tooltip: 'The title of the message.',
+            aggregateBase: 'Message Titles',
             aggregateTooltip: 'Count of message titles (in all languages)',
         }), ColumnDef({
             name: 'format',
             heading: 'Format',
             tooltip: 'When known, the format of the message, such as drama, song, or interview.',
             type: 'string',
-            aggregateTooltip: 'Count of known message formats',
+            aggregateTooltip: 'Count of message formats where known',
         }), ColumnDef({
             name: 'duration_seconds',
             heading: 'Duration',
@@ -137,6 +141,7 @@ let UsageQueryBuilder = function () {
             type: 'time',
             summable: true,
             aggregation: 'sum',
+            aggregateBase: 'Time Played',
             aggregateTooltip: 'Total time the message was played',
         }), ColumnDef({
             name: 'completions',
@@ -283,7 +288,9 @@ let UsageQueryBuilder = function () {
                 function aggregate(columnDef, aggregation) {
                     let result = '';
                     if (aggregation) {
-                        result = aggregation + '(' + (aggregation === 'count' ? 'distinct ' : '')
+                        // We don't include the keyword 'distinct', because the server does that automatically.
+                        // result = aggregation + '(' + (aggregation === 'count' ? 'distinct ' : '')
+                        result = aggregation + '(';
                     }
                     result += columnDef.columnname + (aggregation ? ')' : '');
                     return result
@@ -349,7 +356,9 @@ let UsageQueryBuilder = function () {
 
             let columnDef = validCol(columnName);
             let result = {
-                columnDef: columnDef, tooltip: columnDef.tooltip
+                columnDef: columnDef,
+                tooltip: columnDef.tooltip,
+                heading: columnDef.heading
             };
             if (aggregation) {
                 result.aggregation = validAgg(columnName, aggregation);
@@ -357,9 +366,11 @@ let UsageQueryBuilder = function () {
                     result.normalization = {
                         columnDef: validCol(normColumnName), aggregation: validAgg(normColumnName, normAggregation)
                     };
-                    result.tooltip = columnDef.aggregateTooltip + ' / ' + result.normalization.columnDef.aggregateTooltip
+                    result.tooltip = columnDef.aggregateTooltip + ' / ' + result.normalization.columnDef.aggregateTooltip;
+                    result.heading = columnDef.aggregateBase + ' / ' + result.normalization.columnDef.heading;
                 } else {
-                    result.tooltip = columnDef.aggregateTooltip
+                    result.tooltip = columnDef.aggregateTooltip;
+                    result.heading = columnDef.aggregateHeading;
                 }
             }
             result.type = resultTypeOf(result);
@@ -404,47 +415,43 @@ let UsageQueryBuilder = function () {
     };
     let suffix = 1;
     $.fn.usageQueryBuilder = function (action, options) {
-        action = action || 'initialize';
+        action = action || 'query';
+        if (action instanceof String) { action = action.toLowerCase(); }
 
-        if (action === 'query') {
-            // Return the query represented by this item (and its children)
-            let result = [];
-            $('.rule-container', this).each(function () {
-                result.push(getQuerySpec($(this)));
-            });
-            return result;
-
-        } else if (action === 'add') {
+        if (action === 'add' || action === 'append') {
             // Append a new, possibly empty, column picker to the list of column pickers.
             let $html = makeQueryItemHtml(suffix++);
             addListeners($html, this, options);
             this.append($html);
 
-        } else if (action === 'save') {
-            // Save the current query state in a form suitable to apply later.
-            let result = [];
-            $('.rule-container', this).each(function () {
-                result.push(getQuerySpec($(this)));
-            });
-            return result.map(qs => qs.toString());
-
-        } else if (action === 'restore') {
-            // Restore a previously saved state.
-            if (options && Array.isArray(options)) {
-                this.empty();
-                let me = this;
-                options.forEach(x => {
-                    let qs = columns.UsageQuerySpec(x);
-                    me.usageQueryBuilder('add', qs)
-                });
-            }
         } else if (action === 'parse') {
-            // Parse one or more column descriptions, and return a corresponding list of QuerySpecs.
+            // Parse one or more column descriptions, and return a corresponding list of QuerySpecs. Parses
+            // an array, as 'queryspec' does (implies that this can also clone QuerySpecs).
             let result = [];
             if (options && Array.isArray(options)) {
                 options.forEach(x => {
                     let qs = columns.UsageQuerySpec(x);
                     result.push(qs);
+                });
+                return result;
+            }
+        } else if (action === 'query' || action === 'queryspec') {
+            if (options && Array.isArray(options)) {
+                // Sets the query. Expects an array of QuerySpecs, each of which can be a full
+                // QuerySpec object, the compact string from querySpec.toString(), or a verbose
+                // string like 'title', 'completions,sum', or 'played_seconds,sum/communityname,count'.
+                this.empty();
+                let me = this;
+                options.forEach(x => {
+                    let qs = columns.UsageQuerySpec(x);
+                    me.usageQueryBuilder('append', qs)
+                });
+            } else {
+                // Return the query represented by this item (and its children). Returns an array of
+                // QuerySpec objects, [QuerySpec(column, aggr, norm, norm_aggr), ...]
+                let result = [];
+                $('.rule-container', this).each(function () {
+                    result.push(getQuerySpec($(this)));
                 });
                 return result;
             }

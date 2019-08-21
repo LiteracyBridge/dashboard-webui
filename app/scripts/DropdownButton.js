@@ -145,14 +145,16 @@ DropdownButton = (function () {
                 }
             });
             // When an item is clicked: update the title, fire the event
-            $('a', $elem).on('click', (it) => {
+            $('a', $elem).on('click', (it, opts) => {
                 let value = $(it.target).data('value');
                 let tooltip = $(it.target).data('tooltip');
                 let label = $(it.target).text();
                 $('button .title', $elem).text(label).prop('title', tooltip);
                 selection = value;
                 selectionLabel = label;
-                $elem.trigger('selected', [value]);
+                if (!opts || !opts.noTrigger) {
+                    $elem.trigger('selected', [value]);
+                }
             });
             // Don't show the caret and the dropdown list if there is nothing useful to drop down
             if (list.length<2) {
@@ -176,7 +178,7 @@ DropdownButton = (function () {
 
         function setSelection(newSelection) {
             let $item = $('li', $elem).find(`[data-value=${getValue(newSelection)}]`);
-            $item.trigger('click');
+            $item.trigger('click', [{noTrigger:true}]);
         }
 
         options = options || {};

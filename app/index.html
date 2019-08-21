@@ -295,12 +295,13 @@
 
                 <h3 class="bg-success" id="usage-details-page-query">
                     <button class="btn btn-success btn-small" id="usage-execute-query" style="border-radius:4px"
-                            type="button">
+                            type="button" data-toggle="tooltip"
+                            title="Refresh the data. This should seldom be necessary, as the query will automatically refresh when changed.">
                         <i class="glyphicon glyphicon-refresh"></i>
                     </button>
-                    <span id="usage-query-selection"></span>
+                    <span id="usage-query-selection" data-toggle="tooltip" title="Choose the query"></span>
                     <button class="btn btn-success pull-right btn-small" id="usage-customize-query" style="border-radius:4px"
-                            type="button">
+                            type="button" data-toggle="tooltip" title="Customize the query with any selection of columns">
                         <i class="glyphicon glyphicon-cog"></i>Customize
                     </button>
                 </h3>

@@ -208,6 +208,8 @@ Main = (function () {
         $('a#menu-change-greeting').on('click', User.changeGreeting);
         $('a#menu-delete-account').on('click', doDeleteAccount);
         $('a#menu-verify-email').on('click', User.verifyEmail);
+
+        $('[data-toggle="tooltip"]').tooltip();
     }
 
     setTimeout(init, 0);
