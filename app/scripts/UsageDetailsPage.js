@@ -304,7 +304,7 @@ UsageDetailsPage = function () {
 
         // Customize button clicked.
         $('#usage-customize-query').on('click', ()=>{
-            customizeQuery(currentQuerySpecs);
+            customizeQuery(currentQuerySpecs || customQueryBase);
         });
 
     }

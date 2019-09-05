@@ -102,6 +102,23 @@ let UsageQueryBuilder = function () {
             aggregateBase: 'Playlist Categories',
             aggregateTooltip: 'Count of playlist categories',
         }), ColumnDef({
+            name: 'playlist',
+            heading: 'Playlist',
+            tooltip: 'In what playlist category was the message published?',
+            type: 'string',
+            aggregateBase: 'Playlist Categories',
+            aggregateTooltip: 'Count of playlist categories',
+        }), ColumnDef({
+            name: 'sdg_goals',
+            heading: 'SDG Goals',
+            tooltip: 'What were the SDG Goals?',
+            type: 'string',
+        }), ColumnDef({
+            name: 'sdg_targets',
+            heading: 'SDG Targets',
+            tooltip: 'What were the SDG Targets?',
+            type: 'string',
+        }), ColumnDef({
             name: 'contentid',
             heading: 'Content Id',
             tooltip: 'The unique id of the message, in a particular language.',
