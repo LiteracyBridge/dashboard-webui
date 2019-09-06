@@ -536,6 +536,13 @@ div#progspec-validate-results-no-issues {
     margin-top: 0 !important;
 }
 
+input.export-spreadsheet-filename:not(:placeholder-shown) {
+    color: black;
+}
+input.export-spreadsheet-filename:placeholder-shown {
+    font-style: italic;
+    font-weight: 300;
+}
 
 /* Incredibly over-specified styles for query builder. */
 

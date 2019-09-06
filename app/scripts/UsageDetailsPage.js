@@ -371,6 +371,7 @@ UsageDetailsPage = function () {
             },
             exportOptions: exportOptions,
             text: 'Export to spreadsheet',
+            className: 'btn-primary',
             filename: () => {
                 return $('input', $input).val() || 'Usage-Statistics'
             }
@@ -419,7 +420,7 @@ UsageDetailsPage = function () {
         let table2 = $('table', $container).DataTable(tableOptions);
 
         let $buttons = table2.buttons().container();
-        let $input = $('<label><input type="text" style="height:100%;" class="form-control" placeholder="Filename" aria-controls="DataTables_Table_1"></label>');
+        let $input = $('<label><input type="text" style="height:100%;" class="form-control export-spreadsheet-filename" placeholder="Spreadsheet filename" aria-controls="DataTables_Table_1"></label>');
         $buttons.append($input);
         $buttons.appendTo($('.col-sm-6:eq(0)', table2.table().container()));
 
