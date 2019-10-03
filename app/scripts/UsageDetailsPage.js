@@ -142,29 +142,32 @@ UsageDetailsPage = function () {
             localStorage.setItem('usage.details.project', currentProject);
             localStorage.setItem('usage.details.deployment', currentDeployment);
             localStorage.setItem('usage.details.query', queryString);
-            localStorage.setItem('usage.details.limitDeployments', limitDeployments);
+            localStorage.setItem('usage.details.limitDeployments', limitDeployments?'t':'f');
             Main.setParams(PAGE_ID, {p: currentProject, d: currentDeployment, q: queryString, l: limitDeployments?'t':'f'});
         }
     }
 
     function restoreState() {
-        var previousColumns, limitDeployments;
+        var limitDeploymentsFlag = true;
         let params = Main.getParams();
         let queryString = '';
         if (params) {
             currentProject = params.get('p') || '';
             currentDeployment = params.get('d') || '';
             queryString = params.get('q');
-            limitDeployments = params.get('l')
+            limitDeploymentsFlag = params.get('l')
         } else {
             currentProject = localStorage.getItem('usage.details.project') || '';
             currentDeployment = localStorage.getItem('usage.details.deployment') || '';
             queryString = localStorage.getItem('usage.details.deployment');
-            limitDeployments = localStorage.getItem('usage.details.limitDeployments')
+            limitDeploymentsFlag = localStorage.getItem('usage.details.limitDeployments')
         }
         try {
             let queryItems = (queryString || '').split(';');
             currentQuerySpecs = $('#usage-query-selection').usageQueryBuilder('parse', queryItems);
+            // If not explicitly turned off, let it be on
+            let limitDeployments = limitDeploymentsFlag !== 'f';
+            $limitByDeployment.prop('checked', limitDeployments);
 
             restoreQuerySelection();
         }
@@ -299,6 +302,8 @@ UsageDetailsPage = function () {
             let qIx = querySelecter.selection();
             if (qIx >= 0) {
                 runQuery(qIx);
+            } else if (currentQuerySpecs) {
+                refreshProject(currentProject, currentDeployment, currentQuerySpecs);
             }
         });
 
@@ -348,6 +353,10 @@ UsageDetailsPage = function () {
      * @param stats An object with a {messageData} member.
      */
     function makeUsageTable(querySpecs, stats) {
+        if (!stats.data || !stats.data.length) {
+
+        }
+
         let usageData = stats.data || [];
         let columns = columnOptions(querySpecs, usageData);
 
@@ -459,6 +468,10 @@ UsageDetailsPage = function () {
         return deferred.promise()
     }
 
+    /**
+     * This is a "testing" function. Not currently used.
+     * @returns {*|jQuery}
+     */
     function get2() {
         let url = 'https://y06knefb5j.execute-api.us-west-2.amazonaws.com/Devo';
         var deferred = $.Deferred();
@@ -515,7 +528,7 @@ UsageDetailsPage = function () {
 
         Main.incrementWait(true);
         getUsage(project, deployment, columns).then((stats) => {
-            let haveData = stats.data !== undefined;
+            let haveData = stats.data && stats.data.length && stats.data.length > 0;
             if (haveData) {
                 $('#usage-details-page .have_data').removeClass('hidden');
                 $('#usage-details-page .have_no_data').addClass('hidden');
@@ -535,7 +548,9 @@ UsageDetailsPage = function () {
     }
 
     function reportProject(project, deployment) {
-        $limitByDeployment.prop('checked', true)
+        if (project != currentProject || deployment != currentDeployment) { // jshint ignore:line
+            $limitByDeployment.prop('checked', true);
+        }
         if (!currentQuerySpecs || !currentQuerySpecs.length) {
             currentProject = project;
             currentDeployment = deployment;

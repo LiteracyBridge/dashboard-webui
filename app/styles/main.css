@@ -502,18 +502,6 @@ tr.shown td.details-control {
     margin-right: 15px;
 }
 
-/* File drop target */
-#progspec-filename.over {
-    border: 2px dashed #000;
-}
-
-div.progspec-validation {
-    border: 2px solid darkgrey;
-    border-radius:6px;
-    background: aliceblue;
-    padding: 8px;
-    margin-top: 2rem;
-}
 div#progspec-validate-results,
 div#progspec-validate-results-no-issues {
     background: floralwhite;
@@ -544,6 +532,98 @@ input.export-spreadsheet-filename:placeholder-shown {
     font-weight: 300;
 }
 
+/* File drop target */
+#progspec-filename.over,
+.load-local-filename.over {
+    border: 2px dashed #000;
+}
+
+div.progspec-validation {
+    border: 2px solid darkgrey;
+    border-radius:6px;
+    background: aliceblue;
+    padding: 8px;
+    margin-top: 2rem;
+}
+
+#program-specification-page.have-project .when-not-have-project {
+    display: none;
+}
+#program-specification-page:not(.have-project) .when-have-project {
+    display: none;
+}
+#program-specification-page.have-data .when-not-have-data {
+    display: none;
+}
+#program-specification-page:not(.have-data) .when-have-data {
+    display: none;
+}
+#program-specification-page:not(.have-current) .when-have-current {
+    display: none;
+}
+#program-specification-page:not(.have-pending) .when-have-pending {
+    display: none;
+}
+
+#program-specification-page p {
+
+}
+#program-specification-page .progspec-metadata,
+#download-progspec-modal .progspec-metadata {
+    background-color: #eee;
+    font-family: monospace;
+}
+#program-specification-page .progspec-comment,
+#download-progspec-modal .progspec-comment {
+    margin-left: 20px;
+    margin-top: -9px;
+    font-size: 1.2rem;
+}
+.progspec-comment .progspec-comment-text {
+    font-family: italic;
+}
+
+#program-specification-page.without-project div.need-project {
+    display: none
+}
+#program-specification-page.with-project div.need-no-project {
+    display: none
+}
+
+#progspec-diff-modal .modal-dialog {
+    width: 90%;
+    height: 90vh;
+    padding: 0;
+    margin-left: 5%;
+    margin-top: 5vh;
+}
+#progspec-diff-modal .modal-content {
+    border-radius: 6px;
+}
+#progspec-diff-modal .modal-body {
+    max-height: calc(80vh - 8rem);
+    overflow-y: auto;
+}
+#progspec-diff-modal .modal-body p {
+    margin: 0;
+}
+.progspec-action {
+  margin-top: 1rem;
+  min-height: 12rem;
+}
+
+.progspec-action h3 {
+  margin-top: -4px;
+  margin-left: -4px;
+  margin-right: -4px;
+  padding: 4px;
+}
+#program-specification-actions button {
+  border-radius:4px;
+}
+#program-specification-actions h3 {
+  padding: 4px;
+}
 /* Incredibly over-specified styles for query builder. */
 
 /*!

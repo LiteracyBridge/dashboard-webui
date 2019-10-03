@@ -27,7 +27,8 @@ Main = (function () {
         'e': 'project-details-page',
         'f': 'usage-details-page',
         'g': 'userfeedback-page',
-        'h': 'checkout-page'
+        'h': 'checkout-page',
+        'i': 'program-specification-page'
     }
     let longToShort = {}
     Object.keys(shortToLong).forEach(k=>longToShort[shortToLong[k]]=k)
@@ -44,6 +45,7 @@ Main = (function () {
             // MEDA,MEDA/
             // ...
             allProjectsList = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
+            allProjectsList.push({project:'TEST',path:'TEST/'});
         }
 
         if (!applicationPathPromise) {

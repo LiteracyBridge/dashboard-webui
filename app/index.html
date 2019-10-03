@@ -270,7 +270,10 @@
                 </h5>
                 <div class="detailtable" id='installation-progress-detail'></div>
                 <div id='installation-progress-extraneous-detail'>
-                    <h2 title="These are installations in which the Community selected in the TB-Loader was not one of the communities defined in the Program Specification. Although the right information may well have gotten to the right recipients at the right time, this limits our ability to produce accurate reports on the deployment.">
+                    <h2 title="These are installations in which the Community selected in the TB-Loader was not
+                    one of the communities defined in the Program Specification. Although the right information
+                    may well have gotten to the right recipients at the right time, this limits our ability to
+                    produce accurate reports on the deployment.">
                         Deployments to Community/Groups not in the Program Specification</h2>
                     <div class="detailtable" id='installation-progress-extraneous-table'></div>
                 </div>
@@ -291,7 +294,7 @@
                 &nbsp;<span id="usage-details-project-placeholder"></span>
             </h2>
 
-            <div class="have_data">
+            <div>
 
                 <h3 class="bg-success" id="usage-details-page-query">
                     <button class="btn btn-success btn-small" id="usage-execute-query" style="border-radius:4px"
@@ -317,12 +320,14 @@
                     &nbsp;&nbsp;&nbsp;
                 </div>
 
+            </div>
+            <div class="have_data">
                 <h2>Usage</h2>
                 <div class="detailtable" id="usage-table"></div>
             </div>
 
             <div class="have_no_data">
-                <h3>No data is available for this project and deployment.</h3>
+                <h3>No data is available for this query in this project.</h3>
             </div>
 
         </div>
@@ -372,66 +377,108 @@
     <!-- Program Specification Validation -->
     <div class="tab-pane fade" id="program-specification-page" role="tabpanel">
         <div class="container-fluid">
-            <h2 class="bg-primary">Program Specification Validator</h2>
-            <div id="progspec-input" class="progspec-validation">
-                <div>
-                    <p>What is the name of the project to which this Program Specification applies?</p>
-                </div>
-                <div class="row">
-                    <div class="col-lg-12 col-sm-12 col-12">
-                        <div class="input-group">
-                            <span class="input-group-addon" id="basic-addon1">Project Name:</span> <input
-                            aria-describedby="basic-addon1" class="form-control" id="progspec-project-name" placeholder="Name"
-                            type="text">
-                        </div>
-                    </div>
-                </div><!-- /.row -->
-                <div>
-                    <p>Drag and drop the Program Specification .xlsx file on the box below. Or click the "Browse" button
-                        and choose the file on your computer.</p>
-                </div>
-                <div class="row">
-                    <div class="col-lg-12 col-sm-12 col-12">
-                        <form class="input-group input-group-lg">
-                            <label class="input-group-btn">
-                            <span class="btn btn-primary btn">
-                                Browse for file&hellip; <input id="progspec-file" single style="display: none;"
-                                                               type="file">
-                            </span> </label> <input class="form-control" id="progspec-filename" placeholder="Drop .xlsx file here..." readonly
-                                                    type="text">
-                        </form>
-                    </div>
-                </div><!-- /.row -->
-                <div>
-                    <p>When you are ready, click the "Validate..." button to validate the Program Specification.</p>
-                </div>
-                <div class="row">
-                    <div class="col-lg-12 col-sm-12 col-12">
-                        <div class="input-group">
-                            <label class="input-group-btn">
-                                <button class="btn btn-success disabled" id="progspec-validate" style="border-radius:4px"
-                                        type="button">
-                                    Validate&hellip;
-                                </button>
-                            </label>
-                        </div>
-                    </div>
-                </div><!-- /.row -->
-            </div>
-            <div id="progspec-validate-results" class="hidden progspec-validation">
-                <div>
-                    <h4>Results of validation:</h4>
-                </div>
-                <div class="row">
-                    <div id="progspec-validate-issues" class="col-lg-12 col-sm-12 col-12">
+            <h2 class="bg-primary">Program Specification
+                &nbsp;<span id="program-specification-project-placeholder"></span>
+            </h2>
 
-                    </div>
-                </div><!-- /.row -->
+            <div class="when-not-have-project">
+                <h4>Please select a project.</h4>
             </div>
-            <div id="progspec-validate-results-no-issues" class="hidden progspec-validation">
-                <div>
-                    <h4>Results of validation: No issues found!</h4>
+
+            <div class="progspec-validation when-have-project">
+                <div class="when-not-have-data">
+                    <h4>There is no program specification data available for this project.</h4>
                 </div>
+
+                <div class="when-have-data">
+                    <h3>Status</h3>
+                    <div class="when-have-current">
+                        <h4>Current Program Specification</h4>
+                        <p>Approved by <span class="progspec-metadata" id="program-spec-approved-by"></span>
+                            on <span class="progspec-metadata" id="program-spec-approved-on"></span>.</p>
+                        <p class="progspec-comment">Approval comment: <span class="progspec-metadata progspec-comment-text" id="program-spec-approved-comment"></span></p>
+                        <p>Submitted by <span class="progspec-metadata" id="program-spec-submitted-by"></span>
+                            on <span class="progspec-metadata" id="program-spec-submitted-on"></span>.</p>
+                        <p class="progspec-comment">Submission comment: <span class="progspec-metadata progspec-comment-text" id="program-spec-submitted-comment"></span></p>
+                    </div>
+                    <div class="pending-spec when-have-pending">
+                        <br/>
+                        <h4>Pending Program Specification</h4>
+                        <p>Submitted by <span class="progspec-metadata" id="pending-spec-submitted-by"></span>
+                            on <span class="progspec-metadata" id="pending-spec-submitted-on"></span>.</p>
+                        <p class="progspec-comment">Submission comment: <span class="progspec-metadata progspec-comment-text" id="pending-spec-submitted-comment"></span>
+                        </p>
+                    </div>
+                </div>
+                <div id="program-specification-actions">
+                    <h3 class="bg-primary">Actions</h3>
+                    <div class="row">
+                        <div class="col-xs-6 col-sm-4 col-md-3 col-lg-2 progspec-action">
+                            <div id="progspec-validate" class="thumbnail"
+                                 title="Choose a program spec .xlsx file to validate.">
+                                <h3 class="bg-info">Validate</h3>
+                                <p>Choose a program spec .xlsx file to validate.</p>
+                                <div class="btn-group">
+                                    <button class="btn btn-info" type="button">Validate&hellip;</button>
+                                </div>
+
+                            </div>
+                        </div>
+                        <div class="col-xs-6 col-sm-4 col-md-3 col-lg-2 progspec-action">
+                            <div id="progspec-submit" class="thumbnail">
+                                <h3 class="bg-success">Submit</h3>
+                                <p>Upload a new program spec .xlsx file for review.</p>
+                                <div class="btn-group">
+                                    <button class="btn btn-success" type="button">Submit&hellip;</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-6 col-sm-4 col-md-3 col-lg-2 progspec-action when-have-data when-have-pending">
+                            <div id="progspec-review" class="thumbnail">
+                                <h3 class="bg-primary">Review</h3>
+                                <p>View and approve/<wbr>reject a new program spec.</p>
+                                <div class="btn-group">
+                                    <button class="btn btn-primary" type="button" disabled>Review&hellip;</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-6 col-sm-4 col-md-3 col-lg-2 progspec-action when-have-data hidden">
+                            <div id="progspec-history" class="thumbnail">
+                                <h3 class="bg-warning">History</h3>
+                                <p>View the history of Program Specifications.</p>
+                                <div class="btn-group">
+                                    <button class="btn btn-warning" type="button">History&hellip;</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-6 col-sm-4 col-md-3 col-lg-2 progspec-action when-have-data">
+                            <div id="progspec-download" class="thumbnail">
+                                <h3 class="bg-danger">Download</h3>
+                                <p>Download the program spec as an .xlsx file.</p>
+                                <div class="btn-group">
+                                    <button class="btn btn-danger" type="button">Download&hellip;</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hidden progspec-validation" id="progspec-validate-results">
+                    <div>
+                        <h4>Results of <span id="progspec-validate-results-label">validation</span>:</h4>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12 col-sm-12 col-12" id="progspec-validate-issues">
+
+                        </div>
+                    </div>
+                </div>
+                <div class="hidden progspec-validation" id="progspec-validate-results-no-issues">
+                    <div>
+                        <h4>Results of validation: No issues found!</h4>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -489,7 +536,6 @@
 <!-- build:js scripts/vendor.js -->
 <!-- bower:js -->
 <script src="/bower_components/jquery/dist/jquery.js"></script>
-<script src="/bower_components/jquery-csv/src/jquery.csv.js"></script>
 <script src="/bower_components/moment/moment.js"></script>
 <script src="/bower_components/chart.js/dist/Chart.js"></script>
 <!-- endbower -->
@@ -527,10 +573,12 @@ script src="scripts/3p/aws-sdk-2.5.0.min.js"></script -->
 <script src="scripts/3p/chroma.js"></script>
 <script src="scripts/3p/datatables.js"></script>
 <script src="scripts/3p/bootstrap-dialog.js"></script>
+<script src="scripts/3p/jquery.csv.min.js"></script>
 <script src="scripts/DataTable.js"></script>
 <script src="scripts/CognitoWrapper.js"></script>
 <script src="scripts/Authentication.js"></script>
 <script src="scripts/main.js"></script>
+<script src="scripts/LocalFileLoader.js"></script>
 <script src="scripts/StatisticsData.js"></script>
 <script src="scripts/CheckoutPage.js"></script>
 <script src="scripts/ProjectDetailsData.js"></script>
@@ -543,6 +591,8 @@ script src="scripts/3p/aws-sdk-2.5.0.min.js"></script -->
 <script src="scripts/InstallationData.js"></script>
 <script src="scripts/InstallationPage.js"></script>
 <script src="scripts/InstallationDetailPage.js"></script>
+<script src="scripts/ProgramSpecificationData.js"></script>
+<script src="scripts/ProgramSpecificationDownloader.js"></script>
 <script src="scripts/ProgramSpecificationPage.js"></script>
 <script src="scripts/OverviewPage.js"></script>
 <script src="scripts/DropdownButton.js"></script>

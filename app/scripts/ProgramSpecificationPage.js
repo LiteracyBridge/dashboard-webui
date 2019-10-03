@@ -1,5 +1,6 @@
 /* jshint esversion:6, asi:true */
-/* global $, DataTable, StatisticsData, User, CognitoWrapper,console, Main, ProjectDetailsData, DataTable, Chart, ProjectPicker, Utils, UsageQueries */
+/* global $, DataTable, DropdownButton, StatisticsData, User, CognitoWrapper,console, Main, ProjectDetailsData,
+   DataTable, Chart, moment, ProgramSpecificationData, ProgramSpecificationDownloader, ProjectPicker, Utils, UsageQueries */
 
 var ProgramSpecificationPage = function () {
     'use strict';
@@ -7,173 +8,318 @@ var ProgramSpecificationPage = function () {
     let PAGE_HREF = 'a[href="#' + PAGE_ID + '"]';
     let $PAGE = $('#' + PAGE_ID);
 
+    let $specApprovedBy = $('#program-spec-approved-by');
+    let $specApprovedOn = $('#program-spec-approved-on');
+    let $specApprovedComment = $('#program-spec-approved-comment');
 
-    let URL = 'https://ftgnui9zvf.execute-api.us-west-2.amazonaws.com/PROD/data';
+    let $specSubmittedBy = $('#program-spec-submitted-by');
+    let $specSubmittedOn = $('#program-spec-submitted-on');
+    let $specSubmittedComment = $('#program-spec-submitted-comment');
 
-    function enableValidate(enabled) {
-        let $validate = $('#progspec-validate', $PAGE)
-        if (enabled) {
-            $validate.removeClass('disabled')
-        } else {
-            $validate.addClass('disabled')
+    let $pendingSubmittedBy = $('#pending-spec-submitted-by');
+    let $pendingSubmittedOn = $('#pending-spec-submitted-on');
+    let $pendingSubmittedComment = $('#pending-spec-submitted-comment');
+
+    // program-specification-project-placeholder
+    var currentProject;
+    var fillDone = false;
+
+    let currentSpecExists = false;
+    let pendingSpecExists = false;
+
+    let modalHtml = `<div class="modal fade" id="progspec-diff-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary">
+        <h4 class="modal-title" id="myModalLabel">Program Specification Comparison</h4>
+      </div>
+      <div class="modal-body">
+      </div>
+      <div class="modal-footer">
+        <div class="row comment" style="margin-bottom: 2rem;"> 
+            <div class="col-xs-12">
+                <input id="progspec-approve-comment" class="form-control" placeholder="Comment for approved progam specification" type="text">
+            </div>                
+        </div>
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-danger reject-changes">Reject Changes</button>
+        <button type="button" class="btn btn-primary accept-changes">Approve Changes</button>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+
+    function fillProjects() {
+        if (fillDone) {
+            return;
+        }
+        fillDone = true;
+        let projectsList = Main.getProjectList();
+        function onProjectSelected(evt, proj) {
+            var project = projectsDropdown.selection();
+            if (project) {
+                projectSelected(project);
+            }
+        }
+
+        var options = {
+            projects: projectsList,
+            defaultProject: currentProject
+        };
+        var $elem = $('#program-specification-project-placeholder');
+        $elem.empty();
+        var $projectsDropdown = $('<div>').on('selected', onProjectSelected).appendTo($elem);
+        var projectsDropdown = DropdownButton.create($projectsDropdown, {title: 'Project'});
+        projectsDropdown.update(options.projects, {default: options.defaultProject});
+    }
+
+    function showDiff(diff, options) {
+        options = options || {};
+        let deferred = $.Deferred();
+        let $dialog = $(modalHtml);
+
+        let $comment = $('#progspec-approve-comment', $dialog);
+        let $accept = $('.accept-changes', $dialog);
+        let $reject = $('.reject-changes', $dialog);
+
+        if (options.hasOwnProperty('showAccept') && !options.showAccept) $accept.addClass('hidden');
+        if (options.hasOwnProperty('showReject') && !options.showReject) $reject.addClass('hidden');
+
+        if (options.hasOwnProperty('comment')) {
+            $comment.val(options.comment);
+        }
+        $accept.on('click', ()=>{
+            let comment = $comment.val();
+            $dialog.modal('hide');
+            deferred.resolve({action:'accept', comment:comment, diff:diff});
+        });
+        $reject.on('click', ()=>{
+            $dialog.modal('hide');
+            deferred.resolve({action:'reject', diff:diff})
+        })
+
+        let $issues = $('.modal-body', $dialog);
+        $issues.empty();
+        diff.output.forEach(issue=>$issues.append($('<p>').text(issue)));
+
+        $dialog.modal({keyboard:false, backdrop:'static'});
+
+        // After the dialog closes, remove it from the DOM.
+        $dialog.on('hidden.bs.modal', () => {
+            deferred.reject(); // no-op if already resolved.
+            $dialog.remove()
+        });
+
+        return deferred.promise();
+    }
+
+    /**
+     * Diff options:
+     * - "Review" diff. From "current" to "pending". With "Approve" & "Disapprove" buttons.
+     * - "Validate" diff. From "current" to uploaded file.
+     * - "Submit" diff. From "current" to uploaded file.
+     * - "History" diff. From version A to version B.
+     * - "Revert" diff. From "current" to version A (not current, not pending). With "Revert to version" button.
+     *   TODO: Should the revert be immediate, or should it copy the old version to pending?
+     *
+     * Options: An object with:
+     *  'action': string. One of the options from above.
+     *  'data': string. The "uploaded file" data for a Validate or Submit diff.
+     *  'v1': string. Version of the "first" program spec for a History diff, or the program spec for Revert.
+     *  'v2': string. Version of the "second" program spec for a History diff. Can be a version, "current", or "pending".
+     */
+    function doDiff(options) {
+        ProgramSpecificationData.review(currentProject).then(result=>{
+            if (result.output && result.output.length) {
+                showDiff(result);
+            }
+        });
+    }
+
+    function doReview() {
+        ProgramSpecificationData.review(currentProject).then(result=>{
+            if (result.status === 'ok' && result.output && result.output.length) {
+                return showDiff(result, {showAccept:true, showReject:false});
+            } else if (result.status === 'failure' && result.v1 && result.v1.name === 'not found') {
+                result.output = ['No current program specification'];
+                result.v1.VersionId = 'None';
+                return showDiff(result, {showReject: false, comment: 'Initial Program Specification'});
+            }
+        }).then(reviewResult => {
+            if (reviewResult.action === 'accept') {
+                let currentVersion = reviewResult.diff.v1.VersionId;
+                let pendingVersion = reviewResult.diff.v2.VersionId;
+                let comment = reviewResult.comment;
+                return ProgramSpecificationData.approve(currentProject, currentVersion, pendingVersion, comment)
+            } else if (reviewResult.action === 'reject') {
+
+            }
+        }).then(approveResult => {
+            if (approveResult.output) {
+                showOutput(approveResult.output, 'approve');
+            }
+            showOverview();
+        })
+
+    }
+
+    function doSubmit() {
+        let fileoptions = {shortPrompt: '.xls', longPrompt: 'Program Specification .xlsx', title: 'Choose Program Specification',
+            commentPrompt: 'Comment for submitted progam specification'
+        };
+        LocalFileLoader.loadFile(fileoptions).then(fileResult => {
+            return ProgramSpecificationData.submitProgramSpec(fileResult.data, fileResult.comment, currentProject);
+        }).then(result => {
+            showOverview();
+            showOutput(result.output, 'submit');
+        });
+    }
+
+    function showOutput(output, label) {
+        if (output && output.length) {
+            label = label || 'validation'
+            $('#progspec-validate-results-label').text(label);
+            $('#progspec-validate-results', $PAGE).removeClass('hidden');
+            let $issues = $('#progspec-validate-issues', $PAGE);
+            output.forEach(line => $issues.append($('<p>').text(line)))
         }
     }
 
     function clearResults() {
-        $('#progspec-validate-results', $PAGE).addClass('hidden')
-        $('#progspec-validate-results-no-issues', $PAGE).addClass('hidden')
+        $('#progspec-validate-results', $PAGE).addClass('hidden');
+        $('#progspec-validate-results-no-issues', $PAGE).addClass('hidden');
+        $('#progspec-validate-issues', $PAGE).empty();
     }
 
-    function setupDragAndDrop() {
-        // We can attach the `fileselect` event to all file inputs on the page
-        $PAGE.on('change', ':file', function () {
-            var input = $(this),
-                numFiles = input.get(0).files ? input.get(0).files.length : 1,
-                label = input.val().replace(/\\/g, '/').replace(/.*\//, '');
-            input.trigger('fileselect', [numFiles, label]);
-            recentFile = $('input[type=file]', $PAGE)[0].files[0]
-            enableValidate(!!recentFile)
-            clearResults()
-        });
-
-        // We can watch for our custom `fileselect` event like this
-        $(':file', $PAGE).on('fileselect', function (event, numFiles, label) {
-
-            var input = $(this).parents('.input-group').find(':text'),
-                log = numFiles > 1 ? numFiles + ' files selected' : label;
-
-            if (input.length) {
-                input.val(log);
+    function doValidate() {
+        let projectName = $('#progspec-project-name').val();
+        let fileoptions = {shortPrompt: '.xls', longPrompt: 'Program Specification .xlsx', title: 'Choose Program Specification'};
+        clearResults();
+        LocalFileLoader.loadFile(fileoptions).then(fileResult => {
+            return ProgramSpecificationData.validateProgramSpec(fileResult.data, projectName);
+        }).then(result => {
+            if (result.output && result.output.length) {
+                showOutput(result.output);
             } else {
-                console.log(log);
+                $('#progspec-validate-results-no-issues', $PAGE).removeClass('hidden')
             }
-
+        }).fail(err => {
+            console.log('Error: ' + JSON.stringify(err));
         });
 
-
-        function handleDragStart(e) {
-            this.style.opacity = '0.4';  // this / e.target is the source node.
-        }
-
-        function handleDragOver(evt) {
-            evt.stopPropagation();
-            evt.preventDefault();
-            evt.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.        }
-        }
-
-        function handleDragEnter(e) {
-            // this / e.target is the current hover target.
-            this.classList.add('over');
-        }
-
-        function handleDragLeave(e) {
-            this.classList.remove('over');  // this / e.target is previous target element.
-        }
-
-        function handleDrop(evt) {
-            evt.stopPropagation();
-            evt.preventDefault();
-            this.classList.remove('over');  // this / e.target is previous target element.
-
-            let files = evt.dataTransfer.files; // FileList object.
-            let types = evt.dataTransfer.types;
-            if (files.length === 1 && types.indexOf('Files') >= 0) {
-                $(dropZone).val(files[0].name)
-                recentFile = files[0]
-                enableValidate(!!recentFile)
-                clearResults()
-            }
-        }
-
-        var dropZone = document.getElementById('progspec-filename');
-        dropZone.addEventListener('dragstart', handleDragStart, false);
-        dropZone.addEventListener('dragenter', handleDragEnter, false);
-        dropZone.addEventListener('dragover', handleDragOver, false);
-        dropZone.addEventListener('dragleave', handleDragLeave, false);
-        dropZone.addEventListener('drop', handleDrop, false);
-
     }
 
-    let recentFile = null
-    var readFileData = function(file) {
-        let deferred = new $.Deferred()
-
-        if (file) {
-            var reader = new FileReader();
-
-            reader.onload = function(readerEvt) {
-                var binaryString = readerEvt.target.result;
-                // deferred.resolve(binaryString)
-                deferred.resolve(btoa(binaryString))
-            };
-
-            reader.readAsBinaryString(file);
-        } else {
-            deferred.reject('no file')
-        }
-
-        return deferred.promise()
+    function doDownload() {
+        ProgramSpecificationDownloader.download(currentProject, currentSpecExists, pendingSpecExists);
     }
 
-    function doValidation() {
-        let file = $('input[type=file]', $PAGE)[0].files[0]
-        let projectName = $('#progspec-project-name').val()
-        Main.incrementWait();
-        readFileData(recentFile)
-            .done(data => {
-                let request = {
-                    url: URL + '/validate?project='+projectName,
-                    type: 'POST',
-                    data: data,
-                    headers: {
-                        Authorization: CognitoWrapper.getIdToken(),
-                        'Accept': 'application/json'
-                    },
-                    contentType: 'application/text',
-                    processData: false
+    function showOverview() {
+        if (!currentProject) {return}
+
+        function enableButtons(haveData, havePending) {
+            let noData = !(currentSpecExists || pendingSpecExists);
+            let noPending = !pendingSpecExists;
+            $review.prop('disabled', noPending);
+            $history.prop('disabled', noData);
+            $download.prop('disabled', noData);
+        }
+
+        let $div = $PAGE;
+
+        $div.removeClass('have-data have-pending');
+        enableButtons();
+        currentSpecExists = pendingSpecExists = false;
+        ProgramSpecificationData.listProgramSpecObjects(currentProject)
+            .done(result => {
+                $div.addClass('have-data');
+                let xls = result.objects['program_spec.xlsx'] || {};
+                let md = xls.Metadata;
+                if (md) {
+                    currentSpecExists = true;
+                    $div.addClass('have-current');
+                    $specApprovedBy.text(md['approver-email']);
+                    $specApprovedOn.text(Utils.formatDateTime(md['approval-date']));
+                    $specApprovedComment.text(md['approver-comment']);
+
+                    $specSubmittedBy.text(md['submitter-email']);
+                    $specSubmittedOn.text(Utils.formatDateTime(md['submission-date']));
+                    $specSubmittedComment.text(md['submitter-comment']);
                 }
-                $.ajax(request)
-                    .done((a,b,c)=>{
-                        Main.decrementWait();
-                        if (a && a.issues && a.issues.length) {
-                            $('#progspec-validate-results', $PAGE).removeClass('hidden')
-                            let $issues = $('#progspec-validate-issues', $PAGE)
-                            $issues.empty();
 
-                            a.issues.forEach(issue=>$issues.append($('<p>').text(issue)))
-                        } else {
-                            $('#progspec-validate-results-no-issues', $PAGE).removeClass('hidden')
-                        }
-                        console.log('ajax success: ' + JSON.stringify(a))
-                    })
-                    .fail((a,b)=>{
-                        Main.decrementWait();
-                        console.log('Error: ' + JSON.stringify(a) + JSON.stringify(b));
-                    })
-
+                xls = result.objects['pending_spec.xlsx'] || {};
+                md = xls.Metadata;
+                if (md) {
+                    pendingSpecExists = true;
+                    $div.addClass('have-pending');
+                    $pendingSubmittedBy.text(md['submitter-email']);
+                    $pendingSubmittedOn.text(Utils.formatDateTime(md['submission-date']));
+                    $pendingSubmittedComment.text(md['submitter-comment']);
+                }
+                enableButtons();
+                persistState();
             })
             .fail(err => {
-                Main.decrementWait();
-                console.log(err);
             })
+
     }
 
+    function projectSelected(project) {
+        currentProject = project;
+        showOverview();
+        $PAGE.addClass('have-project')
+    }
 
+    function persistState() {
+        if (currentProject) {
+            localStorage.setItem('progspec.project', currentProject);
+            Main.setParams(PAGE_ID, {p: currentProject});
+        }
+    }
+    function restoreState() {
+        let params = Main.getParams();
+        if (params) {
+            currentProject = params.get('p') || '';
+            let valStr = params.get('t');
+            let val = false;
+            try { val = JSON.parse(valStr); } catch(x) {}
+        } else {
+            currentProject = localStorage.getItem('progspec.project') || '';
+        }
+    }
+
+    var $validate, $submit, $review, $history, $download;
+    let initialized = false;
     function show() {
-        setupDragAndDrop()
-        $('#progspec-validate').on('click', evt => {
-            doValidation()
-        })
+        if (!initialized) {
+            $validate = $('#progspec-validate button');
+            $submit = $('#progspec-submit button');
+            $review = $('#progspec-review button');
+            $history = $('#progspec-history button');
+            $download = $('#progspec-download button');
+            $validate.on('click', doValidate);
+            $submit.on('click', doSubmit);
+            $review.on('click', doReview);
+            $download.on('click', doDownload);
+            restoreState();
+            fillProjects();
+            initialized = true;
+        } else {
+            persistState();
+        }
+    }
+    function hide() {
+        $('#progspec-nav a.progspec-nav').off('click')
     }
 
     $('#progspec-validate').on('click', () => {
-        let fn = $('#progspec-filename').val()
+        let fn = $('#progspec-filename').val();
         console.log(fn)
-    })
-
+    });
 
     // Hook the tab-activated event for this tab.
     $(PAGE_HREF).on('shown.bs.tab', show);
+    $(PAGE_HREF).on('hidden.bs.tab', hide);
 
     return {}
 }();

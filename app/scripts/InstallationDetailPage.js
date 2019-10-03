@@ -12,11 +12,10 @@ InstallationDetailPage = (function () {
     let PAGE_HREF = 'a[href="#' + PAGE_ID + '"]';
     let $PAGE = $('#' + PAGE_ID);
 
-    var previousProject;
-
-    var fillDone = false;
-
     var recipientMap;
+
+    var previousProject;
+    var fillDone = false;
 
     function fillProjects() {
         if (fillDone) {
