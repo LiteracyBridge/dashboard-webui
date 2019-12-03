@@ -315,7 +315,11 @@
                 <div>
 
                     <label style="font-weight:normal"> <input id="limit-by-deployment" type="checkbox"> Limit queries to
-                        a single deployment, for faster performance<span id="limit-by-deployment-prompt"></span>
+                        a single deployment, for faster performance.<span id="limit-by-deployment-prompt"></span>
+                    </label>
+                    <label class="pull-right" style="font-weight:normal"> Click
+                        <a href="https://dashboard.amplio.org/db-docs/index.html#dashboard-reports"
+                            target="_blank">here</a> for help on using this page.
                     </label>
                     &nbsp;&nbsp;&nbsp;
                 </div>
@@ -381,6 +385,13 @@
                 &nbsp;<span id="program-specification-project-placeholder"></span>
             </h2>
 
+            <p><span>Download a fresh <a
+                href="https://s3-us-west-2.amazonaws.com/dashboard-lb-stats/ProgramSpecificationTemplate/Template-ProgramSpecification.xlsx">Template-ProgramSpecification.xlsx</a>.
+            </span>
+                <span class="pull-right">
+                 Click <a href="https://dashboard.amplio.org/db-docs/index.html#program-specification"
+                                               target="_blank">here</a> for help on using this page.</span>
+            </p>
             <div class="when-not-have-project">
                 <h4>Please select a project.</h4>
             </div>
@@ -400,6 +411,7 @@
                         <p>Submitted by <span class="progspec-metadata" id="program-spec-submitted-by"></span>
                             on <span class="progspec-metadata" id="program-spec-submitted-on"></span>.</p>
                         <p class="progspec-comment">Submission comment: <span class="progspec-metadata progspec-comment-text" id="program-spec-submitted-comment"></span></p>
+                        <h4 class="hidden" id="program-specification-sync-message"><em>Please allow 10 minutes for the ACM to synchronize with the updated Program Specification.</em></h4>
                     </div>
                     <div class="pending-spec when-have-pending">
                         <br/>
@@ -536,6 +548,7 @@
 <!-- build:js scripts/vendor.js -->
 <!-- bower:js -->
 <script src="/bower_components/jquery/dist/jquery.js"></script>
+<script src="/bower_components/jquery-csv/src/jquery.csv.js"></script>
 <script src="/bower_components/moment/moment.js"></script>
 <script src="/bower_components/chart.js/dist/Chart.js"></script>
 <!-- endbower -->

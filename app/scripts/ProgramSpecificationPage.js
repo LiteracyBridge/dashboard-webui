@@ -1,6 +1,7 @@
 /* jshint esversion:6, asi:true */
 /* global $, DataTable, DropdownButton, StatisticsData, User, CognitoWrapper,console, Main, ProjectDetailsData,
-   DataTable, Chart, moment, ProgramSpecificationData, ProgramSpecificationDownloader, ProjectPicker, Utils, UsageQueries */
+   DataTable, Chart, moment, ProgramSpecificationData, ProgramSpecificationDownloader, ProjectPicker, Utils, UsageQueries,
+    LocalFileLoader */
 
 var ProgramSpecificationPage = function () {
     'use strict';
@@ -36,10 +37,10 @@ var ProgramSpecificationPage = function () {
       <div class="modal-body">
       </div>
       <div class="modal-footer">
-        <div class="row comment" style="margin-bottom: 2rem;"> 
+        <div class="row comment" style="margin-bottom: 2rem;">
             <div class="col-xs-12">
                 <input id="progspec-approve-comment" class="form-control" placeholder="Comment for approved progam specification" type="text">
-            </div>                
+            </div>
         </div>
         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
         <button type="button" class="btn btn-danger reject-changes">Reject Changes</button>
@@ -74,6 +75,38 @@ var ProgramSpecificationPage = function () {
         projectsDropdown.update(options.projects, {default: options.defaultProject});
     }
 
+    const SYNC_TIMEOUT = 10 * 60; // in seconds
+    let removeSyncMessageTime = moment(moment.now()).add(-1, 'day');;
+    let removeSyncMessageTimeout = 0;
+    function showSyncMessage(opts) {
+        function show() {
+            clearTimeout(removeSyncMessageTimeout);
+            removeSyncMessageTimeout = setTimeout(hide, removeSyncMessageTime.valueOf() - Date.now());
+            $('#program-specification-sync-message', $PAGE).removeClass('hidden');
+        }
+        function hide() {
+            clearTimeout(removeSyncMessageTimeout);
+            $('#program-specification-sync-message', $PAGE).addClass('hidden');
+        }
+        if (opts === 'check') {
+            if (removeSyncMessageTime.isBefore(moment(moment.now()))) {
+                hide();
+            } else {
+                show();
+            }
+        } else if (opts.hasOwnProperty('timeout')) {
+            let expiryStart = 0;
+            if (opts.hasOwnProperty('approvedOn')) {
+                expiryStart = moment(opts.approvedOn + 'Z'); // because the time is UTC time, despite missing 'z'
+            } else {
+                expiryStart = moment(moment.now());
+            }
+            let timeout = opts.timeout;
+            removeSyncMessageTime = expiryStart.add(timeout, 'seconds');
+            show();
+        }
+    }
+
     function showDiff(diff, options) {
         options = options || {};
         let deferred = $.Deferred();
@@ -83,8 +116,8 @@ var ProgramSpecificationPage = function () {
         let $accept = $('.accept-changes', $dialog);
         let $reject = $('.reject-changes', $dialog);
 
-        if (options.hasOwnProperty('showAccept') && !options.showAccept) $accept.addClass('hidden');
-        if (options.hasOwnProperty('showReject') && !options.showReject) $reject.addClass('hidden');
+        if (options.hasOwnProperty('showAccept') && !options.showAccept) {$accept.addClass('hidden');}
+        if (options.hasOwnProperty('showReject') && !options.showReject) {$reject.addClass('hidden');}
 
         if (options.hasOwnProperty('comment')) {
             $comment.val(options.comment);
@@ -97,7 +130,7 @@ var ProgramSpecificationPage = function () {
         $reject.on('click', ()=>{
             $dialog.modal('hide');
             deferred.resolve({action:'reject', diff:diff})
-        })
+        });
 
         let $issues = $('.modal-body', $dialog);
         $issues.empty();
@@ -138,6 +171,7 @@ var ProgramSpecificationPage = function () {
     }
 
     function doReview() {
+        clearResults();
         ProgramSpecificationData.review(currentProject).then(result=>{
             if (result.status === 'ok' && result.output && result.output.length) {
                 return showDiff(result, {showAccept:true, showReject:false});
@@ -153,12 +187,13 @@ var ProgramSpecificationPage = function () {
                 let comment = reviewResult.comment;
                 return ProgramSpecificationData.approve(currentProject, currentVersion, pendingVersion, comment)
             } else if (reviewResult.action === 'reject') {
-
+                return new $.Deferred().reject();
             }
         }).then(approveResult => {
             if (approveResult.output) {
                 showOutput(approveResult.output, 'approve');
             }
+            showSyncMessage({timeout:SYNC_TIMEOUT});
             showOverview();
         })
 
@@ -168,6 +203,7 @@ var ProgramSpecificationPage = function () {
         let fileoptions = {shortPrompt: '.xls', longPrompt: 'Program Specification .xlsx', title: 'Choose Program Specification',
             commentPrompt: 'Comment for submitted progam specification'
         };
+        clearResults();
         LocalFileLoader.loadFile(fileoptions).then(fileResult => {
             return ProgramSpecificationData.submitProgramSpec(fileResult.data, fileResult.comment, currentProject);
         }).then(result => {
@@ -178,7 +214,7 @@ var ProgramSpecificationPage = function () {
 
     function showOutput(output, label) {
         if (output && output.length) {
-            label = label || 'validation'
+            label = label || 'validation';
             $('#progspec-validate-results-label').text(label);
             $('#progspec-validate-results', $PAGE).removeClass('hidden');
             let $issues = $('#progspec-validate-issues', $PAGE);
@@ -190,11 +226,12 @@ var ProgramSpecificationPage = function () {
         $('#progspec-validate-results', $PAGE).addClass('hidden');
         $('#progspec-validate-results-no-issues', $PAGE).addClass('hidden');
         $('#progspec-validate-issues', $PAGE).empty();
+        showSyncMessage('check');
     }
 
     function doValidate() {
         let projectName = $('#progspec-project-name').val();
-        let fileoptions = {shortPrompt: '.xls', longPrompt: 'Program Specification .xlsx', title: 'Choose Program Specification'};
+        let fileoptions = {shortPrompt: '.xlsx', longPrompt: 'Program Specification .xlsx', title: 'Choose Program Specification'};
         clearResults();
         LocalFileLoader.loadFile(fileoptions).then(fileResult => {
             return ProgramSpecificationData.validateProgramSpec(fileResult.data, projectName);
@@ -211,6 +248,7 @@ var ProgramSpecificationPage = function () {
     }
 
     function doDownload() {
+        clearResults();
         ProgramSpecificationDownloader.download(currentProject, currentSpecExists, pendingSpecExists);
     }
 
@@ -227,12 +265,18 @@ var ProgramSpecificationPage = function () {
 
         let $div = $PAGE;
 
+        let fieldsToClear = [$specApprovedBy, $specApprovedOn, $specApprovedComment,
+            $specSubmittedBy, $specSubmittedOn, $specSubmittedComment,
+            $pendingSubmittedBy, $pendingSubmittedOn, $pendingSubmittedComment];
+        fieldsToClear.map($f => $f.text(''));
+        $div.removeClass('have-current have-pending');
+
         $div.removeClass('have-data have-pending');
+        showSyncMessage('check');
         enableButtons();
         currentSpecExists = pendingSpecExists = false;
         ProgramSpecificationData.listProgramSpecObjects(currentProject)
             .done(result => {
-                $div.addClass('have-data');
                 let xls = result.objects['program_spec.xlsx'] || {};
                 let md = xls.Metadata;
                 if (md) {
@@ -241,6 +285,7 @@ var ProgramSpecificationPage = function () {
                     $specApprovedBy.text(md['approver-email']);
                     $specApprovedOn.text(Utils.formatDateTime(md['approval-date']));
                     $specApprovedComment.text(md['approver-comment']);
+                    showSyncMessage({approvedOn:md['approval-date'], timeout:SYNC_TIMEOUT});
 
                     $specSubmittedBy.text(md['submitter-email']);
                     $specSubmittedOn.text(Utils.formatDateTime(md['submission-date']));
@@ -255,6 +300,9 @@ var ProgramSpecificationPage = function () {
                     $pendingSubmittedBy.text(md['submitter-email']);
                     $pendingSubmittedOn.text(Utils.formatDateTime(md['submission-date']));
                     $pendingSubmittedComment.text(md['submitter-comment']);
+                }
+                if (currentSpecExists || pendingSpecExists) {
+                    $div.addClass('have-data');
                 }
                 enableButtons();
                 persistState();
@@ -307,6 +355,7 @@ var ProgramSpecificationPage = function () {
         } else {
             persistState();
         }
+        showSyncMessage('check');
     }
     function hide() {
         $('#progspec-nav a.progspec-nav').off('click')

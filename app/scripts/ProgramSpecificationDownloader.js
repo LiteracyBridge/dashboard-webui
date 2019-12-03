@@ -3,6 +3,7 @@
    DataTable, Chart, moment, ProgramSpecificationData, ProjectPicker, Utils, UsageQueries */
 
 let ProgramSpecificationDownloader = function () {
+    'use strict';
     let useAnchor = false;
 
     function getModalHtml() {
@@ -17,11 +18,11 @@ let ProgramSpecificationDownloader = function () {
                     <label style="font-weight:normal"> <input id="download-pending-progspec" type="checkbox"
                                                               value="option1"> Download Pending Program Specification </label>
                 </div>
-                <div id="download-progspec-description">                    
+                <div id="download-progspec-description">
                 </div>
               </div>
               <div class="modal-footer">
-                <div class="row comment" style="margin-bottom: 2rem;"> 
+                <div class="row comment" style="margin-bottom: 2rem;">
                 </div>
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                 ${useAnchor
@@ -48,11 +49,11 @@ let ProgramSpecificationDownloader = function () {
 
         let infoHtml = `<h4>${version}</h4>`;
         if (obj.Metadata && obj.Metadata['approval-date']) {
-            infoHtml += `<p>Approved by <span class="progspec-metadata">${obj.Metadata['approver-email']}</span> on 
+            infoHtml += `<p>Approved by <span class="progspec-metadata">${obj.Metadata['approver-email']}</span> on
                             <span class="progspec-metadata">${Utils.formatDateTime(obj.Metadata['approval-date'])}</span>.</p>
                         <p class="progspec-comment">Approval comment: <span class="progspec-metadata progspec-comment-text">${obj.Metadata['approver-comment']}</span></p>`;
         }
-        infoHtml += `<p>Submitted by <span class="progspec-metadata">${obj.Metadata['submitter-email']}</span> on 
+        infoHtml += `<p>Submitted by <span class="progspec-metadata">${obj.Metadata['submitter-email']}</span> on
                          <span class="progspec-metadata">${Utils.formatDateTime(obj.Metadata['submission-date'])}</span>.</p>
                         <p class="progspec-comment">Submission comment: <span class="progspec-metadata progspec-comment-text">${obj.Metadata['submitter-comment']}</span></p>`;
         if (obj.Size) {
@@ -90,12 +91,15 @@ let ProgramSpecificationDownloader = function () {
             $dialog.modal('hide');
         }
         let ProgramSpecificationDataGetFunction = useAnchor ? ProgramSpecificationData.getLink : ProgramSpecificationData.getFile;
+        // Refresh the link when user toggles between 'current' and 'pending' program specification. Note that
+        // "refreshing" the link means downloading the program specification.
         function refreshLink(version) {
             $button.prop('disabled', true);
             $descr.empty();
             ProgramSpecificationDataGetFunction(project, version).done(result => {
                 if (result && result.status && result.status === 'ok') {
                     $descr.append(getDescription(result));
+                    // Like DEMO-ProgramSpecification.xlsx or TEST-PendingSpecification.xlsx.
                     filename = project + (version === 'current' ? '-Program' : '-Pending') + 'Specification.xlsx';
                     // $button.attr('download', filename); // doesn't work due to same-domain security restrictions.
                     if (useAnchor) {

@@ -45,7 +45,22 @@ Main = (function () {
             // MEDA,MEDA/
             // ...
             allProjectsList = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
+            allProjectsList.sort((a,b) => {
+                var nameA = a.project.toUpperCase(); // ignore upper and lowercase
+                var nameB = b.project.toUpperCase(); // ignore upper and lowercase
+                if (nameA < nameB) {
+                    return -1;
+                }
+                if (nameA > nameB) {
+                    return 1;
+                }
+
+                // names must be equal
+                return 0;
+            })
+            // Test ACMs at the end
             allProjectsList.push({project:'TEST',path:'TEST/'});
+            allProjectsList.push({project:'DEMO',path:'DEMO/'});
         }
 
         if (!applicationPathPromise) {
