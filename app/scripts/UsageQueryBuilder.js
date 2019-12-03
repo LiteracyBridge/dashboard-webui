@@ -19,7 +19,7 @@ let UsageQueryBuilder = function () {
             } else {
                 result.aggregation = 'count';
             }
-            ['render', 'formatter', 'tooltip'].forEach(prop => {
+            ['render', 'tooltip'].forEach(prop => {
                 if (defs.hasOwnProperty(prop)) {
                     result[prop] = defs[prop]
                 }
@@ -173,19 +173,19 @@ let UsageQueryBuilder = function () {
         // Formatting extensions go here.
         let extensions = {
             duration_seconds: {
-                formatter: row => Utils.formatSeconds(row.duration_seconds), render: function (data, type, row) {
+                render: function (data, type, row) {
                     if (type === 'display' || type === 'filter') {
-                        return Utils.formatSeconds(row.duration_seconds)
+                        return Utils.formatSeconds(data)
                     }
                     return data
                 },
             },
 
             played_seconds: {
-                formatter: row => Utils.formatSeconds(row.played_seconds), render: function (data, type, row) {
+                render: function (data, type, row) {
                     // If display or filter data is requested, format as a nice time string
                     if (type === 'display' || type === 'filter') {
-                        return Utils.formatSeconds(row.played_seconds)
+                        return Utils.formatSeconds(data)
                     }
 
                     // Otherwise the data type requested (`type`) is type detection or
@@ -537,7 +537,7 @@ let UsageQueryBuilder = function () {
             return $(result)
         }
 
-        let ruleContainerHtml = `                            
+        let ruleContainerHtml = `
         <div id="query-column-rule-${suffix}" class="rule-container">
             <div class="rule-header">
                 <div class="btn-group pull-right rule-actions">
@@ -563,9 +563,9 @@ let UsageQueryBuilder = function () {
                     <option value="count">Count</option>
                 </select>
             </div>
-            <div id="query-column" class="rule-operator-container">            
+            <div id="query-column" class="rule-operator-container">
             </div>
-            
+
             <div id="norm-query-aggr" class="rule-filter-container hidden column-normalization">
                 <span class="column-norm-indicator">/&nbsp;</span>
                 <select class="form-control" name="builder-basic_rule_0_filter">
@@ -573,8 +573,8 @@ let UsageQueryBuilder = function () {
                     <option value="count">Count</option>
                 </select>
             </div>
-            <div id="norm-query-column" class="rule-operator-container hidden column-normalization">            
-            </div>                
+            <div id="norm-query-column" class="rule-operator-container hidden column-normalization">
+            </div>
         </div>
         `;
 
