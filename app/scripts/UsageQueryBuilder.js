@@ -19,7 +19,7 @@ let UsageQueryBuilder = function () {
             } else {
                 result.aggregation = 'count';
             }
-            ['render', 'tooltip'].forEach(prop => {
+            ['render', 'tooltip', 'aggregationDefault'].forEach(prop => {
                 if (defs.hasOwnProperty(prop)) {
                     result[prop] = defs[prop]
                 }
@@ -168,6 +168,46 @@ let UsageQueryBuilder = function () {
             summable: true,
             aggregation: 'sum',
             aggregateTooltip: 'Number of times message was played to completion',
+        }), ColumnDef({
+            name: 'threequarters',
+            heading: '3/4 Plays',
+            tooltip: 'How many times was the message played through 3/4?',
+            type: 'number',
+            summable: true,
+            aggregation: 'sum',
+            aggregationDefault: true,
+            aggregateTooltip: 'Number of times message was played to 3/4',
+        }), ColumnDef({
+            name: 'half',
+            heading: '1/2 Plays',
+            tooltip: 'How many times was the message played through 1/2?',
+            type: 'number',
+            summable: true,
+            aggregation: 'sum',
+            aggregationDefault: true,
+            aggregateTooltip: 'Number of times message was played to 1/2',
+        }), ColumnDef({
+            name: 'quarter',
+            heading: '1/4 Plays',
+            tooltip: 'How many times was the message played through 1/4?',
+            type: 'number',
+            summable: true,
+            aggregation: 'sum',
+            aggregationDefault: true,
+            aggregateTooltip: 'Number of times message was played to 1/4',
+        }), ColumnDef({
+            name: 'started',
+            heading: 'Starts',
+            tooltip: 'How many times was the message started (10 seconds)?',
+            type: 'number',
+            summable: true,
+            aggregation: 'sum',
+            aggregationDefault: true,
+            aggregateTooltip: 'Number of times message was started (10 seconds)',
+        }), ColumnDef({
+            name: 'tbcdid',
+            heading: 'Collected By',
+            tooltip: 'Which TB-Loader id collected the statistics?',
         })];
 
         // Formatting extensions go here.
@@ -246,7 +286,12 @@ let UsageQueryBuilder = function () {
             position: 'p',
             timestamp: 'tim',
             played_seconds: 'pl',
-            completions: 'comp'
+            completions: 'comp',
+            threequarters: '3',
+            half: '2',
+            quarter: '4',
+            started: 'st',
+            tbcdid: 'tid'
         };
         // Put abbreviations into the full names
         Object.keys(abbreviations).forEach(fn=>{
@@ -694,6 +739,9 @@ let UsageQueryBuilder = function () {
             setAggregationEnabled(columnDef && columnDef.aggregation);
             if (columnDef && columnDef.aggregation) {
                 setAggregationChoices(columnName, $('#query-aggr select', $rc))
+            }
+            if (columnDef && columnDef.aggregationDefault) {
+                turnAggregationOn();
             }
             queryChanged()
         }

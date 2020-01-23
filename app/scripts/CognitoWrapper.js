@@ -486,6 +486,10 @@ CognitoWrapper = (function () {
         signOut: signOut,
         changePassword: changePassword,
 
-        getIdToken: () => idToken
+        getIdToken: () => idToken,
+        getJwtParams: function getJwtParams() {
+            if (!idToken) { return {}; }
+            return JSON.parse(atob(idToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+        }
     }
 })();

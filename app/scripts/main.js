@@ -162,29 +162,26 @@ Main = (function () {
         setGreeting();
 
         getApplicationPath().then(() => {
-            User.getUserProperties()
-                .then(() => {
-                    filterProjects();
-                    if (User.isAdminUser()) {
-                        $('#admin-menu').removeClass('hidden');
-                    }
-                    // Enable Bootstrap tabbing.
-                    $('#main-nav a.main-nav').on('click', function (e) {
-                        e.preventDefault()
-                        $(this).tab('show')
-                    })
-                    $('#splash h3').removeClass('invisible');
+            filterProjects();
+            if (User.isAdminUser()) {
+                $('#admin-menu').removeClass('hidden');
+            }
+            // Enable Bootstrap tabbing.
+            $('#main-nav a.main-nav').on('click', function (e) {
+                e.preventDefault();
+                $(this).tab('show')
+            });
+            $('#splash h3').removeClass('invisible');
 
-                    if (initialParams && (initialParams.get(PAGE_PARAM) || initialParams.get('q'))) {
-                        let tab = initialParams.get(PAGE_PARAM) || initialParams.get('q');
-                        let longPage = shortToLong[tab] || tab;
-                        if (tab) {
-                            $('#main-nav a[href="#' + longPage + '"]').tab('show');
-                        }
-                    } else if (initialHash) {
-                        $('#main-nav a[href="#' + initialHash + '"]').tab('show');
-                    }
-                });
+            if (initialParams && (initialParams.get(PAGE_PARAM) || initialParams.get('q'))) {
+                let tab = initialParams.get(PAGE_PARAM) || initialParams.get('q');
+                let longPage = shortToLong[tab] || tab;
+                if (tab) {
+                    $('#main-nav a[href="#' + longPage + '"]').tab('show');
+                }
+            } else if (initialHash) {
+                $('#main-nav a[href="#' + initialHash + '"]').tab('show');
+            }
         });
 
         var attributes = User.getUserAttributes();

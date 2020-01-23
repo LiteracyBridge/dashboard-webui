@@ -35,7 +35,7 @@ User = (function () {
             <div>
                 <input id="username" type="text" class="form-control"
                        placeholder="User Name or Email Address"
-                       aria-describedby="basic-addon1" autofocus 
+                       aria-describedby="basic-addon1" autofocus
                        autocorrect="off" autocapitalize="none">
                 <input id="password" type="password" class="password form-control"
                        placeholder="Password"
@@ -176,7 +176,7 @@ User = (function () {
             <div>
                 <p>Are you sure you want to delete your account? This can not be un-done, however, no data
                 will be lost or removed. You can recreate your account again later.</p>
-                <p>Note that this is only the account used to sign in to the Dashboard and TB-Loader, and is 
+                <p>Note that this is only the account used to sign in to the Dashboard and TB-Loader, and is
                  completely independent of any email or computer account.</p>
             </div>
         </div>
@@ -1019,42 +1019,6 @@ User = (function () {
         return promise;
     }
 
-    /**
-     * Get the user's ACM read/write permissions, and admin status.
-     */
-    function getUserProperties() {
-        // This is the UserManagement API Gateway URL.
-        var url = 'https://at6imj9mgk.execute-api.us-west-2.amazonaws.com/prod  ';
-
-        var payload = {
-            action: 'getUserInfo'
-        }
-
-        var request = {
-            url: url,
-            type: 'post',
-            data: JSON.stringify(payload),
-            contentType: 'application/json; charset=utf-8',
-            dataType: 'json',
-            headers: {Authorization: CognitoWrapper.getIdToken()}
-        }
-
-        userPropertiesPromise = $.Deferred();
-        userProperties = null;
-        $.ajax(request)
-            .done((result) => {
-                if (result.errorMessage) {
-                    userPropertiesPromise.reject(result.errorMessage);
-                } else {
-                    userProperties = result;
-                    gotUserProperties(result);
-                    userPropertiesPromise.resolve()
-                }
-            }).fail((err) => {
-            userPropertiesPromise.reject(err)
-        });
-    }
-
     function doAuthenticate() {
         if (!authenticationPromise) {
             if (Main.hasParam('demo')) {
@@ -1069,8 +1033,6 @@ User = (function () {
                 authenticationPromise = $.Deferred();
                 authenticationPromise.resolve({});
                 userProperties = {admin:true, edit:'*', view:'*'};
-                userPropertiesPromise = $.Deferred();
-                userPropertiesPromise.resolve(userProperties);
                 return authenticationPromise;
             }
 
@@ -1080,8 +1042,6 @@ User = (function () {
             // userAttributes.email='bill@literacybridge.org';
             // userAttributes['custom:greeting'] = 'TEST:bill';
             // authenticationPromise.resolve(userAttributes);
-            // userPropertiesPromise = $.Deferred();
-            // userPropertiesPromise.resolve({edit:'.*', admin:true})
             // gotUserProperties({edit:'.*', admin:true});
             // return authenticationPromise;
 
@@ -1101,20 +1061,13 @@ User = (function () {
 
             // When signed in, get the user attributes from our DynamoDB user database, and CognitoWrapper attributes.
             signin.done(() => {
-                getUserProperties();
-                CognitoWrapper.getUserAttributes().done((attributes) => {
-                    // Convert from {'Name': 'attr_name', 'Value': 'attr_value'} to {attr_name: 'attr_value'}
-                    attributes.forEach((attr) => {
-                        userAttributes[attr.Name] = attr.Value
-                    })
-                    console.log('Attributes: ' + JSON.stringify(userAttributes));
-                    authenticationPromise.resolve(userAttributes);
-                }).fail((err) => {
-                        // Signed in, but for some reason didn't get attributes.
-                        console.log('Attributes error: ' + err)
-                        authenticationPromise.resolve({});
-                    }
-                );
+                let _userProperties = CognitoWrapper.getJwtParams();
+                userAttributes = _userProperties;
+                userProperties = _userProperties;
+                gotUserProperties(_userProperties);
+
+                authenticationPromise.resolve(_userProperties);
+
             });
         }
         return authenticationPromise;
@@ -1125,7 +1078,6 @@ User = (function () {
      */
     function doSignout() {
         userAttributes = {};
-        userPropertiesPromise = null;
         authenticationPromise = null;
         username = password = '';
         persist(false);
@@ -1135,7 +1087,6 @@ User = (function () {
     }
 
     var authenticationPromise;
-    var userPropertiesPromise;
     var userProperties = null;
     var userAttributes = {};
     var username = '';
@@ -1157,7 +1108,6 @@ User = (function () {
         changeGreeting: doChangeGreeting,
         verifyEmail: doVerifyEmail,
         getUserAttributes: () => userAttributes,
-        getUserProperties: () => userPropertiesPromise,
 
         isAdminUser: isAdminUser,
         isViewableProject: isViewableProject,
