@@ -539,7 +539,9 @@ User = (function () {
         setFilters(userProperties.edit||'', userProperties.view||'')
     }
     function isAdminUser() {
-        return userProperties && userProperties.admin;
+        let isAdmin = userProperties && userProperties.admin;
+        console.log('isAdmin: '+(isAdmin?'true':'false'));
+        return isAdmin;
     }
 
     /**
@@ -1061,10 +1063,12 @@ User = (function () {
 
             // When signed in, get the user attributes from our DynamoDB user database, and CognitoWrapper attributes.
             signin.done(() => {
+                console.log('Signin done')
                 let _userProperties = CognitoWrapper.getJwtParams();
                 userAttributes = _userProperties;
                 userProperties = _userProperties;
                 gotUserProperties(_userProperties);
+                console.log(userProperties);
 
                 authenticationPromise.resolve(_userProperties);
 

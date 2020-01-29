@@ -11,8 +11,8 @@ CheckoutPage = (function () {
     let PAGE_ID = 'checkout-page';
     let PAGE_HREF = 'a[href="#'+PAGE_ID+'"]';
     let $PAGE = $('#'+PAGE_ID);
-    
-    
+
+
     var confirmUncheckoutHtml = `<div id="uncheckout-dialog" class="uncheckout-dialog">
     <div class="panel panel-default">
       <div class="panel-body container-fluid">
@@ -26,12 +26,12 @@ CheckoutPage = (function () {
         </div>
     </div>
 </div>`;
-    
+
     function confirmUncheckout2(row) {
         function undoCheckout() {
             // API Gateway URL for revokeCheckOut
             var url = 'https://7z4pu4vzqk.execute-api.us-west-2.amazonaws.com/prod/';
-    
+
             var payload = {
                 action: 'revokeCheckOut',
                 db: row.acm_name,
@@ -56,14 +56,14 @@ CheckoutPage = (function () {
                     refreshData();
                 })
         }
-        
+
         var $dialog = $(confirmUncheckoutHtml);
-        
+
         var message = `<p>You are about to force undo checkout in database '${row.acm_name}'.</p>
             <p>Checked out by user '${row.now_out_name}' on ${row.now_out_date.split('.')[0]}
                 ${row.now_out_computername ? ', on computer ' + row.now_out_computername + '.' : '.'}</p>
             <p>Contact ${row.now_out_name} at ${row.now_out_contact}.</p>`;
-        
+
         $('#message', $dialog).html(message);
         // Don't enable the 'confirm' button until they type the ACM name correctly.
         var target = row.acm_name.toLowerCase();
@@ -72,7 +72,7 @@ CheckoutPage = (function () {
             var mismatched = $p.val().toLowerCase() !== target;
             dialog.getButton('confirm')[mismatched ? 'disable' : 'enable']();
         });
-        
+
         var options = {
             title: 'Force Undo Checkout',
             type: BootstrapDialog.TYPE_DANGER,
@@ -98,13 +98,13 @@ CheckoutPage = (function () {
         var dialog = BootstrapDialog.show(options);
         dialog.getButton('confirm').disable();
     }
-    
-    
+
+
     var latestData = [];
     var latestTimestamp = 0;
     var includeUserFeedback = false;
     var latestTable;
-    
+
     /**
      * Refreshes the table with data, possibly filtered to exclude user feedback ACMs.
      * @param data
@@ -127,7 +127,7 @@ CheckoutPage = (function () {
                 'last_in_file_name',
                 'last_in_name',
             ],
-            
+
             headings: {
                 acm_comment: 'acm_comment',
                 acm_name: 'ACM Name',
@@ -144,14 +144,14 @@ CheckoutPage = (function () {
                 last_in_file_name: 'Last Filename',
                 last_in_name: 'Last Checkin Name',
             },
-            
-            
+
+
             tooltips: {
                 last_in_file_name: 'The name of the current database .zip file. If the ACM is checked out, it will be ' +
                 'checked in with a number that\'s 1 greater.',
                 now_out_computername: 'The name of the computer where the ACM is checked out',
             },
-            
+
             formatters: {
                 acm_state: (row, ix) => {
                     // For checked out ACMs, add an "uncheckout" button.
@@ -168,19 +168,19 @@ CheckoutPage = (function () {
                 now_out_name: (row, ix) => row.now_out_name || '',
                 last_in_date: (row, ix) => (row.last_in_date || '').split('.')[0],
                 now_out_computername: (row, ix) => (row.now_out_computername || '')
-                
-                
+
+
             },
             datatable: {paging: false, searching: true, colReorder: true}
         };
-        
+
         data = data || [];
-        
+
         var search;
         if (latestTable) {
             search = latestTable.search();
         }
-        
+
         latestTable = DataTable.create($('#checkout-page-container'), data, options);
         if (search) {
             latestTable.search(search).draw();
@@ -192,7 +192,7 @@ CheckoutPage = (function () {
 
         Main.setParams(PAGE_ID, {uf: includeUserFeedback?'t':'f'});
     }
-    
+
     /**
      * Filters the data based on 'includeUserFeedback', and updates the table.
      */
@@ -201,19 +201,19 @@ CheckoutPage = (function () {
         var data = latestData.filter(row => includeUserFeedback || !fbName.test(row.acm_name));
         refreshTable(data);
     }
-    
+
     /**
      * Refresh the data from the server.
      */
     function refreshData() {
         // API Gateway call to listAcmCheckouts.
         var url = 'https://7z4pu4vzqk.execute-api.us-west-2.amazonaws.com/prod';
-        
+
         var user = User.getUserAttributes();
         var input = {username: user.username, email: user.email};
-    
+
         Main.incrementWait();
-        
+
         // Don't refresh more often than 5 seconds. But do show a wait spinner for a half second, just to
         // show that the UI is alive.
         if (Date.now() - latestTimestamp < 5 * 1000) {
@@ -221,21 +221,21 @@ CheckoutPage = (function () {
                 Main.decrementWait();
             }, 500);
         } else {
-            
+
             var request = {
                 url: url,
                 type: 'get',
                 dataType: 'json',
                 headers: {Authorization: CognitoWrapper.getIdToken()}
             }
-            
+
             $.ajax(request)
                 .done((result) => {
                     Main.decrementWait();
                     if (result.errorMessage) {
                         console.log(result.errorMessage);
                     } else {
-                        latestData = result;
+                        latestData = result.body;
                         latestTimestamp = Date.now();
                         refreshFiltered();
                     }
@@ -244,9 +244,9 @@ CheckoutPage = (function () {
                     Main.decrementWait();
                     console.log(err)
                 });
-            
+
         }
-        
+
     }
 
     function show() {
@@ -258,15 +258,15 @@ CheckoutPage = (function () {
         }
         refreshData();
     }
-    
+
     $('#refresh-checkout-list', $PAGE).on('click', refreshData);
     $('#include-user-feedback', $PAGE).on('click', () => {
         includeUserFeedback = $('#include-user-feedback', $PAGE).prop('checked');
         refreshFiltered();
     });
-    
+
     // Hook the tab-activated event for this tab.
     $(PAGE_HREF).on('shown.bs.tab', show)
-    
+
     return {};
 })();
