@@ -1050,6 +1050,21 @@ User = (function () {
 
             Main.incrementWait();
 
+            // When signed in, get the user attributes from our DynamoDB user database, and CognitoWrapper attributes.
+            signin.done(() => {
+                console.log('Signin done')
+                let _userProperties = CognitoWrapper.getJwtParams();
+                userAttributes = _userProperties;
+                userProperties = _userProperties;
+                gotUserProperties(_userProperties);
+                console.log(userProperties);
+
+                function doResolve() {
+                    authenticationPromise.resolve(_userProperties);
+                }
+                setTimeout(doResolve, 0);
+            });
+
             // Get us to a "signed-in" state.
             CognitoWrapper.getCurrentUser().done(() => {
                 Main.decrementWait();
@@ -1061,18 +1076,6 @@ User = (function () {
                 });
             });
 
-            // When signed in, get the user attributes from our DynamoDB user database, and CognitoWrapper attributes.
-            signin.done(() => {
-                console.log('Signin done')
-                let _userProperties = CognitoWrapper.getJwtParams();
-                userAttributes = _userProperties;
-                userProperties = _userProperties;
-                gotUserProperties(_userProperties);
-                console.log(userProperties);
-
-                authenticationPromise.resolve(_userProperties);
-
-            });
         }
         return authenticationPromise;
     }

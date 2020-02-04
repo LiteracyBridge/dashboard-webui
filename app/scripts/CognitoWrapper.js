@@ -60,7 +60,8 @@ CognitoWrapper = (function () {
             onSuccess: function (result) {
 
                 idToken = result.idToken.getJwtToken();
-                console.log(idToken);
+                console.log('SignIn, JWT Params:')
+                console.log(getJwtParams());
                 deferred.resolve();
 
                 // --------------------------------------------------------------------------------------
@@ -235,7 +236,8 @@ CognitoWrapper = (function () {
                 }
                 console.log('session validity: ' + session.isValid());
                 idToken = session.idToken.getJwtToken();
-                console.log(idToken);
+                console.log('getCurrentUser, JWT Params:')
+                console.log(getJwtParams());
                 deferred.resolve();
 
                 // --------------------------------------------------------------------------------------
@@ -470,6 +472,11 @@ CognitoWrapper = (function () {
         return deferred.promise();
     }
 
+    function getJwtParams() {
+        if (!idToken) { return {}; }
+        return JSON.parse(atob(idToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    }
+
     return {
         signIn: signIn,
         createAccount: createAccount,
@@ -487,9 +494,6 @@ CognitoWrapper = (function () {
         changePassword: changePassword,
 
         getIdToken: () => idToken,
-        getJwtParams: function getJwtParams() {
-            if (!idToken) { return {}; }
-            return JSON.parse(atob(idToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
-        }
+        getJwtParams: getJwtParams
     }
 })();

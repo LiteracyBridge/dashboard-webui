@@ -1,7 +1,7 @@
 /* jshint esversion:6, asi:true */
 /* global $, DataTable, DropdownButton, StatisticsData, User, CognitoWrapper,console, Main, ProjectDetailsData,
    DataTable, Chart, moment, ProgramSpecificationData, ProgramSpecificationDownloader, ProjectPicker, Utils, UsageQueries,
-    LocalFileLoader */
+    LocalFileLoader, BootstrapDialog */
 
 var ProgramSpecificationPage = function () {
     'use strict';
@@ -28,7 +28,7 @@ var ProgramSpecificationPage = function () {
     let currentSpecExists = false;
     let pendingSpecExists = false;
 
-    let modalHtml = `<div class="modal fade" id="progspec-diff-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    let viewDiffHtml = `<div class="modal fade" id="progspec-diff-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header bg-primary">
@@ -50,6 +50,20 @@ var ProgramSpecificationPage = function () {
   </div>
 </div>`;
 
+    let viewContentHtml = `<div class="modal fade" id="progspec-content-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary">
+        <h4 class="modal-title" id="myModalLabel">Content Specification</h4>
+      </div>
+      <div class="modal-body">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default close" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>`;
 
     function fillProjects() {
         if (fillDone) {
@@ -110,7 +124,7 @@ var ProgramSpecificationPage = function () {
     function showDiff(diff, options) {
         options = options || {};
         let deferred = $.Deferred();
-        let $dialog = $(modalHtml);
+        let $dialog = $(viewDiffHtml);
 
         let $comment = $('#progspec-approve-comment', $dialog);
         let $accept = $('.accept-changes', $dialog);
@@ -252,6 +266,138 @@ var ProgramSpecificationPage = function () {
         ProgramSpecificationDownloader.download(currentProject, currentSpecExists, pendingSpecExists);
     }
 
+    let nl=/[\n\r]/gi;
+    function showContent(data, options) {
+        let opts = {
+            columns: ['deployment_num',
+                'playlist_title', 'message_title',
+                'key_points', 'language', 'variant',
+                'sdg_goals', 'sdg_targets'],
+            headings: {deployment_num: 'Depl #',
+                playlist_title: 'Playlist',
+                message_title: 'Title',
+                key_points: 'Key Points',
+                language: 'Language',
+                variant: 'Variant',
+                sdg_goals: 'SDG Goals',
+                sdg_targets: 'SDG Targets'
+            },
+            formatters: {
+
+                key_points: (row, row_ix, cell) => {
+                    // eslint-disable-next-line quotes
+                    let noNl = cell.replace(nl, '<br/>')
+                    return `<p>${noNl}</p>`;
+                }
+            },
+            size: BootstrapDialog.SIZE_WIDE,
+            datatable: {paging: false, searching: true, colReorder: true}
+
+        };
+
+        options = options || {};
+        options.size = options.size ||  BootstrapDialog.SIZE_WIDE;
+        options.datatable = options.datatable || {paging: false, searching: true, colReorder: true};
+
+        let deferred = $.Deferred();
+        let $dialog = $(viewContentHtml);
+
+        let $close = $('.close', $dialog);
+        let $body = $('.modal-body', $dialog);
+
+        $close.on('click', () => {
+            $dialog.modal('hide');
+            deferred.resolve();
+        });
+
+        DataTable.create($body, data, options);
+        $dialog.modal({keyboard:true, closeByBackdrop:true, backdrop:'static'});
+
+        return deferred.promise();
+    }
+
+    let contentOptions = {
+        filename: 'content.csv',
+        columns: ['deployment_num',
+            'playlist_title', 'message_title',
+            'key_points', 'language', 'variant',
+            'sdg_goals', 'sdg_targets'],
+        headings: {deployment_num: 'Depl #',
+            playlist_title: 'Playlist',
+            message_title: 'Title',
+            key_points: 'Key Points',
+            language: 'Language',
+            variant: 'Variant',
+            sdg_goals: 'SDG Goals',
+            sdg_targets: 'SDG Targets'
+        },
+        formatters: {
+
+            key_points: (row, row_ix, cell) => {
+                // eslint-disable-next-line quotes
+                let noNl = cell.replace(nl, '<br/>')
+                return `<p>${noNl}</p>`;
+            }
+        },
+
+    };
+    let recipientsOptions = {
+        columns: ['recipientid', // 'project',
+            // 'partner',
+            'region', 'district',
+            'communityname', 'groupname', // 'affiliate',
+            'agent',
+            // 'component', 'country',
+            'numhouseholds', 'numtbs',
+            //'supportentity',
+            // 'model', 'language', 'coordinates', 'latitude',
+            // 'longitude',
+            'variant'],
+        headings: {
+            recipientid: 'Recipient ID',
+            region: 'Region', district: 'District',
+            communityname: 'Community', groupname: 'Group', agent: 'Agent',
+            numhouseholds: '# HHs', numtbs: '# TBs',
+            variant: 'Variant'
+        },
+        filename: 'recipients.csv'
+    };
+    let deploymentOptions = {
+        columns: [
+            'deployment_num', 'startdate', 'enddate', 'component', 'name'
+        ],
+        headings: {
+            deployment_num: 'Depl #',
+            startdate: 'Start', enddate: 'End',
+            component: 'Component', name: 'Deployment Name'
+        },
+        filename: 'deployment_spec.csv'
+    };
+
+
+    function loadAndView(options) {
+        ProgramSpecificationData.getFile(currentProject, options.filename).done(result => {
+            let data = $.csv.toObjects(result.data, {separator: ',', delimiter: '"'});
+            console.log(data);
+            showContent(data, options);
+
+        }).fail(err => {
+
+        });
+    }
+
+    function doViewContent() {
+        loadAndView(contentOptions);
+    }
+
+    function doViewRecipients() {
+        loadAndView(recipientsOptions);
+    }
+
+    function doViewDeployments() {
+        loadAndView(deploymentOptions);
+    }
+
     function showOverview() {
         if (!currentProject) {return}
 
@@ -337,6 +483,7 @@ var ProgramSpecificationPage = function () {
     }
 
     var $validate, $submit, $review, $history, $download;
+    var $showDeployments, $showContent, $showRecipients;
     let initialized = false;
     function show() {
         if (!initialized) {
@@ -349,6 +496,13 @@ var ProgramSpecificationPage = function () {
             $submit.on('click', doSubmit);
             $review.on('click', doReview);
             $download.on('click', doDownload);
+
+            $showDeployments = $('#view-deployments-spec');
+            $showContent = $('#view-content-spec');
+            $showRecipients = $('#view-recipients-spec');
+            $showDeployments.on('click', doViewDeployments);
+            $showContent.on('click', doViewContent);
+            $showRecipients.on('click', doViewRecipients);
             restoreState();
             fillProjects();
             initialized = true;
