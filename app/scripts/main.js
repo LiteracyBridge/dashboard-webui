@@ -2,7 +2,7 @@
  * Created by bill on 3/2/17.
  */
 /* jshint undef:true, esversion:6, asi:true */
-/* globals console, $, ProjectDetailsData, BootstrapDialog, User, AWS, CognitoWrapper, URLSearchParams */
+/* globals console, $, ProgramDetailsData, RolesData, BootstrapDialog, User, AWS, CognitoWrapper, URLSearchParams */
 
 var Main = Main || {};
 
@@ -14,7 +14,13 @@ Main = (function () {
     var applicationPathPromise;
 
     var allProjectsList;
-    var filteredProjects;
+
+    // This will be a dictionary of {program : rolestr} where rolestr is a concatenation of one or more of
+    // *, AD, PM, CO, FO.
+    let userRoles = {};
+    let userPrograms = [];
+    let userAdmin = [];
+    let _isAdmin;
 
     let PAGE_PARAM = 'pp';
 
@@ -28,10 +34,12 @@ Main = (function () {
         'f': 'usage-details-page',
         'g': 'userfeedback-page',
         'h': 'checkout-page',
-        'i': 'program-specification-page'
-    }
-    let longToShort = {}
-    Object.keys(shortToLong).forEach(k=>longToShort[shortToLong[k]]=k)
+        'i': 'program-specification-page',
+        'j': 'roles-page'
+    };
+    let longToShort = {};
+    let adminPages = ['checkout-page', 'roles-page'];
+    Object.keys(shortToLong).forEach(k=>longToShort[shortToLong[k]]=k);
 
 
     /**
@@ -57,7 +65,7 @@ Main = (function () {
 
                 // names must be equal
                 return 0;
-            })
+            });
             // Test ACMs at the end
             allProjectsList.push({project:'TEST',path:'TEST/'});
             allProjectsList.push({project:'DEMO',path:'DEMO/'});
@@ -93,7 +101,7 @@ Main = (function () {
 
     // slice off the leading ? or #
     let initialParams = new URLSearchParams(location.search.slice(1));
-    let initialHash = location.hash.slice(1)
+    let initialHash = location.hash.slice(1);
 
     function setParams(page, values) {
         let params = new URLSearchParams();
@@ -101,7 +109,7 @@ Main = (function () {
             if (k===PAGE_PARAM) {throw('parameter collision');}
             params.set(k, values[k]);
         });
-        let shortPage = longToShort[page] || page
+        let shortPage = longToShort[page] || page;
         params.set(PAGE_PARAM, shortPage);
         let newUrl = new URL(location);
         newUrl.search = params;
@@ -144,13 +152,6 @@ Main = (function () {
 
 
     function onSignedIn() {
-        function filterProjects() {
-            var paths = {};
-            allProjectsList.filter(row=>User.isViewableProject(row.project)).forEach((el) => {
-                paths[el.project] = el.path
-            });
-            filteredProjects = paths;
-        }
         function setGreeting() {
             var attributes = User.getUserAttributes();
             var greeting = attributes['custom:greeting'] || attributes.email;
@@ -161,31 +162,43 @@ Main = (function () {
         $('body').on('custom:greeting', setGreeting);
         setGreeting();
 
-        getApplicationPath().then(() => {
-            filterProjects();
-            if (User.isAdminUser()) {
-                $('#admin-menu').removeClass('hidden');
-            }
-            // Enable Bootstrap tabbing.
-            $('#main-nav a.main-nav').on('click', function (e) {
-                e.preventDefault();
-                $(this).tab('show')
-            });
-            $('#splash h3').removeClass('invisible');
+        let programsPromise = RolesData.getPrograms();
 
-            if (initialParams && (initialParams.get(PAGE_PARAM) || initialParams.get('q'))) {
-                let tab = initialParams.get(PAGE_PARAM) || initialParams.get('q');
-                let longPage = shortToLong[tab] || tab;
-                if (tab) {
-                    $('#main-nav a[href="#' + longPage + '"]').tab('show');
+        getApplicationPath().then(() => {
+            programsPromise.done(rolesList => {
+                userRoles = rolesList;
+                // Is the user an admin for any program?
+                userPrograms = Object.keys(userRoles).sort();
+                userAdmin = userPrograms.filter(p=>userRoles[p].indexOf('AD')>=0||userRoles[p].indexOf('*')>=0);
+                _isAdmin = userAdmin.length > 0;
+                if (_isAdmin) {
+                    $('#admin-menu').removeClass('hidden');
                 }
-            } else if (initialHash) {
-                $('#main-nav a[href="#' + initialHash + '"]').tab('show');
-            }
+                // Enable Bootstrap tabbing.
+                $('#main-nav a.main-nav').on('click', function (e) {
+                    e.preventDefault();
+                    $(this).tab('show')
+                });
+                $('#splash h3').removeClass('invisible');
+
+                let gotoPage = ';';
+                if (initialParams && (initialParams.get(PAGE_PARAM) || initialParams.get('q'))) {
+                    let tab = initialParams.get(PAGE_PARAM) || initialParams.get('q');
+                    let longPage = shortToLong[tab] || tab;
+                    if (tab) {
+                        gotoPage = longPage;
+                    }
+                } else if (initialHash) {
+                    gotoPage = initialHash;
+                }
+                if (gotoPage && adminPages.indexOf(gotoPage) < 0 || _isAdmin) {
+                    $('#main-nav a[href="#' + gotoPage + '"]').tab('show');
+                }
+            });
         });
 
         var attributes = User.getUserAttributes();
-        if (attributes.email_verified === 'false') {
+        if (!attributes.email_verified) {
             $('li.verify-email').removeClass('hidden');
         }
 
@@ -241,7 +254,8 @@ Main = (function () {
         decrementWait: decrementWait,
         clearWait: clearWait,
 
-        getProjectPaths: ()=>{return filteredProjects;},
-        getProjectList: ()=>{return Object.keys(filteredProjects);}
+        getProgramsForUser: ()=>userPrograms,
+        getProgramsForAdminUser: ()=>userAdmin,
+
     }
 })();

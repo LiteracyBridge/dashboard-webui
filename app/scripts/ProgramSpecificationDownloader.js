@@ -1,6 +1,6 @@
 /* jshint esversion:6, asi:true */
-/* global $, DataTable, DropdownButton, StatisticsData, User, CognitoWrapper,console, Main, ProjectDetailsData,
-   DataTable, Chart, moment, ProgramSpecificationData, ProjectPicker, Utils, UsageQueries */
+/* global $, DataTable, DropdownButton, StatisticsData, User, CognitoWrapper,console, Main, ProgramDetailsData,
+   DataTable, Chart, moment, ProgramSpecificationData, ProgramPicker, Utils, UsageQueries */
 
 let ProgramSpecificationDownloader = function () {
     'use strict';
@@ -84,7 +84,7 @@ let ProgramSpecificationDownloader = function () {
         return blob;
     }
 
-    function download(project, currentExists, pendingExists) {
+    function download(program, currentExists, pendingExists) {
         var filename, data;
         function saveFile() {
             $.fn.dataTable.fileSave(b64toBlob(data), filename, true);
@@ -96,11 +96,11 @@ let ProgramSpecificationDownloader = function () {
         function refreshLink(version) {
             $button.prop('disabled', true);
             $descr.empty();
-            ProgramSpecificationDataGetFunction(project, version).done(result => {
+            ProgramSpecificationDataGetFunction(program, version).done(result => {
                 if (result && result.status && result.status === 'ok') {
                     $descr.append(getDescription(result));
                     // Like DEMO-ProgramSpecification.xlsx or TEST-PendingSpecification.xlsx.
-                    filename = project + (version === 'current' ? '-Program' : '-Pending') + 'Specification.xlsx';
+                    filename = program + (version === 'current' ? '-Program' : '-Pending') + 'Specification.xlsx';
                     // $button.attr('download', filename); // doesn't work due to same-domain security restrictions.
                     if (useAnchor) {
                         $button.attr('href', result.url);

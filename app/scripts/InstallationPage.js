@@ -2,7 +2,7 @@
  * Created by bill on 10/23/17.
  */
 /* jshint undef:true, esversion:6, asi:true */
-/* globals console, $, DataTable, Main, User, Chart, ProjectPicker, ProjectDetailsData, InstallationData, Utils, moment */
+/* globals console, $, DataTable, Main, User, Chart, ProgramPicker, ProgramDetailsData, InstallationData, Utils, moment */
 
 var InstallationPage = InstallationPage || {};
 
@@ -12,7 +12,7 @@ InstallationPage = (function () {
     let PAGE_HREF = 'a[href="#' + PAGE_ID + '"]';
     let $PAGE = $('#' + PAGE_ID);
 
-    var previousProject;
+    var previousProgram;
     var previousDeployment;
 
     var fillDone = false;
@@ -85,11 +85,11 @@ InstallationPage = (function () {
         }
         fillDone = true;
         var preSelectDeployment = previousDeployment;
-        let projectsList = Main.getProjectList();
+        let programsList = Main.getProgramsForUser();
 
-         function getDeploymentsForProject(proj) {
+         function getDeploymentsForProgram(proj) {
             var promise = $.Deferred();
-            ProjectDetailsData.getDeploymentsList(proj)
+            ProgramDetailsData.getDeploymentsList(proj)
                 .done((deploymentsList) => {
                     // deploymentsList is a list of {project:'name', deployment:'name', deploymentnumber: number, startdate:'date', enddate:'date'}
                     deploymentsList = deploymentsList.map((elem) => {
@@ -109,19 +109,19 @@ InstallationPage = (function () {
         }
 
         var options = {
-            projects: projectsList,
-            defaultProject: previousProject,
-            getDeploymentsForProject: getDeploymentsForProject
+            programs: programsList,
+            defaultProgram: previousProgram,
+            getDeploymentsForProgram: getDeploymentsForProgram
         };
 
-        $('#installation-progress-project-placeholder').on('selected', (evt, extra) => {
-            var project = extra.project;
+        $('#installation-progress-program-placeholder').on('selected', (evt, extra) => {
+            var program = extra.program;
             var deployment = extra.deployment;
-            if (project && deployment) {
-                reportProject(project, deployment);
+            if (program && deployment) {
+                reportProgram(program, deployment);
             }
         });
-        ProjectPicker.add('#installation-progress-project-placeholder', options);
+        ProgramPicker.add('#installation-progress-program-placeholder', options);
 
     }
 
@@ -594,15 +594,15 @@ InstallationPage = (function () {
 
     let includeTestInstalls = false;
 
-    function reportProject(project, deployment) {
+    function reportProgram(program, deployment) {
         Main.incrementWait();
 
         $('#include-test-installs', $PAGE).prop('disabled', true);
         let options = {
             includeTestInstalls: includeTestInstalls
         }
-        InstallationData.getInstallationStatusForDeployment(project, deployment, options).done((status)=>{
-            // tbsDeployed: [ {talkingbookid,deployedtimestamp,project,deployment,contentpackage,community,firmware,location,coordinates,username,tbcdid,action,newsn,testing} ]
+        InstallationData.getInstallationStatusForDeployment(program, deployment, options).done((status)=>{
+            // tbsDeployed: [ {talkingbookid,deployedtimestamp,program,deployment,contentpackage,community,firmware,location,coordinates,username,tbcdid,action,newsn,testing} ]
             // recipients: [ {affiliate,partner,program,country,region,district,community,group_name,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,languagecode} ]
             // community: [ {affiliate,partner,program,country,region,district,community,directory_name,num_HHs,num_TBs,TB_ID,supportentity,model,languagecode,
             //      num_TBsInstalled, numGroups,
@@ -618,7 +618,7 @@ InstallationPage = (function () {
                 extraneousRecipientDetails(status);
                 $('#include-test-installs', $PAGE).prop('disabled', false);
 
-                previousProject = project;
+                previousProgram = program;
                 previousDeployment = deployment;
                 persistState();
 
@@ -636,20 +636,20 @@ InstallationPage = (function () {
     }
 
     function refreshProject() {
-        reportProject(previousProject, previousDeployment);
+        reportProgram(previousProgram, previousDeployment);
     }
 
     function persistState() {
-        if (previousProject && previousDeployment) {
-            localStorage.setItem('installation.project', previousProject);
+        if (previousProgram && previousDeployment) {
+            localStorage.setItem('installation.project', previousProgram);
             localStorage.setItem('installation.deployment', previousDeployment);
-            Main.setParams(PAGE_ID, {p: previousProject, d: previousDeployment, t: includeTestInstalls});
+            Main.setParams(PAGE_ID, {p: previousProgram, d: previousDeployment, t: includeTestInstalls});
         }
     }
     function restoreState() {
         let params = Main.getParams();
         if (params) {
-            previousProject = params.get('p') || '';
+            previousProgram = params.get('p') || '';
             previousDeployment = params.get('d') || '';
             let valStr = params.get('t');
             let val = false;
@@ -657,7 +657,7 @@ InstallationPage = (function () {
             includeTestInstalls = val;
             $('#include-test-installs', $PAGE).prop('checked', includeTestInstalls);
         } else {
-            previousProject = localStorage.getItem('installation.project') || '';
+            previousProgram = localStorage.getItem('installation.project') || '';
             previousDeployment = localStorage.getItem('installation.deployment') || '';
         }
     }

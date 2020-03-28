@@ -8,8 +8,8 @@ DataTable,
 DataTable,
 DropdownButton,
 Main,
-ProjectDetailsData,
-ProjectPicker,
+ProgramDetailsData,
+ProgramPicker,
 Sortable,
 StatisticsData,
 User,
@@ -41,7 +41,7 @@ UsageDetailsPage = function () {
                 <div class="rules-list" id="columns-list">
                 </div>
             </div>
- 
+
             <!-- div>
                 <p> SELECT DISTINCT <span id="query-display-query"></span> FROM usage-info;</p>
                 <p> Strings: <span id="query-display-strings"></span></p>
@@ -85,11 +85,11 @@ UsageDetailsPage = function () {
         }
         fillDone = true;
         var preSelectDeployment = currentDeployment;
-        let list = Main.getProjectList();
+        let list = Main.getProgramsForUser();
 
-        function getDeploymentsForProject(proj) {
+        function getDeploymentsForProgram(proj) {
             var promise = $.Deferred();
-            ProjectDetailsData.getDeploymentsList(proj)
+            ProgramDetailsData.getDeploymentsList(proj)
                 .done((deploymentsList) => {
                     // deploymentsList is array [{deployment:'name;name2', deploymentnumber:number, ...}, ...]
                     deploymentsList = deploymentsList.map((elem) => {
@@ -110,19 +110,19 @@ UsageDetailsPage = function () {
         }
 
         var options = {
-            projects: list,
-            defaultProject: currentProject,
-            getDeploymentsForProject: getDeploymentsForProject
+            programs: list,
+            defaultProgram: currentProject,
+            getDeploymentsForProgram: getDeploymentsForProgram
         };
 
         $('#usage-details-project-placeholder').on('selected', (evt, extra) => {
-            var project = extra.project;
+            var program = extra.program;
             var deployment = extra.deployment;
-            if (project && deployment) {
-                reportProject(project, deployment);
+            if (program && deployment) {
+                reportProgram(program, deployment);
             }
         });
-        ProjectPicker.add('#usage-details-project-placeholder', options);
+        ProgramPicker.add('#usage-details-project-placeholder', options);
     }
 
 
@@ -204,7 +204,7 @@ UsageDetailsPage = function () {
         function runQuery() {
             let querySpecs = $columns.usageQueryBuilder('query');
             querySelecter.setSelection({value:-1});
-            refreshProject(currentProject, currentDeployment, querySpecs);
+            refreshProgram(currentProject, currentDeployment, querySpecs);
         }
         function onQueryChanged() {
             // let querySpecs = $columns.usageQueryBuilder('query');
@@ -273,7 +273,7 @@ UsageDetailsPage = function () {
             if (qIx >= 0) {
                 let q = queries[qIx];
                 let querySpecs = $select.usageQueryBuilder('parse', q.querySpecs);
-                refreshProject(currentProject, currentDeployment, querySpecs);
+                refreshProgram(currentProject, currentDeployment, querySpecs);
             }
         }
         let $select = $('#usage-query-selection');
@@ -303,7 +303,7 @@ UsageDetailsPage = function () {
             if (qIx >= 0) {
                 runQuery(qIx);
             } else if (currentQuerySpecs) {
-                refreshProject(currentProject, currentDeployment, currentQuerySpecs);
+                refreshProgram(currentProject, currentDeployment, currentQuerySpecs);
             }
         });
 
@@ -443,7 +443,7 @@ UsageDetailsPage = function () {
 
 
 
-    function getUsage(project, deployment, columns) {
+    function getUsage(program, deployment, columns) {
         // Limit to the specified deployment?
         if (deployment && deployment>0 && $limitByDeployment.prop('checked')) {
             $('#limit-by-deployment-prompt').text(` (Deployment ${deployment})`)
@@ -453,7 +453,7 @@ UsageDetailsPage = function () {
         }
 
         var deferred = $.Deferred();
-        StatisticsData.getUsage(project, deployment, columns)
+        StatisticsData.getUsage(program, deployment, columns)
             .done(result => {
                 if (result.errorMessage) {
                     deferred.reject(result.errorMessage);
@@ -518,16 +518,16 @@ UsageDetailsPage = function () {
         console.log('test fn')
     }
 
-    function refreshProject(project, deployment, querySpecs) {
-        if (!project || !querySpecs || !querySpecs.length) {return;}
+    function refreshProgram(program, deployment, querySpecs) {
+        if (!program || !querySpecs || !querySpecs.length) {return;}
         let columns = querySpecs.map(qs=>qs.query);
 
-        currentProject = project;
+        currentProject = program;
         currentDeployment = deployment;
         currentQuerySpecs = querySpecs;
 
         Main.incrementWait(true);
-        getUsage(project, deployment, columns).then((stats) => {
+        getUsage(program, deployment, columns).then((stats) => {
             let haveData = stats.data && stats.data.length && stats.data.length > 0;
             if (haveData) {
                 $('#usage-details-page .have_data').removeClass('hidden');
@@ -547,16 +547,16 @@ UsageDetailsPage = function () {
         });
     }
 
-    function reportProject(project, deployment) {
-        if (project != currentProject || deployment != currentDeployment) { // jshint ignore:line
+    function reportProgram(program, deployment) {
+        if (program != currentProject || deployment != currentDeployment) { // jshint ignore:line
             $limitByDeployment.prop('checked', true);
         }
         if (!currentQuerySpecs || !currentQuerySpecs.length) {
-            currentProject = project;
+            currentProject = program;
             currentDeployment = deployment;
             return;
         }
-        refreshProject(project, deployment, currentQuerySpecs)
+        refreshProgram(program, deployment, currentQuerySpecs)
     }
 
     let initialized = false;
@@ -581,7 +581,7 @@ UsageDetailsPage = function () {
 
             $limitByDeployment.change( ()=>{
                 if (currentProject && currentDeployment && currentQuerySpecs) {
-                    refreshProject(currentProject, currentDeployment, currentQuerySpecs);
+                    refreshProgram(currentProject, currentDeployment, currentQuerySpecs);
                 }
             });
 

@@ -25,35 +25,35 @@ Utils = (function () {
         return ROOT + STATS_PATH;
     }
 
-    function pathForProject(project) {
-        return statsPath() + project + '/';
+    function pathForProject(program) {
+        return statsPath() + program + '/';
     }
 
-    function pathForFile(project, file) {
-        let result = pathForProject(project);
+    function pathForFile(program, file) {
+        let result = pathForProject(program);
         result += file;
         return result;
     }
 
     /**
-     * Retrieve a project-specific file, and apply mapper to the contents.
+     * Retrieve a program-specific file, and apply mapper to the contents.
      * Cache the mapped result for subsequent calls.
-     * @param project The project for which the file is desired.
+     * @param program The program for which the file is desired.
      * @param filename The name of the file.
      * @param mapper Optional mapper to transform the fetched data into whatever is desired. If none is provided,
      *              the raw data is cached and returned.
      * @returns {*} A promise on the mapped data.
      */
-    function getFileCached(project, filename, mapper) {
-        let fileCache = projectFileCache[project];
+    function getFileCached(program, filename, mapper) {
+        let fileCache = projectFileCache[program];
         if (fileCache === undefined) {
-            fileCache = projectFileCache[project] = {};
+            fileCache = projectFileCache[program] = {};
         }
         // If the mapped data isn't already cached...
         if (fileCache[filename] === undefined) {
             fileCache[filename] = $.Deferred();
             // Try to fetch the data.
-            let filepath = Utils.pathForFile(project, filename);
+            let filepath = Utils.pathForFile(program, filename);
             $.get(filepath).done(function resolved(filedata) {
                 // We got the data, so apply the mapper, if one was provided.
                 filedata = (mapper && mapper(filedata)) || filedata;

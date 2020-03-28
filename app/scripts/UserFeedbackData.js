@@ -1,5 +1,5 @@
 /* jshint esversion:6, asi:true */
-/* global $, console, ProjectDetailsData, Main */
+/* global $, console, ProgramDetailsData, Main */
 
 var UserFeedbackData = UserFeedbackData || {};
 
@@ -619,21 +619,21 @@ UserFeedbackData = (function () {
     }
 
     /**
-     * Fetch progress statistics for the project.
+     * Fetch progress statistics for the program.
      * @returns {*} A promise that resolves to an object with 3 members:
      *  .categories -- an array of objects like {id, name, fullname}
      *  .progress -- an array of objects like {date, uncategorized, categorized, '9-0', '90-11', ...}
      */
-    function getData(project) {
+    function getData(program) {
         // Already have it?
-        if (progressPromises[project] !== undefined) {
-            return progressPromises[project];
+        if (progressPromises[program] !== undefined) {
+            return progressPromises[program];
         }
         var progressPromise = $.Deferred();
-        progressPromises[project] = progressPromise;
+        progressPromises[program] = progressPromise;
 
-        var categories = $.get(categoriesPath(project));
-        var progress = $.get(summaryPath(project));
+        var categories = $.get(categoriesPath(program));
+        var progress = $.get(summaryPath(program));
 
         // Wait for all to load. TODO: handle timeouts.
         $.when(categories, progress)
@@ -654,15 +654,15 @@ UserFeedbackData = (function () {
         return progressPromise;
     }
 
-    function getDurations(project) {
+    function getDurations(program) {
         // Already have it?
-        if (durationsPromises[project] !== undefined) {
-            return durationsPromises[project];
+        if (durationsPromises[program] !== undefined) {
+            return durationsPromises[program];
         }
         var durationsPromise = $.Deferred();
-        durationsPromises[project] = durationsPromise;
+        durationsPromises[program] = durationsPromise;
 
-        var messages = $.get(messagesPath(project));
+        var messages = $.get(messagesPath(program));
 
         // Wait for all to load. TODO: handle timeouts.
         $.when(messages)
@@ -678,8 +678,8 @@ UserFeedbackData = (function () {
         return durationsPromise;
     }
 
-    function getProjectName(project) {
-        return $.get(projectNamePath(project));
+    function getProgramName(program) {
+        return $.get(projectNamePath(program));
     }
 
     function getProjectsList() {
@@ -700,7 +700,7 @@ UserFeedbackData = (function () {
 
                 var nl = /\s/
                 var ufAcmNames = ufProjects.split(nl); // like ['ACM-UWR-FB-2015-10', 'ACM-UWR-FB-2016-1', ...]
-                var projList = Main.getProjectList();
+                var projList = Main.getProgramsForUser();
                 var result = {};
                 // For each user feedback project...
                 ufAcmNames.forEach((acmName) => {
@@ -730,7 +730,7 @@ UserFeedbackData = (function () {
 
     return {
         getProjectsList: getProjectsList,
-        getProjectName: getProjectName,
+        getProjectName: getProgramName,
         getData: getData,
         getDurations: getDurations
     };

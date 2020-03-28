@@ -5,9 +5,7 @@
 /* global $, BootstrapDialog, console, CognitoWrapper, Main, AWS */
 
 
-var User = User || {};
-
-User = (function () {
+let User = (function () {
     'use strict';
 
     /**
@@ -28,8 +26,7 @@ User = (function () {
      * input fields, including passwords. Passwords won't autocorrect or autocapitalize,
      * but user may turn on "show passwords", which turns them to text fields.
      */
-
-    var signInHtml = `<div id="auth-dialog" class="auth-dialog">
+    const signInHtml = `<div id="auth-dialog" class="auth-dialog">
     <form class="panel panel-default">
       <div class="panel-body container-fluid">
             <div>
@@ -71,7 +68,7 @@ User = (function () {
     </form>
 </div>`;
 
-    var createAccountHtml = `<div class="auth-dialog">
+    const createAccountHtml = `<div class="auth-dialog">
     <form class="panel panel-default">
         <div class="panel-heading">
             <h2 class="panel-title">Create New Account</h2>
@@ -115,7 +112,7 @@ User = (function () {
     </form>
 </div>`;
 
-    var createAccountHelpHtml = `<h3>Create An Account</h3>
+    const createAccountHelpHtml = `<h3>Create An Account</h3>
         <p>Pick a user name, whatever you like, but all user names must be unique, so you may not get
          your first choice. That's OK, because your email address is what really identifies you uniquely
          to the system.</p>
@@ -129,9 +126,9 @@ User = (function () {
          automatically. If your email address is @ something else, contact your administrator to add your email
          address to the system first.
         <p>When you sign in, you can use your email address, or your user name.</p>
-        `
+        `;
 
-    var changePasswordHtml = `<div class="auth-dialog">
+    const changePasswordHtml = `<div class="auth-dialog">
     <form class="panel panel-default">
         <div class="panel-heading">
             <h2 class="panel-title">Change Password</h2>
@@ -167,7 +164,7 @@ User = (function () {
     </form>
 </div>`;
 
-    var confirmDeleteHtml = `<div class="auth-dialog">
+    const confirmDeleteHtml = `<div class="auth-dialog">
     <form class="panel panel-default">
         <div class="panel-heading">
             <h2 class="panel-title">Delete Account</h2>
@@ -190,7 +187,7 @@ User = (function () {
     </form>
 </div>`;
 
-    var confirmAccountHtml = `<div class="auth-dialog">
+    const confirmAccountHtml = `<div class="auth-dialog">
     <form class="panel panel-default">
         <div class="panel-heading">
             <h3 class="panel-title">Create account: confirmation</h3>
@@ -214,7 +211,7 @@ User = (function () {
     </form>
 </div>`;
 
-    var confirmPasswordHtml = `<div class="ngdialog-message auth-dialog">
+    const confirmPasswordHtml = `<div class="ngdialog-message auth-dialog">
     <form class="panel panel-default">
         <div class="panel-heading">
             <h3 class="panel-title">Reset password</h3>
@@ -253,7 +250,7 @@ User = (function () {
     </form>
 </div>`;
 
-    var changeGreetingHtml = `<div class="auth-dialog">
+    const changeGreetingHtml = `<div class="auth-dialog">
     <form class="panel panel-default">
         <div class="panel-heading">
             <h3 class="panel-title">Change Preferred Greeting</h3>
@@ -287,23 +284,20 @@ User = (function () {
         if (!$.fn.draggable) {
             $.fn.draggable = function (opt) {
                 opt = $.extend({handle: '', cursor: 'move'}, opt);
-                var $el = (opt.handle === '') ? this : this.find(opt.handle);
+                const $el = (opt.handle === '') ? this : this.find(opt.handle);
 
                 return $el.css('cursor', opt.cursor).on('mousedown', function (e) {
-                    var $drag;
+                    let $drag;
                     if (opt.handle === '') {
                         $drag = $(this).addClass('draggable');
                     } else {
                         $drag = $(this).addClass('active-handle').parent().addClass('draggable');
                     }
-                    var z_idx = $drag.css('z-index'),
-                        ofs_y = $drag.offset().top - e.pageY,
+                    const z_idx = $drag.css('z-index'), ofs_y = $drag.offset().top - e.pageY,
                         ofs_x = $drag.offset().left - e.pageX;
                     $drag.css('z-index', 2000).parents().on('mousemove', function (e) {
-                        var css = {
-                            position: 'absolute',
-                            top: e.pageY + ofs_y,
-                            left: e.pageX + ofs_x
+                        const css = {
+                            position: 'absolute', top: e.pageY + ofs_y, left: e.pageX + ofs_x
                         };
 
                         $('.draggable').css(css)
@@ -322,7 +316,7 @@ User = (function () {
             }
         }
 
-        var $elem = $(`<div id="nonm" class="auth-dialog-help container container-fluid alert alert-info alert-dismissable">
+        const $elem = $(`<div id="nonm" class="auth-dialog-help container container-fluid alert alert-info alert-dismissable">
                 <button type="button" class="close" data-dismiss="alert" aria-hidden="true">x</button>
                 <div id="wrapper"></div>
                 <button id="do-create" type="button" class="btn btn-info pull-right" data-dismiss="alert">Dismiss Help</button>
@@ -341,30 +335,26 @@ User = (function () {
      */
     function addNotificationArea($parent) {
 
-        var alerter = {
-            $parent: $parent,
-            notify: function (msg) {
-                var $msgElement = $('<div id="alert-trivial-message" class="alert alert-info"</div>');
+        const alerter = {
+            $parent: $parent, notify: function $parent(msg) {
+                const $msgElement = $('<div id="alert-trivial-message" class="alert alert-info"</div>');
                 $msgElement.text(msg);
                 this.$parent.empty().append($msgElement);
-            },
-            warning: function (msg) {
-                var $msgElement = $('<div id="alert-trivial-message" class="alert alert-warning"</div>');
+            }, warning: function warning(msg) {
+                const $msgElement = $('<div id="alert-trivial-message" class="alert alert-warning"</div>');
                 $msgElement.text(msg);
                 this.$parent.empty().append($msgElement);
-            },
-            error: function (msg) {
-                var $msgElement = $(`<div class="alert alert-danger" role="alert">
+            }, error: function error(msg) {
+                const $msgElement = $(`<div class="alert alert-danger" role="alert">
         <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
         <span class="sr-only">Error:</span><span id="alert-danger-message"></span>
         </div>`);
                 $('#alert-danger-message', $msgElement).text(msg);
                 this.$parent.empty().append($msgElement);
-            },
-            clear: function () {
+            }, clear: function () {
                 this.$parent.empty();
             }
-        }
+        };
 
         $parent.empty();
         return alerter;
@@ -375,10 +365,10 @@ User = (function () {
      * @param $dialog
      */
     function addPasswordUtils($dialog) {
-        var newPassword = $('.newpassword', $dialog);
+        const newPassword = $('.newpassword', $dialog);
         // show/hide
         $('#show-password', $dialog).on('click', () => {
-            var showPassword = $('#show-password', $dialog).prop('checked');
+            const showPassword = $('#show-password', $dialog).prop('checked');
             $('.password', $dialog).attr('type', showPassword ? 'text' : 'password');
         });
         // If there are two passwords, when they're unequal, light up "mismatch"
@@ -388,9 +378,9 @@ User = (function () {
                 console.log('password[0]: ' + newPassword[0]);
                 console.log('$(password[0]): ' + $(newPassword[0]));
                 console.log('$(password[0]).val(): ' + $(newPassword[0]).val());
-                var p1 = $(newPassword[0]).val();
-                var p2 = $(newPassword[1]).val();
-                var mismatch = (p1.length > 0 && p2.length > 0 && p1 !== p2);
+                const p1 = $(newPassword[0]).val();
+                const p2 = $(newPassword[1]).val();
+                const mismatch = (p1.length > 0 && p2.length > 0 && p1 !== p2);
                 $('#password-mismatch', $dialog)[mismatch ? 'show' : 'hide']();
             });
         }
@@ -501,48 +491,31 @@ User = (function () {
     }
 
 
-    let defaultViewString = 'LBG-DEMO|DEMO';
-    defaultViewString = 'LBG-DEMO|DEMO|CARE|CBCC.*|MEDA|TUDRIDEP|UNICEFGHDF-MAHAMA|UWR|WINROCK';
-    var defaultEditString = '';
-    // Extracts the project name from an ACM-* name. Accounts for user feedback, ACM-*-FB-*
-    var acmNameMatch = /(?:ACM-)?([-\w]+?)(?:-FB-([-\w]*))?$/
-
-    var viewFilter = RegExp(`^(${defaultViewString})$`);
-    var editFilter = RegExp(`^(${defaultEditString})$`);
-
-    function isUsersProject(acmName, re) {
-        var parts = acmNameMatch.exec(acmName);
-        if (parts && parts.length>=2) {
-            return (re.test(parts[1]))
-        }
-    }
-    function isViewableProject(acmName) {
-        return isUsersProject(acmName, viewFilter);
-    }
-    function isEditableProject(acmName) {
-        return isUsersProject(acmName, editFilter);
-    }
-    function setFilters(edit, view) {
-        var e = edit.trim();
-        var v = view.trim();
-
-        editFilter = RegExp(`^(${e||defaultEditString})$`, 'i');
-
-        // This joins both with pipe, if both exist, otherwise takes either, otherwise takes default
-        var vStr = e&&v&&`${e}|${v}` || e || v || defaultViewString;
-        viewFilter = RegExp(`^(${vStr})$`, 'i');
-    }
-    function resetUserProperties() {
-        setFilters('', '');
-    }
-    function gotUserProperties() {
-        setFilters(userProperties.edit||'', userProperties.view||'')
-    }
-    function isAdminUser() {
-        let isAdmin = userProperties && userProperties.admin;
-        console.log('isAdmin: '+(isAdmin?'true':'false'));
-        return isAdmin;
-    }
+    // let defaultViewString = 'LBG-DEMO|DEMO';
+    // defaultViewString = 'LBG-DEMO|DEMO|CARE|CBCC.*|MEDA|TUDRIDEP|UNICEFGHDF-MAHAMA|UWR|WINROCK';
+    // const defaultEditString = '';
+    // // Extracts the project name from an ACM-* name. Accounts for user feedback, ACM-*-FB-*
+    // const acmNameMatch = /(?:ACM-)?([-\w]+?)(?:-FB-([-\w]*))?$/;
+    //
+    // let viewFilter = RegExp(`^(${defaultViewString})$`);
+    // let editFilter = RegExp(`^(${defaultEditString})$`);
+    //
+    // function setFilters(edit, view) {
+    //     const e = edit.trim();
+    //     const v = view.trim();
+    //
+    //     editFilter = RegExp(`^(${e||defaultEditString})$`, 'i');
+    //
+    //     // This joins both with pipe, if both exist, otherwise takes either, otherwise takes default
+    //     const vStr = e && v && `${e}|${v}` || e || v || defaultViewString;
+    //     viewFilter = RegExp(`^(${vStr})$`, 'i');
+    // }
+    // function resetUserProperties() {
+    //     setFilters('', '');
+    // }
+    // function gotUserProperties() {
+    //     setFilters(userProperties.edit||'', userProperties.view||'')
+    // }
 
     /**
      * When a user forgets their password, they can 'reset' it. That causes a code to be sent to
@@ -550,16 +523,16 @@ User = (function () {
      * @returns {*} A promise on resetting the password.
      */
     function doResetPassword() {
-        var promise = $.Deferred();
-        var $dialog = $(confirmPasswordHtml);
-        var alerter = addNotificationArea($('.panel-footer', $dialog));
+        const promise = $.Deferred();
+        const $dialog = $(confirmPasswordHtml);
+        const alerter = addNotificationArea($('.panel-footer', $dialog));
         addPasswordUtils($dialog);
 
         //$('#do-reset', $dialog).on('click', () => {
         $('form', $dialog).on('submit', (evt) => {
             evt.preventDefault();
-            var newPassword = $('#newpassword', $dialog).val();
-            var code = $('#confirmation-code', $dialog).val();
+            const newPassword = $('#newpassword', $dialog).val();
+            const code = $('#confirmation-code', $dialog).val();
             CognitoWrapper.confirmPassword({username: username, password: newPassword, code: code}).then(() => {
                 password = newPassword;
                 persist();
@@ -572,28 +545,28 @@ User = (function () {
 
         fixTabOrdering($dialog);
 
-        var options = {
+        const options = {
             title: 'Enter Confirmation Code',
             message: $dialog,
             closable: false,
             draggable: true,
             buttons: [],
-            onshown: function()  {
+            onshown: function () {
                 $dialog.find('input[autofocus]').focus();
             }
-        }
-        var dialog = BootstrapDialog.show(options);
+        };
+        let dialog = BootstrapDialog.show(options);
 
         return promise;
     }
 
     function doChangeGreeting() {
-        var promise = $.Deferred();
-        var $dialog = $(changeGreetingHtml);
-        var alerter = addNotificationArea($('.panel-footer', $dialog));
+        const promise = $.Deferred();
+        const $dialog = $(changeGreetingHtml);
+        const alerter = addNotificationArea($('.panel-footer', $dialog));
         addPasswordUtils($dialog);
 
-        var oldGreeting = userAttributes['custom:greeting'];
+        const oldGreeting = userAttributes['custom:greeting'];
         if (oldGreeting) {
             $('#old-greeting-reminder', $dialog).removeClass('hidden');
             $('#old-greeting', $dialog).text(oldGreeting);
@@ -602,11 +575,11 @@ User = (function () {
         //$('#do-change', $dialog).on('click', () => {
         $('form', $dialog).on('submit', (evt) => {
             evt.preventDefault();
-            var newGreeting = $('#new-greeting', $dialog).val();
-            var attrs = {'custom:greeting': newGreeting};
+            const newGreeting = $('#new-greeting', $dialog).val();
+            const attrs = {'custom:greeting': newGreeting};
             CognitoWrapper.updateAttributes({attributes:attrs}).then(() => {
                 userAttributes['custom:greeting'] = newGreeting;
-                $('body').trigger('custom:greeting')
+                $('body').trigger('custom:greeting');
                 dialog.close();
                 promise.resolve();
             }, (err) => {
@@ -616,17 +589,17 @@ User = (function () {
 
         fixTabOrdering($dialog);
 
-        var options = {
+        const options = {
             title: 'Change Custom Greeting',
             message: $dialog,
             closable: true,
             draggable: true,
             buttons: [],
-            onshown: function()  {
+            onshown: function () {
                 $dialog.find('input[autofocus]').focus();
             }
-        }
-        var dialog = BootstrapDialog.show(options);
+        };
+        let dialog = BootstrapDialog.show(options);
 
         return promise;
     }
@@ -636,17 +609,17 @@ User = (function () {
      * When it is entered, verifies the email address with the server.
      */
     function doVerifyEmail() {
-        var gotCodePromise = $.Deferred();
+        const gotCodePromise = $.Deferred();
         CognitoWrapper.getEmailVerificationCode(gotCodePromise);
 
-        var promise = $.Deferred();
-        var $dialog = $(confirmAccountHtml);
-        var alerter = addNotificationArea($('.panel-footer', $dialog));
+        const promise = $.Deferred();
+        const $dialog = $(confirmAccountHtml);
+        const alerter = addNotificationArea($('.panel-footer', $dialog));
 
         // $('#do-confirm', $dialog).on('click', () => {
         $('form', $dialog).on('submit', (evt) => {
             evt.preventDefault();
-            var code = $('#confirmation-code', $dialog).val();
+            const code = $('#confirmation-code', $dialog).val();
             gotCodePromise.resolve(code);
                 dialog.close();
                 promise.resolve();
@@ -658,31 +631,31 @@ User = (function () {
 
         fixTabOrdering($dialog);
 
-        var options = {
+        const options = {
             title: 'Enter Confirmation Code',
             message: $dialog,
             closable: false,
             draggable: true,
             buttons: [],
-            onshown: function()  {
+            onshown: function () {
                 $dialog.find('input[autofocus]').focus();
             }
-        }
+        };
 
-        var dialog = BootstrapDialog.show(options);
+        let dialog = BootstrapDialog.show(options);
         return promise;
 
     }
 
     function doConfirmAccount() {
-        var promise = $.Deferred();
-        var $dialog = $(confirmAccountHtml);
-        var alerter = addNotificationArea($('.panel-footer', $dialog));
+        const promise = $.Deferred();
+        const $dialog = $(confirmAccountHtml);
+        const alerter = addNotificationArea($('.panel-footer', $dialog));
 
         // $('#do-confirm', $dialog).on('click', () => {
         $('form', $dialog).on('submit', (evt) => {
             evt.preventDefault();
-            var code = $('#confirmation-code', $dialog).val();
+            const code = $('#confirmation-code', $dialog).val();
             CognitoWrapper.confirmRegistration({username: username, code: code}).then(() => {
                 dialog.close();
                 promise.resolve();
@@ -697,18 +670,18 @@ User = (function () {
 
         fixTabOrdering($dialog);
 
-        var options = {
+        const options = {
             title: 'Enter Confirmation Code',
             message: $dialog,
             closable: false,
             draggable: true,
             buttons: [],
-            onshown: function()  {
+            onshown: function () {
                 $dialog.find('input[autofocus]').focus();
             }
-        }
+        };
 
-        var dialog = BootstrapDialog.show(options);
+        let dialog = BootstrapDialog.show(options);
         return promise;
     }
 
@@ -717,9 +690,9 @@ User = (function () {
      * @returns {*} A promise on account deletion.
      */
     function doDeleteAccount() {
-        var promise = $.Deferred();
-        var $dialog = $(confirmDeleteHtml);
-        var alerter = addNotificationArea($('.panel-footer', $dialog));
+        const promise = $.Deferred();
+        const $dialog = $(confirmDeleteHtml);
+        const alerter = addNotificationArea($('.panel-footer', $dialog));
 
         //$('#do-change', $dialog).on('click', () => {
         $('form', $dialog).on('submit', (evt) => {
@@ -740,17 +713,17 @@ User = (function () {
 
         fixTabOrdering($dialog);
 
-        var options = {
+        const options = {
             title: 'Delete Account',
             message: $dialog,
             closable: true,
             draggable: true,
             buttons: [],
-            onshown: function()  {
+            onshown: function () {
                 $dialog.find('input[autofocus]').focus();
             }
-        }
-        var dialog = BootstrapDialog.show(options);
+        };
+        let dialog = BootstrapDialog.show(options);
 
         return promise;
     }
@@ -760,10 +733,10 @@ User = (function () {
      * @returns {*} A promise on the password change.
      */
     function doChangePassword() {
-        var promise = $.Deferred()
+        const promise = $.Deferred();
 
-        var $dialog = $(changePasswordHtml);
-        var alerter = addNotificationArea($('.panel-footer', $dialog));
+        const $dialog = $(changePasswordHtml);
+        const alerter = addNotificationArea($('.panel-footer', $dialog));
         addPasswordUtils($dialog);
 
         if (rememberMe && password) {
@@ -773,8 +746,8 @@ User = (function () {
         //$('#do-change', $dialog).on('click', () => {
         $('form', $dialog).on('submit', (evt) => {
             evt.preventDefault();
-            var oldPassword = $('#oldpassword', $dialog).val();
-            var newPassword = $('#newpassword', $dialog).val();
+            const oldPassword = $('#oldpassword', $dialog).val();
+            const newPassword = $('#newpassword', $dialog).val();
             CognitoWrapper.changePassword({
                 username: username,
                 oldPassword: oldPassword,
@@ -792,21 +765,21 @@ User = (function () {
             });
 
 
-        })
+        });
 
         fixTabOrdering($dialog);
 
-        var options = {
+        const options = {
             title: 'Dashboard Change Password',
             message: $dialog,
             closable: true,
             draggable: true,
             buttons: [],
-            onshown: function()  {
+            onshown: function () {
                 $dialog.find('input[autofocus]').focus();
             }
-        }
-        var dialog = BootstrapDialog.show(options);
+        };
+        let dialog = BootstrapDialog.show(options);
 
         return promise;
     }
@@ -817,10 +790,10 @@ User = (function () {
      * @returns {*} A promise on creating the account.
      */
     function doCreateAccount() {
-        var promise = $.Deferred()
+        const promise = $.Deferred();
 
-        var $dialog = $(createAccountHtml);
-        var alerter = addNotificationArea($('.panel-footer', $dialog));
+        const $dialog = $(createAccountHtml);
+        const alerter = addNotificationArea($('.panel-footer', $dialog));
         addPasswordUtils($dialog);
 
         // $('#do-create', $dialog).on('click', () => {
@@ -828,8 +801,8 @@ User = (function () {
             evt.preventDefault();
             username = $('#newusername', $dialog).val();
             password = $('#newpassword', $dialog).val();
-            var email = $('#newuseremail', $dialog).val();
-            var phone = $('#newphone', $dialog).val();
+            const email = $('#newuseremail', $dialog).val();
+            const phone = $('#newphone', $dialog).val();
             CognitoWrapper.createAccount({
                 username: username,
                 email: email,
@@ -851,7 +824,7 @@ User = (function () {
         });
         fixTabOrdering($dialog);
 
-        var options = {
+        const options = {
             title: 'Dashboard Create New Account',
             message: $dialog,
             closable: true,
@@ -860,18 +833,18 @@ User = (function () {
             onhide: () => {
                 clearTimeout(timeout)
             },
-            onshown: function()  {
+            onshown: function () {
                 $dialog.find('input[autofocus]').focus();
             }
-        }
-        var dialog = BootstrapDialog.show(options);
+        };
+        let dialog = BootstrapDialog.show(options);
 
         // Pop up help in 15 seconds.
         var timeout = null;
 
         function setupTimeout() {
             timeout = setTimeout(() => {
-                var h = makeWindowDraggable($(createAccountHelpHtml));
+                const h = makeWindowDraggable($(createAccountHelpHtml));
                 dialog.$modal.append(h);
                 timeout = null;
             }, 15000);
@@ -880,7 +853,7 @@ User = (function () {
         function resetTimeout() {
             // If there's a timeout active, reschedule it.
             if (timeout) {
-                clearTimeout(timeout)
+                clearTimeout(timeout);
                 setupTimeout();
             }
         }
@@ -920,12 +893,13 @@ User = (function () {
      * @returns {*} A promise that is resolved when (if) the sign in is successful.
      */
     function signinDialog() {
-        var retryCount = 0;
+        let retryCount = 0;
+
         /**
          * Helper to sign in after credentials entered, password reset, or account created.
          */
         function cognitoSignin() {
-            alerter.notify('Signing in...')
+            alerter.notify('Signing in...');
             Main.incrementWait();
             CognitoWrapper.signIn({username: username, password: password})
                 .done((result => {
@@ -942,13 +916,13 @@ User = (function () {
                      * this error, retry one time.
                      */
                     if (err.code === 'NotAuthorizedException' && err.message.startsWith('Logins don\'t match') && retryCount === 0) {
-                        alerter.notify('Retrying...')
+                        alerter.notify('Retrying...');
                         retryCount++;
                         cognitoSignin();
                         return;
                     }
-                    var msg = (err && err.message || err) || 'Error signing in.';
-                    alerter.error(msg)
+                    const msg = (err && err.message || err) || 'Error signing in.';
+                    alerter.error(msg);
                     if (err.code === 'PasswordResetRequiredException') {
                         doResetPassword().done(() => {
                             cognitoSignin();
@@ -958,9 +932,9 @@ User = (function () {
         }
 
 
-        var promise = $.Deferred()
+        var promise = $.Deferred();
 
-        var $dialog = $(signInHtml);
+        const $dialog = $(signInHtml);
         var alerter = addNotificationArea($('.panel-footer', $dialog));
         addPasswordUtils($dialog);
 
@@ -985,11 +959,11 @@ User = (function () {
             password = $('#password', $dialog).val();
             cognitoSignin();
             evt.preventDefault();
-        })
+        });
         $('#forgot-password', $dialog).on('click', () => {
             username = $('#username', $dialog).val();
             if (!username) {
-                alerter.error('Please provide username (Who forgot their password?)')
+                alerter.error('Please provide username (Who forgot their password?)');
                 $('#username', $dialog).focus();
                 return;
             }
@@ -1002,17 +976,17 @@ User = (function () {
 
         fixTabOrdering($dialog);
 
-        var options = {
+        const options = {
             title: 'Dashboard Sign In',
             message: $dialog,
             closable: false,
             draggable: true,
             buttons: [],
-            onshown: function()  {
+            onshown: function () {
                 $dialog.find('input[autofocus]').focus();
             }
-        }
-        var dialog = BootstrapDialog.show(options);
+        };
+        let dialog = BootstrapDialog.show(options);
 
         if (username && password) {
             cognitoSignin()
@@ -1039,7 +1013,7 @@ User = (function () {
             }
 
             authenticationPromise = $.Deferred();
-            var signin = $.Deferred();
+            const signin = $.Deferred();
 
             // userAttributes.email='bill@literacybridge.org';
             // userAttributes['custom:greeting'] = 'TEST:bill';
@@ -1052,11 +1026,19 @@ User = (function () {
 
             // When signed in, get the user attributes from our DynamoDB user database, and CognitoWrapper attributes.
             signin.done(() => {
-                console.log('Signin done')
+                let booleanProperties = ['admin', 'email_verified', 'phone_number_verified'];
+                console.log('Signin done');
                 let _userProperties = CognitoWrapper.getJwtParams();
+                booleanProperties.forEach(prop=>{
+                    if (_userProperties.hasOwnProperty(prop)) {
+                        if (typeof _userProperties[prop]  === 'string') {
+                            _userProperties[prop] = _userProperties[prop].toLowerCase() === 'true';
+                        }
+                    }
+                });
                 userAttributes = _userProperties;
                 userProperties = _userProperties;
-                gotUserProperties(_userProperties);
+                // gotUserProperties(_userProperties);
                 console.log(userProperties);
 
                 function doResolve() {
@@ -1090,7 +1072,7 @@ User = (function () {
         persist(false);
         CognitoWrapper.signOut();
         userProperties = null;
-        resetUserProperties();
+        // resetUserProperties();
     }
 
     var authenticationPromise;
@@ -1116,9 +1098,5 @@ User = (function () {
         verifyEmail: doVerifyEmail,
         getUserAttributes: () => userAttributes,
 
-        isAdminUser: isAdminUser,
-        isViewableProject: isViewableProject,
-        isEditableProject: isEditableProject
     };
-})
-();
+})();

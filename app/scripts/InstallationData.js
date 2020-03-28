@@ -1,5 +1,5 @@
 /* jshint esversion:6, asi:true*/
-/* global $, console, Main, User, Utils, moment, ProjectDetailsData */
+/* global $, console, Main, User, Utils, moment, ProgramDetailsData */
 
 let InstallationData = function () {
     'use strict';
@@ -15,13 +15,13 @@ let InstallationData = function () {
         return set;
     }
 
-    function getTbDailiesListForProject(project) {
-        return Utils.getFileCached(project, 'tbsdaily.json');
+    function getTbDailiesListForProgram(program) {
+        return Utils.getFileCached(program, 'tbsdaily.json');
     }
 
-    function getTbDailiesDataForProject(project, year, month, day) {
+    function getTbDailiesDataForProgram(program, year, month, day) {
         let name = (year === undefined) ? 'tbsdeployed.csv' : year+'/'+ month+'/'+day+'/tbsdeployed.csv';
-        return Utils.getFileCached(project, name, (list) => {
+        return Utils.getFileCached(program, name, (list) => {
             let tbsdeployed = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
             tbsdeployed = tbsdeployed.map((d) => {
                 d.deployedtimestamp = moment(d.deployedtimestamp);
@@ -33,8 +33,8 @@ let InstallationData = function () {
         });
     }
 
-    function getComponentDeploymentsForProject(project) {
-        return Utils.getFileCached(project, 'component_deployments.csv', (list) => {
+    function getComponentDeploymentsForProgram(program) {
+        return Utils.getFileCached(program, 'component_deployments.csv', (list) => {
             // deploymentnumber,component
             // 1,"Jirapa Groups"
             // 1,"Jirapa HH Rotation"
@@ -46,46 +46,46 @@ let InstallationData = function () {
                 d.deploymentnumber = 1 * d.deploymentnumber;
                 return d;
             }).sort((a,b)=>{return a.deploymentnumber - b.deploymentnumber});
-            console.log(`Got ${componentDeployments.length} component deployments for ${project}.`)
+            console.log(`Got ${componentDeployments.length} component deployments for ${program}.`)
             return componentDeployments;
         });
     }
 
-    function getComponentsForProjectAndDeployment(project, deploymentnumber) {
+    function getComponentsForProgramAndDeployment(program, deploymentnumber) {
         let promise = $.Deferred();
-        getComponentDeploymentsForProject(project).then((components)=>{
+        getComponentDeploymentsForProgram(program).then((components)=>{
             components = components.filter(d=>d.deploymentnumber == deploymentnumber); // jshint ignore:line
-            console.log(`Got ${components.length} component deployments for ${project}/${deploymentnumber}.`)
+            console.log(`Got ${components.length} component deployments for ${program}/${deploymentnumber}.`)
             promise.resolve(components);
         }, promise.reject);
         return promise;
     }
 
     /**
-     * Gets information about a deployment for a project
-     * @param project The desired project
+     * Gets information about a deployment for a program
+     * @param program The desired program
      * @param deploymentnumber The desired deploymentnumber
      * @returns {*}
      */
-    function getDeploymentInfo(project, deploymentnumber) {
+    function getDeploymentInfo(program, deploymentnumber) {
         let deployment = ('' + deploymentnumber).toUpperCase();
         let promise = $.Deferred();
-        ProjectDetailsData.getDeploymentsList(project).then((deployments)=>{
+        ProgramDetailsData.getDeploymentsList(program).then((deployments)=>{
             promise.resolve(deployments.find(d=>d.deployment.toUpperCase()===deployment || d.deploymentnumber==deploymentnumber)); // jshint ignore:line
         }, promise.reject);
         return promise;
     }
 
     /**
-     * Given a project and a deploymentnumber, get the names for that deployment. Ususally there is only one name
+     * Given a program and a deploymentnumber, get the names for that deployment. Ususally there is only one name
      * per deployment, but occasionally there are multiples.
-     * @param project The project desired.
+     * @param program The program desired.
      * @param deploymentnumber The deployment number.
      * @returns {*} A promise that resovles with a list of deployment names.
      */
-    function getDeploymentNames(project, deploymentnumber) {
+    function getDeploymentNames(program, deploymentnumber) {
         let promise = $.Deferred();
-        ProjectDetailsData.getDeploymentsList(project).then((deployments)=>{
+        ProgramDetailsData.getDeploymentsList(program).then((deployments)=>{
             let result = []
             deployments.forEach((elem, ix) => { if (elem.deploymentnumber === deploymentnumber) { result=result.concat(elem.deploymentnames) }})
             promise.resolve(result);
@@ -93,9 +93,9 @@ let InstallationData = function () {
         return promise;
     }
 
-    function getRecipientsForProject(project) {
-        return Utils.getFileCached(project, 'recipients.csv', (list) => {
-            // recipients: [ {recipientid, project, partner, communityname, groupname, affiliate, component, country,
+    function getRecipientsForProgram(program) {
+        return Utils.getFileCached(program, 'recipients.csv', (list) => {
+            // recipients: [ {recipientid, program, partner, communityname, groupname, affiliate, component, country,
             //                  region, district, num_HHs, num_TBs, supportentity, model, languagecode, coordinates} ]
             // LBG,UNICEF,Jirapa HH Rotation,Ghana,Upper West,Jirapa,Goziel,,Goziel,105,27,,Robert Yaw,HHR,dga
             // LBG,UNICEF,Jirapa Groups,Ghana,Upper West,Jirapa,Ul-Tuopare,Songbaala ,Songbaala Ul-Tuopare,,2,B-00060266,Bosore Gilbert,Group Rotation,dga
@@ -109,7 +109,7 @@ let InstallationData = function () {
                 delete r.language;
                 return r;
             });
-            console.log(`Got ${recipients.length} recipients for ${project}.`)
+            console.log(`Got ${recipients.length} recipients for ${program}.`)
             return recipients;
         });
     }
@@ -117,25 +117,25 @@ let InstallationData = function () {
     /**
      * Get all of the recipients that should have received a deploymentnumber. Map deploymentnumber to the
      * components that should have received it, then get the recipients from those components.
-     * @param project
+     * @param program
      * @param deploymentnumber
      * @returns {*}
      */
-    function getRecipientsForProjectAndDeployment(project, deploymentnumber) {
+    function getRecipientsForProgramAndDeployment(program, deploymentnumber) {
         let promise = $.Deferred();
-        let recips = getRecipientsForProject(project);
-        let comps = getComponentsForProjectAndDeployment(project, deploymentnumber);
+        let recips = getRecipientsForProgram(program);
+        let comps = getComponentsForProgramAndDeployment(program, deploymentnumber);
 
         recips.then((recipients) => {
-            // We don't have a "components for project" file for every project. If we don't have one, simply use the
+            // We don't have a "components for program" file for every program. If we don't have one, simply use the
             // unfiltered list.
             comps.then((components) => {
                 let componentsInDeployment = Set( components.map( c => c.component ));
                 let r2 = recipients.filter( r  => componentsInDeployment.contains(r.component) );
-                console.log(`Got ${r2.length} recipients for ${project}/${deploymentnumber}.`)
+                console.log(`Got ${r2.length} recipients for ${program}/${deploymentnumber}.`)
                 promise.resolve(r2)
             }, (err) => {
-                console.log(`Got ${recipients.length} recipients for ${project} without deployment filter.`)
+                console.log(`Got ${recipients.length} recipients for ${program} without deployment filter.`)
                 promise.resolve(recipients)
             });
         }, promise.reject);
@@ -145,13 +145,13 @@ let InstallationData = function () {
 
     let tbsDeployedPromises = {};
 
-    function getTBsDeployedForProject(project) {
-        if (!tbsDeployedPromises[project]) {
-            tbsDeployedPromises[project] = $.Deferred();
+    function getTBsDeployedForProgram(program) {
+        if (!tbsDeployedPromises[program]) {
+            tbsDeployedPromises[program] = $.Deferred();
 
-            let path = Utils.pathForFile(project, 'tbsdeployed.csv');
+            let path = Utils.pathForFile(program, 'tbsdeployed.csv');
             let tbsDeployed = $.get(path);
-            $.when(tbsDeployed, ProjectDetailsData.getProjectDeploymentNames(project)).done((tbList, deploymentNamesList) => {
+            $.when(tbsDeployed, ProgramDetailsData.getProgramDeploymentNames(program)).done((tbList, deploymentNamesList) => {
                 // Deployments, sadly, often were given multiple names. Here we have a list of them, separated by ';'
                 let deploymentNamesMap = {};
                 deploymentNamesList.forEach((elem)=> {
@@ -159,7 +159,7 @@ let InstallationData = function () {
                     nameList.forEach((name)=>{deploymentNamesMap[name] = elem.deploymentnumber});
                 });
                 // The projects list file is a .csv with data like:
-                // tbsDeployed: [ {talkingbookid,deployedtimestamp,project,deployment,contentpackage,community,firmware,location,coordinates,username,tbcdid,action,newsn,testing} ]
+                // tbsDeployed: [ {talkingbookid,deployedtimestamp,program,deployment,contentpackage,community,firmware,location,coordinates,username,tbcdid,action,newsn,testing} ]
                 // B-00050232,20171004T171836.977Z,UNICEF-2,UNICEF-2-2017-1,UNICEF-2-2017-1-DGA,TIZZA NIMBARE,r1212,JIRAPA OFFICE,,literacybridge\Tb,6,update-fw,f,f
                 // B-0006031E,20171005T102130.934Z,UNICEF-2,UNICEF-2-2017-1,UNICEF-2-2017-1-DGA,NON-SPECIFIC,r1212,JIRAPA OFFICE,,literacybridge\Tb,6,update-fw,f,f
                 // ...
@@ -176,27 +176,27 @@ let InstallationData = function () {
                     d.testing = csvTrue.test(d.testing);
                     return d;
                 });
-                console.log(`Got ${tbDeployments.length} tbs deployed for ${project}.`)
-                tbsDeployedPromises[project].resolve(tbDeployments);
+                console.log(`Got ${tbDeployments.length} tbs deployed for ${program}.`)
+                tbsDeployedPromises[program].resolve(tbDeployments);
             }).fail((err) => {
-                tbsDeployedPromises[project].reject(err);
+                tbsDeployedPromises[program].reject(err);
             });
         }
-        return tbsDeployedPromises[project];
+        return tbsDeployedPromises[program];
     }
 
     /**
-     * Given a project and a deploymentnumber, get the tb deployment records for that deployment.
-     * @param project of interest
+     * Given a program and a deploymentnumber, get the tb deployment records for that deployment.
+     * @param program of interest
      * @param deploymentnumber of interest
      * @returns {*} Promise that resolves with the desired tbsDeployed records.
      */
-    function getTBsDeployedForDeployment(project, deploymentnumber) {
+    function getTBsDeployedForDeployment(program, deploymentnumber) {
         let promise = $.Deferred();
         // The tbsdeployed records have a deployment name in them. We need to map the deployment number to a list
         // of one or more names, then match on that list.
-        $.when(getTBsDeployedForProject(project),
-            getDeploymentNames(project, deploymentnumber))
+        $.when(getTBsDeployedForProgram(program),
+            getDeploymentNames(program, deploymentnumber))
             .then((tbDeployments, deploymentnames) => {
                     let names = Set(deploymentnames)
                     let filtered = tbDeployments.filter(d => names.contains(d.deployment));
@@ -207,7 +207,7 @@ let InstallationData = function () {
     }
 
     /**
-     * This is a large and complex function. Given a deploymentNumber in a project, it combines the tbsDeployed
+     * This is a large and complex function. Given a deploymentNumber in a program, it combines the tbsDeployed
      * table and the recipients table. The result is an array of deployment installation, per community. The information
      * includes:
      * - the recipient information for the community
@@ -217,22 +217,22 @@ let InstallationData = function () {
      *
      * For communities with Groups, each group owns the list of its own TBs.
      *
-     * @param project
+     * @param program
      * @param deploymentnumber
      * @param options: an object that may include the following:
      *     includeTestInstalls: If true, also include test installations.
      * @returns {*}
      */
-    function getInstallationStatusForDeployment(project, deploymentnumber, options) {
+    function getInstallationStatusForDeployment(program, deploymentnumber, options) {
         options = options || {}
         const sameInMostGroupsOfACommunity = ['program', 'country', 'region', 'district', 'supportentity', 'model', 'languagecode'];
         let promise = $.Deferred();
-        $.when(getRecipientsForProjectAndDeployment(project, deploymentnumber),
-            getTBsDeployedForDeployment(project, deploymentnumber),
-            getDeploymentInfo(project, deploymentnumber)).then((allRecipients, tbsDeployed, deploymentInfo) => {
-            // tbsDeployed: [ {talkingbookid, recipientid, deployedtimestamp, project, deployment, contentpackage, firmware,
+        $.when(getRecipientsForProgramAndDeployment(program, deploymentnumber),
+            getTBsDeployedForDeployment(program, deploymentnumber),
+            getDeploymentInfo(program, deploymentnumber)).then((allRecipients, tbsDeployed, deploymentInfo) => {
+            // tbsDeployed: [ {talkingbookid, recipientid, deployedtimestamp, program, deployment, contentpackage, firmware,
             //                  location, coordinates, username, tbcdid, action, newsn, testing} ]
-            // recipients: [ {recipientid, project, partner, communityname, groupname, affiliate, component, country,
+            // recipients: [ {recipientid, program, partner, communityname, groupname, affiliate, component, country,
             //                  region, district, num_HHs, num_TBs, supportentity, model, languagecode, coordinates} ]
 
             // Copy the data before modifying it, to avoid polluting the source.
@@ -311,7 +311,7 @@ let InstallationData = function () {
                     recipient.daystoinstall = installedThisRecipient.daystoinstall;
 
                     // Remove this recipient's installations from installedPerRecipient. When this loop is done, any
-                    // remaining are for recipients not in this project/program.
+                    // remaining are for recipients not in this program/program.
                     delete installedPerRecipient[recipient.recipientid];
                 }
             });
@@ -400,9 +400,9 @@ let InstallationData = function () {
 
     return {
         getInstallationStatusForDeployment: getInstallationStatusForDeployment,
-        getTbDailiesListForProject: getTbDailiesListForProject,
-        getTbDailiesDataForProject: getTbDailiesDataForProject,
-        getRecipientsForProject: getRecipientsForProject
+        getTbDailiesListForProject: getTbDailiesListForProgram,
+        getTbDailiesDataForProject: getTbDailiesDataForProgram,
+        getRecipientsForProject: getRecipientsForProgram
     }
 
 }();

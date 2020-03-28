@@ -2,7 +2,7 @@
  * Created by bill on 3/2/17.
  */
 /* jshint undef:true, esversion:6, asi:true */
-/* globals console, $, Main, UserFeedbackData, Chart, ProjectPicker, ProjectDetailsData, chroma */
+/* globals console, $, Main, UserFeedbackData, Chart, ProgramPicker, ProgramDetailsData, chroma */
 
 var UserFeedbackPage = UserFeedbackPage || {};
 
@@ -50,10 +50,10 @@ UserFeedbackPage = (function () {
 
                 var projectNames = Object.keys(feedbackByProject);
 
-                function getDeploymentsForProject(proj) {
+                function getDeploymentsForProgram(proj) {
                     var promise = $.Deferred();
 
-                    ProjectDetailsData.getProjectDeploymentNames(proj)
+                    ProgramDetailsData.getProgramDeploymentNames(proj)
                         .done((deploymentsList) => {
                             // deploymentsList is a list of {deploymentname:'name', deploymentnumber: number}
                             // There may be multiple names per number.
@@ -92,27 +92,27 @@ UserFeedbackPage = (function () {
                 }
 
                 var options = {
-                    projects: projectNames,
-                    defaultProject: previousProject,
-                    getDeploymentsForProject: getDeploymentsForProject
+                    programs: projectNames,
+                    defaultPrograms: previousProject,
+                    getDeploymentsForProgram: getDeploymentsForProgram
                 };
 
                 // Listen first, because adding the picker may trigger, if there are previous values.
                 $('#uf-project-placeholder').on('selected', (evt, extra) => {
                     console.log(evt, extra);
-                    var project = extra.project;
+                    var program = extra.program;
                     var deployment = extra.deployment;
                     var ufAcmName;
-                    if (project && deployment && feedbackByProject[project] && feedbackByProject[project][deployment]) {
+                    if (program && deployment && feedbackByProject[program] && feedbackByProject[program][deployment]) {
                         // Convert from label back to acmName
-                        ufAcmName = feedbackByProject[project][deployment]
+                        ufAcmName = feedbackByProject[program][deployment]
                         if (ufAcmName) {
-                            reportFeedback(project, deployment, ufAcmName);
+                            reportFeedback(program, deployment, ufAcmName);
                         }
                     }
 
                 });
-                ProjectPicker.add($('#uf-project-placeholder'), options);
+                ProgramPicker.add($('#uf-project-placeholder'), options);
             })
     }
 
@@ -477,7 +477,7 @@ UserFeedbackPage = (function () {
     }
 
 
-    function reportFeedback(project, deployment, acmName) {
+    function reportFeedback(program, deployment, acmName) {
         if (previousAcmName === acmName) {
             return;
         }
@@ -493,7 +493,7 @@ UserFeedbackPage = (function () {
         });
         plotAll($withUncategorized.prop('checked'), acmName);
 
-        previousProject = project;
+        previousProject = program;
         previousDeployment = deployment;
         persistState();
     }

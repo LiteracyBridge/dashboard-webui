@@ -80,7 +80,7 @@
                        role="button">Admin <span class="caret"></span> </a>
                     <ul class="dropdown-menu">
                         <li><a class="main-nav" href="#checkout-page">ACMs</a></li>
-                        <li><a class="main-nav" href="#users-page">Users</a></li>
+                        <li><a class="main-nav" href="#roles-page">Users</a></li>
                     </ul>
                 </li>
 
@@ -164,7 +164,7 @@
 
             </div>
             <div class="have_no_data">
-                <h3>No data is available for this project and deployment.</h3>
+                <h3>No data is available for this program and deployment.</h3>
             </div>
 
         </div>
@@ -189,7 +189,7 @@
     <div class="tab-pane fade" id="installation-detail-page" role="tabpanel">
         <div class="container-fluid">
             <h2 class="bg-primary">Installation Details
-                &nbsp;<span id="installation-detail-project-placeholder"></span>
+                &nbsp;<span id="installation-detail-program-placeholder"></span>
             </h2>
 
             <div class="detailtable" id='installation-details'></div>
@@ -212,7 +212,7 @@
     <div class="tab-pane fade" id="installation-progress-page" role="tabpanel">
         <div class="container-fluid">
             <h2 class="bg-primary">Deployment Installation Summary
-                &nbsp;<span id="installation-progress-project-placeholder"></span>
+                &nbsp;<span id="installation-progress-program-placeholder"></span>
             </h2>
 
             <div class="have_data">
@@ -280,7 +280,7 @@
 
             </div>
             <div class="have_no_data">
-                <h3>No data is available for this project and deployment.</h3>
+                <h3>No data is available for this program and deployment.</h3>
             </div>
 
 
@@ -331,7 +331,7 @@
             </div>
 
             <div class="have_no_data">
-                <h3>No data is available for this query in this project.</h3>
+                <h3>No data is available for this query in this program.</h3>
             </div>
 
         </div>
@@ -393,7 +393,7 @@
                                                target="_blank">here</a> for help on using this page.</span>
             </p>
             <div class="when-not-have-project">
-                <h4>Please select a project.</h4>
+                <h4>Please select a program.</h4>
             </div>
 
             <div class="progspec-validation when-have-project">
@@ -524,6 +524,17 @@
             <div class="detailtable" id="checkout-page-container"></div>
         </div>
     </div>
+
+    <!-- Users & roles page -->
+    <div class="tab-pane fade" id="roles-page" role="tabpanel">
+        <div class="container-fluid">
+        <ht class="bg-primary">User Roles in ACM Programs</ht>
+
+            <div id="roles-admin-container" class="container">
+            </div>
+
+        </div>
+    </div>
 </div>
 
 <!-- Wait spinner -->
@@ -600,8 +611,8 @@ script src="scripts/3p/aws-sdk-2.5.0.min.js"></script -->
 <script src="scripts/LocalFileLoader.js"></script>
 <script src="scripts/StatisticsData.js"></script>
 <script src="scripts/CheckoutPage.js"></script>
-<script src="scripts/ProjectDetailsData.js"></script>
-<script src="scripts/ProjectDetailsPage.js"></script>
+<script src="scripts/ProgramDetailsData.js"></script>
+<script src="scripts/ProgramDetailsPage.js"></script>
 <script src="scripts/InventoryPage.js"></script>
 <script src="scripts/UsageQueryBuilder.js"></script>
 <script src="scripts/UsageDetailsPage.js"></script>
@@ -613,9 +624,12 @@ script src="scripts/3p/aws-sdk-2.5.0.min.js"></script -->
 <script src="scripts/ProgramSpecificationData.js"></script>
 <script src="scripts/ProgramSpecificationDownloader.js"></script>
 <script src="scripts/ProgramSpecificationPage.js"></script>
+<script src="scripts/RolesData.js"></script>
+<script src="scripts/RolesEditor.js"></script>
+<script src="scripts/RolesPage.js"></script>
 <script src="scripts/OverviewPage.js"></script>
 <script src="scripts/DropdownButton.js"></script>
-<script src="scripts/ProjectPicker.js"></script>
+<script src="scripts/ProgramPicker.js"></script>
 <script src="scripts/Utils.js"></script>
 <!-- endbuild -->
 

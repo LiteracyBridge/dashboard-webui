@@ -1,9 +1,8 @@
 /* jshint esversion:6, asi:true */
 /* global $, console, Main, User, Utils, moment */
 
-var ProjectDetailsData = ProjectDetailsData || {};
 
-ProjectDetailsData = function () {
+let ProgramDetailsData = function () {
     'use strict';
 
     let STATS_PATH = 'data/';
@@ -22,16 +21,16 @@ ProjectDetailsData = function () {
     // Contains per-project promise; resolved with {deploymentData:[], productionData:[], usageData:[]}
     // deploymentData is an array of DeploymentData (in random order):
     //   {project:,deployment:,deploymentnumber:,num_packages:,num_languages:,num_communities:,deployed_tbs:}
-    var projectCache = {};
+    var programCache = {};
 
     /**
-     * Given a project, get the list of deployment names, with the deployment # of each one. Also includes some
+     * Given a program, get the list of deployment names, with the deployment # of each one. Also includes some
      * metadata for each deployment: startdate, enddate
-     * @param project for which to get deployments.
+     * @param program for which to get deployments.
      * @returns {*} A promise that resovles to a list of [{deployment:'name;name2', deploymentnumber:number},...]
      */
-    function getDeploymentsList(project) {
-        return Utils.getFileCached(project, 'deployments.csv', (filedata)=>{
+    function getDeploymentsList(program) {
+        return Utils.getFileCached(program, 'deployments.csv', (filedata)=>{
             let csv = $.csv.toObjects(filedata, {separator: ',', delimiter: '"'});
             csv = csv.map((d)=>{
                 d.startdatestr = d.startdate;
@@ -64,13 +63,13 @@ ProjectDetailsData = function () {
     }
 
     /**
-     * Given a project, get the list of deployment names, with the deployment # of each one.
-     * @param project for which to get deployments.
+     * Given a program, get the list of deployment names, with the deployment # of each one.
+     * @param program for which to get deployments.
      * @returns {*} A promise that resovles to a list of [{deploymentname:'name', deploymentnumber:number},...]
      */
-    function getProjectDeploymentNames(project) {
+    function getProgramDeploymentNames(program) {
             let deferred = $.Deferred();
-            getDeploymentsList(project).then((list)=>{
+            getDeploymentsList(program).then((list)=>{
                 let deploymentNames = list.map(d=>{return {deploymentname:d.deployment, deploymentnumber:Number(d.deploymentnumber)}});
                 deferred.resolve(deploymentNames);
 
@@ -79,12 +78,12 @@ ProjectDetailsData = function () {
     }
 
     /**
-     * Given a project, get a list of all deployments made to all villages.
-     * @param project for which to get deployment data.
-     * @returns {*} a promise that resolves to a list of [{project,deployment,deploymentnumber,startdate,enddate,package,community,deployed_tbs},...]
+     * Given a program, get a list of all deployments made to all villages.
+     * @param program for which to get deployment data.
+     * @returns {*} a promise that resolves to a list of [{program,deployment,deploymentnumber,startdate,enddate,package,community,deployed_tbs},...]
      */
-    function getDeploymentData(project) {
-        return Utils.getFileCached(project, 'deployments_by_community.csv', (filedata) => {
+    function getDeploymentData(program) {
+        return Utils.getFileCached(program, 'deployments_by_community.csv', (filedata) => {
             let csv = $.csv.toObjects(filedata, {separator: ',', delimiter: '"'});
             return {deploymentByCommunityData: csv};
         });
@@ -92,18 +91,18 @@ ProjectDetailsData = function () {
      }
 
     /**
-     * Given a project and a deployment, get deployment data for the specific deployment.
-     * @param project for which to get deployment data.
+     * Given a program and a deployment, get deployment data for the specific deployment.
+     * @param program for which to get deployment data.
      * @param deployment OR deploymentnumber in particular for which to get data.
-     * @returns {*} a promise that resolves to a list of [{project,deployment,deploymentnumber,startdate,enddate,package,community,deployed_tbs},...]
-     *   NOTE: records are for the same project, and same deployment OR deploymentnumber as requested.
+     * @returns {*} a promise that resolves to a list of [{program,deployment,deploymentnumber,startdate,enddate,package,community,deployed_tbs},...]
+     *   NOTE: records are for the same program, and same deployment OR deploymentnumber as requested.
      */
-    function getDeploymentDetails(project, deployment) {
+    function getDeploymentDetails(program, deployment) {
         var promise = $.Deferred();
 
-        // Get arrays of stats (per deployment) for this project
+        // Get arrays of stats (per deployment) for this program
         Main.incrementWait();
-        getDeploymentData(project).then((data) => {
+        getDeploymentData(program).then((data) => {
             Main.decrementWait();
             // data is a hash of one arrays. If filtering by deployment, need to look in each member for desired deployment.
             var result = {}
@@ -122,32 +121,32 @@ ProjectDetailsData = function () {
     }
 
     /**
-     * Fetch statistics for a project. Cached for subsequent calls.
-     * @param project The project for which stats are desired.
+     * Fetch statistics for a program. Cached for subsequent calls.
+     * @param program The program for which stats are desired.
      * @returns {*} A promise that resolves to an object with 3 members:
-     *  .deploymentData -- an array of objects like {project,deployment,deploymentnumber,num_packages,num_languages,
+     *  .deploymentData -- an array of objects like {program,deployment,deploymentnumber,num_packages,num_languages,
    *                                               num_communities,deployed_tbs}
-     *  .productionData -- an array of objects like {project,deployment,deploymentnumber,num_packages,num_languages,
+     *  .productionData -- an array of objects like {program,deployment,deploymentnumber,num_packages,num_languages,
    *                                               num_categories,num_messages,duration_minutes}
-     *  .usageData -- an array of objects like {project,deployment,deploymentnumber,num_packages,num_communities,
+     *  .usageData -- an array of objects like {program,deployment,deploymentnumber,num_packages,num_communities,
    *                                          num_categories,num_messages,num_tbs,played_minutes,
    *                                          num_effective_completions,num_completions}
      */
-    function getProjectData(project) {
+    function getProgramData(program) {
         // Already have it?
-        if (projectCache[project] !== undefined) {
-            return projectCache[project];
+        if (programCache[program] !== undefined) {
+            return programCache[program];
         }
 
         var promise = new $.Deferred();
-        projectCache[project] = promise;
+        programCache[program] = promise;
 
-        var deplByDepl = $.get(Utils.pathForFile(project, 'deployments_by_deployment.csv'));
-        var tbsdDeplByDepl = $.get(Utils.pathForFile(project, 'tb_deployments_by_deployment.csv'));
-        var prodByDepl = $.get(Utils.pathForFile(project, 'production_by_deployment.csv'));
-        var usageByDepl = $.get(Utils.pathForFile(project, 'usage_by_deployment.csv'));
-        var usageByCategory = $.get(Utils.pathForFile(project, 'usage_by_package_category.csv'));
-        var usageByMessage = $.get(Utils.pathForFile(project, 'usage_by_message.csv'));
+        var deplByDepl = $.get(Utils.pathForFile(program, 'deployments_by_deployment.csv'));
+        var tbsdDeplByDepl = $.get(Utils.pathForFile(program, 'tb_deployments_by_deployment.csv'));
+        var prodByDepl = $.get(Utils.pathForFile(program, 'production_by_deployment.csv'));
+        var usageByDepl = $.get(Utils.pathForFile(program, 'usage_by_deployment.csv'));
+        var usageByCategory = $.get(Utils.pathForFile(program, 'usage_by_package_category.csv'));
+        var usageByMessage = $.get(Utils.pathForFile(program, 'usage_by_message.csv'));
 
         // Wait for all to load. TODO: handle timeouts.
         $.when(deplByDepl, tbsdDeplByDepl, prodByDepl, usageByDepl, usageByCategory, usageByMessage)
@@ -189,31 +188,31 @@ ProjectDetailsData = function () {
     }
 
     /**
-     * Fetch the statistics for a given project and deployment.
-     * @param project The project for which statistics are desired.
+     * Fetch the statistics for a given program and deployment.
+     * @param program The program for which statistics are desired.
      * @param deployment The deployment OR deploymentnumber for which statistics are desired.
      * @returns {*} A promise that resolves with an object with 3 members:
-     *  .deploymentData -- an object like {project,deployment,deploymentnumber,num_packages,num_languages,
+     *  .deploymentData -- an object like {program,deployment,deploymentnumber,num_packages,num_languages,
      *                                     num_communities,deployed_tbs}
-     *  .productionData -- an object like {project,deployment,deploymentnumber,num_packages,num_languages,
+     *  .productionData -- an object like {program,deployment,deploymentnumber,num_packages,num_languages,
      *                                     num_categories,num_messages,duration_minutes}
-     *  .usageData -- an object like {project,deployment,deploymentnumber,num_packages,num_communities,
+     *  .usageData -- an object like {program,deployment,deploymentnumber,num_packages,num_communities,
      *                                num_categories,num_messages,num_tbs,played_minutes,
      *                                num_effective_completions,num_completions}
-     *  .categoryData -- an array of objects like {project,deploymentnumber,cat_packages,cat_languages,category,
+     *  .categoryData -- an array of objects like {program,deploymentnumber,cat_packages,cat_languages,category,
      *                                num_messages,duration_minutes,played_minutes,effective_completions,completions,
      *                                num_tbs}
-     *  .messageData -- an array of objects like {project,deployment,deploymentnumber,package,languagecode,languagecode,
+     *  .messageData -- an array of objects like {program,deployment,deploymentnumber,package,languagecode,languagecode,
      *                                category,contentid,title,duration_minutes,played_minutes,played_minutes_per_tb,
      *                                effective_completions,effective_completions_per_tb,completions,num_tbs,
      *                                num_package_tbs,percent_tbs_playing}
      */
-    function getProjectStats(project, deployment) {
+    function getProgramStats(program, deployment) {
         var promise = $.Deferred();
 
-        // Get arrays of stats (per deployment) for this project
+        // Get arrays of stats (per deployment) for this program
         Main.incrementWait();
-        getProjectData(project).then((data) => {
+        getProgramData(program).then((data) => {
             Main.decrementWait();
             // data is a hash of arrays. Need to look in each member for desired deployment.
             var result = {}
@@ -249,8 +248,8 @@ ProjectDetailsData = function () {
 
     return {
         getDeploymentsList: getDeploymentsList,
-        getProjectDeploymentNames: getProjectDeploymentNames,
-        getProjectStats: getProjectStats,
+        getProgramDeploymentNames: getProgramDeploymentNames,
+        getProgramStats: getProgramStats,
         getDeploymentDetails: getDeploymentDetails
     };
 }();

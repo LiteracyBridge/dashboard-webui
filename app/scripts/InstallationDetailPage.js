@@ -2,7 +2,7 @@
  * Created by bill on 10/23/17.
  */
 /* jshint undef:true, esversion:6, asi:true */
-/* globals console, $, DropdownButton, DataTable, Main, User, Chart, ProjectPicker, ProjectDetailsData, InstallationData, Utils, moment */
+/* globals console, $, DropdownButton, DataTable, Main, User, Chart, ProgramPicker, ProgramDetailsData, InstallationData, Utils, moment */
 
 var InstallationDetailPage = InstallationDetailPage || {};
 
@@ -14,31 +14,31 @@ InstallationDetailPage = (function () {
 
     var recipientMap;
 
-    var previousProject;
+    var previousProgram;
     var fillDone = false;
 
-    function fillProjects() {
+    function fillPrograms() {
         if (fillDone) {
             return;
         }
         fillDone = true;
-        let projectsList = Main.getProjectList();
-        function onProjectSelected(evt, proj) {
-            var project = projectsDropdown.selection();
-            if (project) {
-                projectSelected(project);
+        let programsList = Main.getProgramsForUser();
+        function onProgramSelected(evt, proj) {
+            var program = programsDropdown.selection();
+            if (program) {
+                programSelected(program);
             }
         }
 
         var options = {
-            projects: projectsList,
-            defaultProject: previousProject
+            programs: programsList,
+            defaultProgram: previousProgram
         };
-        var $elem = $('#installation-detail-project-placeholder');
+        var $elem = $('#installation-detail-program-placeholder');
         $elem.empty();
-        var $projectsDropdown = $('<div>').on('selected', onProjectSelected).appendTo($elem);
-        var projectsDropdown = DropdownButton.create($projectsDropdown, {title: 'Project'});
-        projectsDropdown.update(options.projects, {default: options.defaultProject});
+        var $programsDropdown = $('<div>').on('selected', onProgramSelected).appendTo($elem);
+        var programsDropdown = DropdownButton.create($programsDropdown, {title: 'Program'});
+        programsDropdown.update(options.programs, {default: options.defaultProgram});
     }
     /**
      * Shows tbsdeployed for some timeframe.
@@ -100,14 +100,14 @@ InstallationDetailPage = (function () {
     }
 
     /**
-     * Shows a given subset of the tbsdeployed for the project.
-     * @param project The project.
+     * Shows a given subset of the tbsdeployed for the program.
+     * @param program The program.
      * @param year If present, show tbsdeployed for year-month-day.
      * @param month If present, show tbsdeployed for year-month-day.
      * @param day If present, show tbsdeployed for year-month-day.
-     * If no year, show all tbsdeployed for project. Note that it is very slow.
+     * If no year, show all tbsdeployed for program. Note that it is very slow.
      */
-    function showProjectTbsDeployed(project, year, month, day) {
+    function showProjectTbsDeployed(program, year, month, day) {
         let filtered = !!year;
         let prompt = filtered ? `Installations statistics uploaded on ${year}-${month}-${day}` : 'All known TB installations';
 
@@ -123,7 +123,7 @@ InstallationDetailPage = (function () {
         // ...take a breath...
         setTimeout(()=>{
             /// ...let it out..., and get the data.
-            InstallationData.getTbDailiesDataForProject(project, year, month, day).then((tbsDeployed)=>{
+            InstallationData.getTbDailiesDataForProject(program, year, month, day).then((tbsDeployed)=>{
                 prompt += `, ${tbsDeployed.length} Deployments to TBs.`;
                 showTbsDeployed(tbsDeployed);
                 $('#installation-details-timeframe').text(prompt);
@@ -134,10 +134,10 @@ InstallationDetailPage = (function () {
 
     /**
      * Fills the date selection widgets from the dailies list. Handles navigation between dates.
-     * @param project Name of project
-     * @param dailiesList Object with list of days for which there's tbsdeployed data in this project.
+     * @param program Name of program
+     * @param dailiesList Object with list of days for which there's tbsdeployed data in this program.
      */
-    function fillDailiesList(project, dailiesList) {
+    function fillDailiesList(program, dailiesList) {
         /**
          * Project Details was chosen. Clear the 'Months' and 'Days' widgets, and populate Years with the years
          * having data. Attach a click handler to each year to drill into that year.
@@ -240,7 +240,7 @@ InstallationDetailPage = (function () {
          */
         function onDayChosen() {
             $allData.prop('checked', false);
-            showProjectTbsDeployed(project, year, month, day);
+            showProjectTbsDeployed(program, year, month, day);
        }
 
         let $allData = $('#installation-details-all');
@@ -255,7 +255,7 @@ InstallationDetailPage = (function () {
             let allData = $allData.prop('checked');
             if (allData) {
                 $('a', $chooser).removeClass('time-selected');
-                showProjectTbsDeployed(project);
+                showProjectTbsDeployed(program);
             } else {
                 onProjectDetailsChosen();
             }
@@ -272,23 +272,23 @@ InstallationDetailPage = (function () {
     }
 
     /**
-     * Called when a project has been selected.
-     * @param project
+     * Called when a program has been selected.
+     * @param program
      */
-    function projectSelected(project) {
+    function programSelected(program) {
         Main.incrementWait();
 
-        let recipientsPromise = InstallationData.getRecipientsForProject(project);
-        let dailiesPromise = InstallationData.getTbDailiesListForProject(project);
+        let recipientsPromise = InstallationData.getRecipientsForProject(program);
+        let dailiesPromise = InstallationData.getTbDailiesListForProject(program);
 
         $.when(dailiesPromise, recipientsPromise).done((dailiesList, recipientsList)=>{
             recipientMap = {};
             recipientsList.forEach((recip)=>recipientMap[recip.recipientid]=recip);
 
             Main.decrementWait();
-            fillDailiesList(project, dailiesList);
+            fillDailiesList(program, dailiesList);
 
-            previousProject = project;
+            previousProgram = program;
             persistState();
         }).fail((err)=>{
             Main.decrementWait();
@@ -297,17 +297,17 @@ InstallationDetailPage = (function () {
     }
 
     function persistState() {
-        if (previousProject) {
-            localStorage.setItem('installation.detail.project', previousProject);
-            Main.setParams(PAGE_ID, {p: previousProject});
+        if (previousProgram) {
+            localStorage.setItem('installation.detail.project', previousProgram);
+            Main.setParams(PAGE_ID, {p: previousProgram});
         }
     }
     function restoreState() {
         let params = Main.getParams();
         if (params) {
-            previousProject = params.get('p') || '';
+            previousProgram = params.get('p') || '';
         } else {
-            previousProject = localStorage.getItem('installation.detail.project') || '';
+            previousProgram = localStorage.getItem('installation.detail.project') || '';
         }
     }
 
@@ -316,7 +316,7 @@ InstallationDetailPage = (function () {
         if (!initialized) {
             initialized = true;
             restoreState();
-            fillProjects();
+            fillPrograms();
         } else {
             persistState();
         }

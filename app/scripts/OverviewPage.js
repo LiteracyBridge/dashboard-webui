@@ -7,12 +7,12 @@
 var OverviewPage = OverviewPage || {};
 
 OverviewPage = (function () {
-    'use strict'
+    'use strict';
     let PAGE_ID = 'overview-page';
     let PAGE_HREF = 'a[href="#' + PAGE_ID + '"]';
     let $PAGE = $('#' + PAGE_ID);
 
-    let DATA_PATH = 'data/'
+    let DATA_PATH = 'data/';
     var ROOT;
 
     function getPath() {
@@ -37,7 +37,7 @@ OverviewPage = (function () {
 
     };
     var headings = {
-        project: 'Project',
+        project: 'Program',
         deploymentnumber: 'Deployment #',
         deployment: 'Deployment',
         startdate: 'Start Date',
@@ -46,7 +46,7 @@ OverviewPage = (function () {
         'num_communities': '# Communities Reporting',
         'num_tbs': '# Talking Books Reporting',
         'deployed_tbs': '# Talking Books Deployed'
-    }
+    };
 
 
     /**
@@ -58,7 +58,7 @@ OverviewPage = (function () {
         function createFromCsv(container, path, options) {
             $.get(path).done((csvData) => {
                 var data = $.csv.toObjects(csvData, {separator: ',', delimiter: '"'});
-                var filtered = data.filter(row=>User.isViewableProject(row.project));
+                var filtered = data.filter(row=>Main.getProgramsForUser().indexOf(row.project)>=0);
                 DataTable.create(container, filtered, options);
             });
         }
@@ -68,7 +68,7 @@ OverviewPage = (function () {
             headings: headings,
             tooltips: tooltips,
             datatable: {searching: true}
-        }
+        };
         createFromCsv($elem, path, options);
     }
 
@@ -99,7 +99,7 @@ OverviewPage = (function () {
     }
 
     // Hook the tab-activated event for this tab.
-    $(PAGE_HREF).on('shown.bs.tab', show)
+    $(PAGE_HREF).on('shown.bs.tab', show);
 
     return {}
 })();

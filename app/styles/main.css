@@ -816,3 +816,285 @@ div.rule-container:last-child li#move-down a {
     opacity: 0.35;
 }
 
+/***************************************************************************************************/
+/*                              Roles Editor                                                       */
+
+.roles-builder .roles-org, .roles-builder .roles-program {
+    position: relative;
+    margin: 4px 0;
+    border-radius: 5px;
+    padding: 5px;
+    border: 1px solid #eee;
+    background: rgba(255, 255, 255, .9)
+}
+
+.roles-info, .roles-info p {
+    position: relative;
+    margin: 0;
+    border:none;
+}
+.roles-builder .roles-org {
+    /*margin-left: 5px;*/
+    /*background: rgb(250, 240, 210)*/
+    border: 2px solid darkgrey;
+}
+.roles-builder .roles-org  .roles-org {
+    /*margin-left: 5px;*/
+    /*background: rgb(250, 240, 210)*/
+    border: 2px solid lightgrey;
+}
+
+.roles-builder .roles-program {
+    margin-left: 10px;
+    background: rgb(210, 250, 240)
+}
+
+.roles-org.collapsed .roles-list {
+    display: none;
+}
+
+/*!
+ * jQuery QueryBuilder 2.5.2
+ * Copyright 2014-2018 Damien "Mistic" Sorel (http://www.strangeplanet.fr)
+ * Licensed under MIT (https://opensource.org/licenses/MIT)
+ */
+.roles-builder .roles-container,
+.roles-builder .roles-group-container {
+    position: relative;
+    margin: 4px 0;
+    border-radius: 5px;
+    padding: 5px;
+    border: 1px solid #eee;
+    background: rgba(255, 255, 255, .9)
+}
+
+.roles-builder .roles-group-container {
+    padding: 10px 10px 6px;
+    border: 1px solid #dcc896;
+    background: rgba(250, 240, 210, .5)
+}
+
+.roles-builder .roles-group-header {
+    margin-bottom: 10px
+}
+
+.roles-builder .roles-group-header .group-conditions .btn.readonly:not(.active),
+.roles-builder .roles-group-header .group-conditions input[name$='_cond'] {
+    border: 0;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+    white-space: nowrap
+}
+
+.roles-builder .roles-group-header .group-conditions .btn.readonly {
+    border-radius: 3px
+}
+
+.roles-builder .roles-list {
+    list-style: none;
+    padding: 0 0 0 15px;
+    margin: 0
+}
+
+
+.roles-builder .has-error {
+    background-color: #fdd;
+    border-color: #f99
+}
+
+.roles-image {
+    max-height: 1.5em;
+}
+
+.role-label-container:not(.program-label) .roles-program-image {
+    display: none;
+}
+
+.role-label-container:not(.org-label) .roles-org-image {
+    display: none;
+}
+
+/* Make the + and - large and bold and the same width. */
+.role-list-toggle, .roles-table-toggle {
+    font-family: courier;
+    font-size: 20px;
+    font-weight: bolder;
+}
+
+/* Don't display the +/- toggle for program lines */
+.roles-program-container .role-list-toggle {
+    display: none;
+}
+/* Don't display the +/- toggle for the top */
+.top-label .role-list-toggle {
+    display: none;
+}
+
+/* Show + or - as appropriate */
+.roles-org.collapsed > div > div > span > .role-list-toggle.collapse-role-list {
+    display: none;
+}
+.roles-org:not(.collapsed) > div > div > span > .role-list-toggle.expand-role-list {
+    display: none;
+}
+.org-label > .roles-label-text-span {
+    cursor: pointer !important;
+}
+.user-label .roles-user-label-text {
+    background: inherit;
+    box-shadow: none;
+}
+
+/* Format the roles display */
+.role-label-container {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.roles-label-roles-span {
+    font-size: .9em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: rgb(120,120,120);
+}
+.roles-label-roles-span:not(.no-roles) {
+    /*cursor: pointer;*/
+}
+.roles-label-roles-span.no-roles {
+    font-style: italic;
+    font-size: .8em;
+    color: darkgrey;
+}
+.roles-label-text {
+    border-radius: 4px;
+    cursor: default;
+}
+.roles-edit-button {
+    border: 1px solid darkgrey;
+    cursor: pointer;
+}
+
+/* format the roles table in the per-user roles display/edit dialog */
+table.roles-table {
+    width: 100%;
+}
+table.roles-table tr {
+    vertical-align: top;
+}
+table.roles-table td:not(.roles-table-toggler) {
+    padding-top: .4em;
+}
+table.roles-table, table.roles-table td {
+    border: 1px solid lightgrey;
+    padding: 2px 6px;
+}
+/* Formatting for the email cell in the table, either as a span or as an input. */
+table.roles-table td.roles-table-email {
+    width: 50%;
+    padding-left: 0;
+    padding-right: 0;
+    text-align: right;
+}
+table.roles-table .roles-table-email span {
+    text-align: right;
+    margin-right: .5em;
+}
+table.roles-table .roles-table-email input {
+    width: 100%;
+    margin-right: .2em;
+    border: none;
+    text-align: right;
+    color: black;
+    background-color: inherit;
+    /*text-overflow: ellipsis;*/
+}
+
+/* Formatting the new email mini-dialog */
+.roles-table-new-email > div {
+    display: block;
+    overflow: hidden;
+    margin-right: 5.5em;
+    margin-top: 2px;
+    border: 1px lightgrey solid;
+}
+.roles-table-new-email input {
+    width: 100%;
+}
+.roles-table-new-email button {
+    float: right;
+}
+
+
+.button-float-left {
+    float: left;
+}
+
+/* expand and collapse the roles edit control */
+.roles-table-row.collapsed .roles-table-roles-expanded,
+.roles-table-row.collapsed .collapse-roles-edit{
+    display: none;
+}
+.roles-table-row:not(.collapsed) .roles-table-roles-collapsed,
+.roles-table-row:not(.collapsed) .expand-roles-edit{
+    display: none;
+}
+/* visually combine the +/1 and the roles display/edit dialog. */
+table.roles-table .roles-table-toggler {
+    border-right: none;
+    cursor: pointer !important;
+    width: 1.5em;
+}
+table.roles-table .roles-table-roles {
+    border-left: none;
+}
+table.roles-table ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+table.roles-table ul label {
+    margin-left: .5em;
+}
+
+/* Rules to draw the "tree" lines on the left of the items inside a .roles-list */
+.roles-builder .roles-list > ::after, .roles-builder .roles-list > ::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    width: 10px;
+    height: calc(50% + 4px);
+    border-color: #ccc;
+    border-style: solid
+}
+
+.roles-builder .roles-list > ::before {
+    top: -4px;
+    border-width: 0 0 2px 2px
+}
+
+.roles-builder .roles-list > ::after {
+    top: 50%;
+    border-width: 0 0 0 2px
+}
+
+.roles-builder .roles-list > :first-child::before {
+    top: -5px;  /* was -12 */
+    height: calc(50% + 6px)  /* was + 6 */
+}
+
+.roles-builder .roles-list > :last-child::before {
+    border-radius: 0 0 0 4px
+}
+
+.roles-builder .roles-list > :last-child::after {
+    display: none
+}
+
+
+
+/*                                                                                                 */
+/***************************************************************************************************/

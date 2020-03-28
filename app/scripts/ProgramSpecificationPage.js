@@ -1,6 +1,6 @@
 /* jshint esversion:6, asi:true */
-/* global $, DataTable, DropdownButton, StatisticsData, User, CognitoWrapper,console, Main, ProjectDetailsData,
-   DataTable, Chart, moment, ProgramSpecificationData, ProgramSpecificationDownloader, ProjectPicker, Utils, UsageQueries,
+/* global $, DataTable, DropdownButton, StatisticsData, User, CognitoWrapper,console, Main, ProgramDetailsData,
+   DataTable, Chart, moment, ProgramSpecificationData, ProgramSpecificationDownloader, ProgramPicker, Utils, UsageQueries,
     LocalFileLoader, BootstrapDialog */
 
 var ProgramSpecificationPage = function () {
@@ -22,7 +22,7 @@ var ProgramSpecificationPage = function () {
     let $pendingSubmittedComment = $('#pending-spec-submitted-comment');
 
     // program-specification-project-placeholder
-    var currentProject;
+    var currentProgram;
     var fillDone = false;
 
     let currentSpecExists = false;
@@ -70,23 +70,23 @@ var ProgramSpecificationPage = function () {
             return;
         }
         fillDone = true;
-        let projectsList = Main.getProjectList();
-        function onProjectSelected(evt, proj) {
-            var project = projectsDropdown.selection();
-            if (project) {
-                projectSelected(project);
+        let programsList = Main.getProgramsForUser();
+        function onProgramSelected(evt, proj) {
+            var program = programsDropdown.selection();
+            if (program) {
+                programSelected(program);
             }
         }
 
         var options = {
-            projects: projectsList,
-            defaultProject: currentProject
+            programs: programsList,
+            defaultProgram: currentProgram
         };
         var $elem = $('#program-specification-project-placeholder');
         $elem.empty();
-        var $projectsDropdown = $('<div>').on('selected', onProjectSelected).appendTo($elem);
-        var projectsDropdown = DropdownButton.create($projectsDropdown, {title: 'Project'});
-        projectsDropdown.update(options.projects, {default: options.defaultProject});
+        var $programsDropdown = $('<div>').on('selected', onProgramSelected).appendTo($elem);
+        var programsDropdown = DropdownButton.create($programsDropdown, {title: 'Program'});
+        programsDropdown.update(options.programs, {default: options.defaultProgram});
     }
 
     const SYNC_TIMEOUT = 10 * 60; // in seconds
@@ -177,7 +177,7 @@ var ProgramSpecificationPage = function () {
      *  'v2': string. Version of the "second" program spec for a History diff. Can be a version, "current", or "pending".
      */
     function doDiff(options) {
-        ProgramSpecificationData.review(currentProject).then(result=>{
+        ProgramSpecificationData.review(currentProgram).then(result=>{
             if (result.output && result.output.length) {
                 showDiff(result);
             }
@@ -186,7 +186,7 @@ var ProgramSpecificationPage = function () {
 
     function doReview() {
         clearResults();
-        ProgramSpecificationData.review(currentProject).then(result=>{
+        ProgramSpecificationData.review(currentProgram).then(result=>{
             if (result.status === 'ok' && result.output && result.output.length) {
                 return showDiff(result, {showAccept:true, showReject:false});
             } else if (result.status === 'failure' && result.v1 && result.v1.name === 'not found') {
@@ -199,7 +199,7 @@ var ProgramSpecificationPage = function () {
                 let currentVersion = reviewResult.diff.v1.VersionId;
                 let pendingVersion = reviewResult.diff.v2.VersionId;
                 let comment = reviewResult.comment;
-                return ProgramSpecificationData.approve(currentProject, currentVersion, pendingVersion, comment)
+                return ProgramSpecificationData.approve(currentProgram, currentVersion, pendingVersion, comment)
             } else if (reviewResult.action === 'reject') {
                 return new $.Deferred().reject();
             }
@@ -219,7 +219,7 @@ var ProgramSpecificationPage = function () {
         };
         clearResults();
         LocalFileLoader.loadFile(fileoptions).then(fileResult => {
-            return ProgramSpecificationData.submitProgramSpec(fileResult.data, fileResult.comment, currentProject);
+            return ProgramSpecificationData.submitProgramSpec(fileResult.data, fileResult.comment, currentProgram);
         }).then(result => {
             showOverview();
             showOutput(result.output, 'submit');
@@ -263,7 +263,7 @@ var ProgramSpecificationPage = function () {
 
     function doDownload() {
         clearResults();
-        ProgramSpecificationDownloader.download(currentProject, currentSpecExists, pendingSpecExists);
+        ProgramSpecificationDownloader.download(currentProgram, currentSpecExists, pendingSpecExists);
     }
 
     let nl=/[\n\r]/gi;
@@ -376,7 +376,7 @@ var ProgramSpecificationPage = function () {
 
 
     function loadAndView(options) {
-        ProgramSpecificationData.getFile(currentProject, options.filename).done(result => {
+        ProgramSpecificationData.getFile(currentProgram, options.filename).done(result => {
             let data = $.csv.toObjects(result.data, {separator: ',', delimiter: '"'});
             console.log(data);
             showContent(data, options);
@@ -399,7 +399,7 @@ var ProgramSpecificationPage = function () {
     }
 
     function showOverview() {
-        if (!currentProject) {return}
+        if (!currentProgram) {return}
 
         function enableButtons(haveData, havePending) {
             let noData = !(currentSpecExists || pendingSpecExists);
@@ -421,7 +421,7 @@ var ProgramSpecificationPage = function () {
         showSyncMessage('check');
         enableButtons();
         currentSpecExists = pendingSpecExists = false;
-        ProgramSpecificationData.listProgramSpecObjects(currentProject)
+        ProgramSpecificationData.listProgramSpecObjects(currentProgram)
             .done(result => {
                 let xls = result.objects['program_spec.xlsx'] || {};
                 let md = xls.Metadata;
@@ -458,27 +458,27 @@ var ProgramSpecificationPage = function () {
 
     }
 
-    function projectSelected(project) {
-        currentProject = project;
+    function programSelected(program) {
+        currentProgram = program;
         showOverview();
         $PAGE.addClass('have-project')
     }
 
     function persistState() {
-        if (currentProject) {
-            localStorage.setItem('progspec.project', currentProject);
-            Main.setParams(PAGE_ID, {p: currentProject});
+        if (currentProgram) {
+            localStorage.setItem('progspec.program', currentProgram);
+            Main.setParams(PAGE_ID, {p: currentProgram});
         }
     }
     function restoreState() {
         let params = Main.getParams();
         if (params) {
-            currentProject = params.get('p') || '';
+            currentProgram = params.get('p') || '';
             let valStr = params.get('t');
             let val = false;
             try { val = JSON.parse(valStr); } catch(x) {}
         } else {
-            currentProject = localStorage.getItem('progspec.project') || '';
+            currentProgram = localStorage.getItem('progspec.program') || '';
         }
     }
 

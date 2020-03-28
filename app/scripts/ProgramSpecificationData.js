@@ -1,12 +1,12 @@
 /* jshint esversion:6, asi:true */
-/* global $, DataTable, DropdownButton, StatisticsData, User, CognitoWrapper,console, Main, ProjectDetailsData, DataTable, Chart, ProjectPicker, Utils, UsageQueries */
+/* global $, DataTable, DropdownButton, StatisticsData, User, CognitoWrapper,console, Main, ProgramDetailsData, DataTable, Chart, ProgramPicker, Utils, UsageQueries */
 
 var ProgramSpecificationData = function () {
     'use strict';
 
     let URL = 'https://ftgnui9zvf.execute-api.us-west-2.amazonaws.com/PROD';
 
-    function getRequest(path, data) {
+    function makeRequest(path, data) {
         if (path.length>0 && path[path.length-1] !== '/') {
             path = '/' + path;
         }
@@ -49,12 +49,12 @@ var ProgramSpecificationData = function () {
     }
 
     function validateProgramSpec(data, projectName) {
-        let request = getRequest('validate?project='+projectName+'&fix_recips=f', data);
+        let request = makeRequest('validate?project='+projectName+'&fix_recips=f', data);
         return submitRequest(request);
     }
 
     function submitProgramSpec(data, comment, projectName) {
-        let request = getRequest('submit?project='+projectName+'&fix_recips=t&comment='+comment, data);
+        let request = makeRequest('submit?project='+projectName+'&fix_recips=t&comment='+comment, data);
         return submitRequest(request);
     }
 
@@ -63,31 +63,31 @@ var ProgramSpecificationData = function () {
         if (getHistory) {
             path += '&history=t';
         }
-        let request = getRequest(path);
+        let request = makeRequest(path);
         return submitRequest(request);
     }
 
     function reviewPending(projectName) {
         let path = 'diff?project='+projectName+'&v1=current&v2=pending&fix_recips=t';
-        let request = getRequest(path);
+        let request = makeRequest(path);
         return submitRequest(request);
     }
 
     function approve(projectName, currentVersion, pendingVersion, comment) {
         let path='approve?project='+projectName+'&current='+currentVersion+'&pending='+pendingVersion+'&comment='+comment;
-        let request = getRequest(path);
+        let request = makeRequest(path);
         return submitRequest(request);
     }
 
     function getLink(projectName, version) {
         let path='getlink?project='+projectName+'&version='+version;
-        let request = getRequest(path);
+        let request = makeRequest(path);
         return submitRequest(request);
     }
 
     function getFile(projectName, version) {
         let path='getfile?project='+projectName+'&version='+version;
-        let request = getRequest(path);
+        let request = makeRequest(path);
         return submitRequest(request);
     }
 

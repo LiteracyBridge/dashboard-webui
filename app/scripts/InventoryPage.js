@@ -2,7 +2,7 @@
  * Created by bill on 8/4/17.
  */
 /* jshint undef:true, esversion:6, asi:true */
-/* globals console, $, DataTable, Main, User, DropdownButton, ProjectDetailsData */
+/* globals console, $, DataTable, Main, User, DropdownButton, ProgramDetailsData */
 
 var InventoryPage = InventoryPage || {};
 
@@ -23,7 +23,7 @@ InventoryPage = (function () {
         }
         fillDone = true;
         var preSelectDeployment = previousDeployment;
-        let projectsList = Main.getProjectList();
+        let projectsList = Main.getProgramsForUser();
         var $elem = $('#inventory-project-placeholder');
         $elem.empty();
 
@@ -73,11 +73,11 @@ InventoryPage = (function () {
     }
 
 
-    function reportProject(project, deployment) {
-        ProjectDetailsData.getDeploymentDetails(project).done((data) => {
+    function reportProject(program, deployment) {
+        ProgramDetailsData.getDeploymentDetails(program).done((data) => {
             deploymentDetails(data);
 
-            previousProject = project;
+            previousProject = program;
             previousDeployment = deployment;
             persistState();
         }).fail((err) => {

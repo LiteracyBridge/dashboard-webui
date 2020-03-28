@@ -1,5 +1,5 @@
 /* jshint esversion:6, asi:true */
-/* global $, User, CognitoWrapper,console, Main, ProjectDetailsData, DataTable, Chart, ProjectPicker, Utils */
+/* global $, User, CognitoWrapper,console, Main, ProgramDetailsData, DataTable, Chart, ProgramPicker, Utils */
 
 var StatisticsData = StatisticsData || {};
 
@@ -28,9 +28,9 @@ StatisticsData = (function () {
     }
 
 
-    function getUsage(project, deployment, columns) {
+    function getUsage(program, deployment, columns) {
         var deferred = $.Deferred()
-        var url = baseUrl + '/usage/' + project
+        var url = baseUrl + '/usage/' + program
 
         if (deployment) {
             url += '/' + deployment
@@ -52,7 +52,7 @@ StatisticsData = (function () {
     }
 
 
-    function getProjectList() {
+    function getProgramList() {
         let deferred = $.Deferred()
         let url = baseUrl + '/projects'
         query(url)
@@ -60,8 +60,8 @@ StatisticsData = (function () {
                 if (result.errorMessage) {
                     deferred.reject(result.errorMessage);
                 } else {
-                    let projects = result.result.values
-                    deferred.resolve(projects);
+                    let programs = result.result.values
+                    deferred.resolve(programs);
                 }
             })
             .fail(deferred.reject)
@@ -70,7 +70,7 @@ StatisticsData = (function () {
 
     return {
         getUsage: getUsage,
-        getProjectList: getProjectList
+        getProgramList: getProgramList
     }
 
 })();

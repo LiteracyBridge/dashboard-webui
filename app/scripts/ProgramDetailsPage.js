@@ -1,9 +1,7 @@
 /* jshint esversion:6, asi:true */
-/* global $, User, CognitoWrapper,console, Main, ProjectDetailsData, DataTable, Chart, ProjectPicker, Utils */
+/* global $, User, CognitoWrapper,console, Main, ProgramDetailsData, DataTable, Chart, ProgramPicker, Utils */
 
-var ProjectDetailsPage = ProjectDetailsPage || {};
-
-ProjectDetailsPage = function () {
+let ProgramDetailsPage = function () {
     'use strict';
     let PAGE_ID = 'project-details-page';
     let PAGE_HREF = 'a[href="#' + PAGE_ID + '"]';
@@ -13,17 +11,17 @@ ProjectDetailsPage = function () {
 
     var fillDone = false;
 
-    function fillProjects() {
+    function fillPrograms() {
         if (fillDone) {
             return;
         }
         fillDone = true;
         var preSelectDeployment = previousDeployment;
-        let list = Main.getProjectList();
+        let list = Main.getProgramsForUser();
 
-        function getDeploymentsForProject(proj) {
+        function getDeploymentsForProgram(proj) {
             var promise = $.Deferred();
-            ProjectDetailsData.getDeploymentsList(proj)
+            ProgramDetailsData.getDeploymentsList(proj)
                 .done((deploymentsList) => {
                     // deploymentsList is array [{deployment:'name;name2', deploymentnumber:number, ...}, ...]
                     deploymentsList = deploymentsList.map((elem)=>{
@@ -43,19 +41,19 @@ ProjectDetailsPage = function () {
         }
 
         var options = {
-            projects: list,
-            defaultProject: previousProject,
-            getDeploymentsForProject: getDeploymentsForProject
+            programs: list,
+            defaultProgram: previousProject,
+            getDeploymentsForProgram: getDeploymentsForProgram
         };
 
         $('#details-project-placeholder').on('selected', (evt, extra) => {
-            var project = extra.project;
+            var program = extra.program;
             var deployment = extra.deployment;
-            if (project && deployment) {
-                reportProject(project, deployment);
+            if (program && deployment) {
+                reportProgram(program, deployment);
             }
         });
-        ProjectPicker.add('#details-project-placeholder', options);
+        ProgramPicker.add('#details-project-placeholder', options);
     }
 
     function format(str) {
@@ -485,10 +483,10 @@ ProjectDetailsPage = function () {
     }
 
 
-    function reportProject(project, deployment) {
-        previousProject = project;
+    function reportProgram(program, deployment) {
+        previousProject = program;
         previousDeployment = deployment;
-        ProjectDetailsData.getProjectStats(project, deployment).then((stats) => {
+        ProgramDetailsData.getProgramStats(program, deployment).then((stats) => {
             if (stats.deploymentData) {
                 $('#project-details-page .have_data').removeClass('hidden');
                 $('#project-details-page .have_no_data').addClass('hidden');
@@ -509,7 +507,7 @@ ProjectDetailsPage = function () {
         if (!initialized) {
             initialized = true;
             restoreState();
-            fillProjects();
+            fillPrograms();
         } else {
             persistState();
         }
