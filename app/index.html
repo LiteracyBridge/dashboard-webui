@@ -65,8 +65,21 @@
                     </ul>
                 </li>
 
-                <li role="navigation"><a class="main-nav" href="#usage-details-page">Usage</a>
+                <!-- li role="navigation"><a class="main-nav" href="#usage-details-page">Usage</a></li -->
+                <!--
+                <li class="dropdown" id="idm-usage-menu">
+                    <a aria-expanded="false" aria-haspopup="true" class="dropdown-toggle" data-toggle="dropdown"
+                       href="#"
+                       role="button">Usage <span class="caret"></span> </a>
+                    <ul class="dropdown-menu">
+                -->
+                        <li role="navigation"><a class="main-nav" href="#usage-details-page">Usage Queries</a></li>
+                        <li role="navigation"><a class="main-nav" href="#visualization-page">Visualizations</a>
+                <!--
+                        </li>
+                    </ul>
                 </li>
+                -->
 
                 <li role="navigation"><a class="main-nav" href="#userfeedback-page">User Feedback</a>
                 </li>
@@ -335,6 +348,41 @@
             </div>
 
         </div>
+    </div>
+
+    <!-- Usage Tableau Report -->
+    <div class="tab-pane fade" id="visualization-page" role="tabpanel">
+        <div class="container-fluid">
+            <h2 class="bg-primary", id="visualization-page-header">Tableau Workbook
+                &nbsp;<span id="usage-tableau-project-placeholder"></span>
+            </h2>
+
+
+            <div>
+                <div id="tableau-workbook-download" class="thumbnail">
+                    <h4 class="bg-success">Download the Tableau workbook
+                        <a id="tableau-workbook-download-button" download href="#" class="btn btn-secondary" role="button">Download&hellip;</a>
+                        <!-- button id="tableau-workbook-download-button" class="btn btn-success" type="button">Download&hellip;</button -->
+                    </h4>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-1"></div>
+                <div class="col-sm-10">
+                    <img id="tableau-preview-image" class="img-responsive center-block tableau-preview"/>
+                    <div id="tableau-preview-text" class="tableau-preview hidden">Preview</div>
+                    <div id="tableau-no-preview-text" class="tableau-preview">No Preview Available</div>
+                </div>
+                <div class="col-sm-1"></div>
+            </div>
+
+
+        </div>
+    </div>
+
+    <div>
+
     </div>
 
     <!-- User Feedback Report -->
@@ -615,6 +663,7 @@ script src="scripts/3p/aws-sdk-2.5.0.min.js"></script -->
 <script src="scripts/InventoryPage.js"></script>
 <script src="scripts/UsageQueryBuilder.js"></script>
 <script src="scripts/UsageDetailsPage.js"></script>
+<script src="scripts/VisualizationPage.js"></script>
 <script src="scripts/UserFeedbackData.js"></script>
 <script src="scripts/UserFeedbackPage.js"></script>
 <script src="scripts/InstallationData.js"></script>

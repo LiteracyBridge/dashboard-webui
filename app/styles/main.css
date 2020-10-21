@@ -816,6 +816,39 @@ div.rule-container:last-child li#move-down a {
     opacity: 0.35;
 }
 
+img.tableau-preview {
+    border: 2px lightgray solid;
+    box-shadow: 5px 8px 5px #bbb;
+}
+
+#tableau-preview-text.tableau-preview {
+    top: 20%;
+    left: 10%;
+    position: absolute;
+    font-size: 15EM;
+    color: #FFFFFF77;
+    -webkit-text-stroke: 2px #44444477;
+    text-stroke: 2px #44444477;
+    transform: rotate(30deg);
+}
+#tableau-no-preview-text.tableau-preview {
+    top: 50%;
+    left: 31%;
+    position: absolute;
+    font-size: 4EM;
+    color: #777d;
+    -webkit-text-stroke: 1px #44444477;
+    text-stroke: 1px #44444477;
+}
+
+#tableau-workbook-download-button {
+    cursor: auto;
+}
+#tableau-workbook-download-button.disabled {
+    cursor: not-allowed;
+}
+
+
 /***************************************************************************************************/
 /*                              Roles Editor                                                       */
 

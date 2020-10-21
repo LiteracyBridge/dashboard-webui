@@ -7,8 +7,8 @@ StatisticsData = (function () {
 
     'use strict';
 
-    let baseUrl = 'https://y06knefb5j.execute-api.us-west-2.amazonaws.com/Devo'
-
+    let statsUrl = 'https://y06knefb5j.execute-api.us-west-2.amazonaws.com/Devo'
+    let twbxUrl = 'https://lkh9z46j7e.execute-api.us-west-2.amazonaws.com/prod'
 
     function query(url, queryParameters) {
         var request = {
@@ -30,7 +30,7 @@ StatisticsData = (function () {
 
     function getUsage(program, deployment, columns) {
         var deferred = $.Deferred()
-        var url = baseUrl + '/usage/' + program
+        var url = statsUrl + '/usage/' + program
 
         if (deployment) {
             url += '/' + deployment
@@ -54,7 +54,7 @@ StatisticsData = (function () {
 
     function getProgramList() {
         let deferred = $.Deferred()
-        let url = baseUrl + '/projects'
+        let url = statsUrl + '/projects'
         query(url)
             .done(result => {
                 if (result.errorMessage) {
@@ -68,9 +68,23 @@ StatisticsData = (function () {
         return deferred.promise()
     }
 
+    function getWorkbookLinks(program) {
+        let deferred = $.Deferred()
+        let url = twbxUrl + '/getlinks?program=' + program;
+        query(url)
+            .done(result => {
+                result = result.result
+                result = {workbook: result.workbook, preview: result.preview}
+                deferred.resolve(result)
+            })
+            .fail(deferred.reject)
+        return deferred.promise();
+    }
+
     return {
         getUsage: getUsage,
-        getProgramList: getProgramList
+        getProgramList: getProgramList,
+        getWorkbookLinks: getWorkbookLinks
     }
 
 })();

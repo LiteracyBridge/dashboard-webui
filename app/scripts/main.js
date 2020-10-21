@@ -35,7 +35,8 @@ Main = (function () {
         'g': 'userfeedback-page',
         'h': 'checkout-page',
         'i': 'program-specification-page',
-        'j': 'roles-page'
+        'j': 'roles-page',
+        'k': 'visualization-page',
     };
     let longToShort = {};
     let adminPages = ['checkout-page', 'roles-page'];
