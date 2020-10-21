@@ -419,7 +419,7 @@ let ProgramDetailsPage = function () {
                 usage2: () => {
                     if (usage) {
                         var languagecode = '';
-                        if (prod.num_languages > 1) {
+                        if (prod && prod.num_languages > 1) {
                             languagecode = ` (${mostCompletions.languagecode}) `;
                         }
                         var cell = `<p><span class="stat">${Utils.formatNumber(usage.num_completions)}</span> # times messages were listened to completion</p>
