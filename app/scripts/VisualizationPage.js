@@ -78,12 +78,36 @@ var VisualizationPage = function () {
         TableauWorkbookDownloader.download(currentProgram);
     }
 
+    var slideTimeout;
+    function slideShow(list) {
+        function nextSlide() {
+            $preview.attr('src', list[slideIx])
+            if (list.length > 1) {
+                if (++slideIx >= list.length) {
+                    slideIx = 0;
+                }
+                slideTimeout = setTimeout(nextSlide, 5000);
+            }
+        }
+        if (slideTimeout) {
+            clearTimeout(slideTimeout);
+            slideTimeout = null;
+        }
+        let slideIx = 0;
+        if (list && list.length) {
+            nextSlide();
+        }
+    }
+
+
     function enableWorkbook(info) {
-        havePreview = !!(info && info.preview && info.workbook);
+        havePreview = !!(info && info.preview && info.preview.length && info.workbook);
         haveWorkbook = !!(info && info.workbook);
         if (havePreview) {
-            $preview.attr('src', info.preview);
+            // $preview.attr('src', info.preview);
+            slideShow(info.preview);
         } else {
+            slideShow();
             $preview.attr('src', 'images/empty.png');
         }
         if (haveWorkbook) {

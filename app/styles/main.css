@@ -819,6 +819,7 @@ div.rule-container:last-child li#move-down a {
 img.tableau-preview {
     border: 2px lightgray solid;
     box-shadow: 5px 8px 5px #bbb;
+    width: 100%;
 }
 
 #tableau-preview-text.tableau-preview {

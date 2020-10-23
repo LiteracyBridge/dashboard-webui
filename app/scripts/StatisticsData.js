@@ -70,7 +70,7 @@ StatisticsData = (function () {
 
     function getWorkbookLinks(program) {
         let deferred = $.Deferred()
-        let url = twbxUrl + '/getlinks?program=' + program;
+        let url = twbxUrl + '/getlinks?all=1&program=' + program;
         query(url)
             .done(result => {
                 result = result.result
