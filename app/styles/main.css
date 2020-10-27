@@ -823,23 +823,23 @@ img.tableau-preview {
 }
 
 #tableau-preview-text.tableau-preview {
-    top: 20%;
-    left: 10%;
-    position: absolute;
-    font-size: 15EM;
-    color: #FFFFFF77;
-    -webkit-text-stroke: 2px #44444477;
-    text-stroke: 2px #44444477;
-    transform: rotate(30deg);
+    /*top: 20%;*/
+    /*left: 10%;*/
+    /*position: absolute;*/
+    font-size: 1.3EM;
+    color: #777d;
+    /*-webkit-text-stroke: 2px #44444477;*/
+    /*text-stroke: 2px #44444477;*/
+    /*transform: rotate(30deg);*/
 }
 #tableau-no-preview-text.tableau-preview {
-    top: 50%;
-    left: 31%;
-    position: absolute;
-    font-size: 4EM;
+    /*top: 50%;*/
+    /*left: 31%;*/
+    /*position: absolute;*/
+    font-size: 2EM;
     color: #777d;
-    -webkit-text-stroke: 1px #44444477;
-    text-stroke: 1px #44444477;
+    /*-webkit-text-stroke: 1px #44444477;*/
+    /*text-stroke: 1px #44444477;*/
 }
 
 #tableau-workbook-download-button {

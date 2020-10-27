@@ -86,7 +86,7 @@ var VisualizationPage = function () {
                 if (++slideIx >= list.length) {
                     slideIx = 0;
                 }
-                slideTimeout = setTimeout(nextSlide, 5000);
+                slideTimeout = setTimeout(nextSlide, 8000);
             }
         }
         if (slideTimeout) {
