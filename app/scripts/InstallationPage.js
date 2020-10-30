@@ -128,7 +128,7 @@ InstallationPage = (function () {
 
     var progressChart;
     var progressConfig = {
-        type: 'scatter',
+        type: 'line',
         data: {
             datasets: []
         },
@@ -141,7 +141,7 @@ InstallationPage = (function () {
                     type: 'time',
                     time: {
                         unit: 'week',
-                        stepSize: 2,
+                        // stepSize: 2,
                         minUnit: 'day',
                         displayFormats: {
                             week: 'MMM D'
@@ -151,8 +151,9 @@ InstallationPage = (function () {
                         callback: function (value, index, values) {
                             return value;
                         },
-                        autoSkip: true,
-                        maxRotation: 0
+                        beginAtZero: true,
+                        autoSkip: false,
+                        maxRotation: 90
                     },
                     scaleLabel: {
                         //display: true,
@@ -231,7 +232,7 @@ InstallationPage = (function () {
                 pointBorderColor: 'rgba(139,0,0,1)',
                 pointBackgroundColor: 'rgba(255,255,255,0.6)',
                 tension: 0,
-                backgroundColor: 'rgba(139,0,0,1)'
+                backgroundColor: 'rgba(139,0,0,1)',
             },{
                 name: 'bad',
                 label: '50% - 85% complete',
@@ -240,7 +241,7 @@ InstallationPage = (function () {
                 pointBorderColor: 'rgba(239,149,0,1)',
                 pointBackgroundColor: 'rgba(255,255,255,0.6)',
                 tension: 0,
-                backgroundColor: 'rgba(239,149,0,1)'
+                backgroundColor: 'rgba(239,149,0,1)',
             },{
                 name: 'good',
                 label: '> 85% complete',
@@ -249,7 +250,7 @@ InstallationPage = (function () {
                 pointBorderColor: 'rgba(75,200,25,1)',
                 pointBackgroundColor: 'rgba(255,255,255,0.6)',
                 tension: 0,
-                backgroundColor: 'rgba(153,255,51,1)'
+                backgroundColor: 'rgba(153,255,51,1)',
             },{
                 name: 'future',
                 label: 'Future - TBD',
@@ -258,13 +259,19 @@ InstallationPage = (function () {
                 pointBorderColor: 'rgba(128,128,64,0.7)',
                 pointBackgroundColor: 'rgba(255,255,255,1)',
                 tension: 0,
-                backgroundColor: 'rgba(255,255,128,0.2)'
+                backgroundColor: 'rgba(255,255,128,0.2)',
             }];
 
         // See how many installs took place on each day of the deployment. Find earliest and latest deployment.
         let start = status.deploymentInfo.startdate.clone();
         let dailyInstalls = [];
         let span = status.deploymentInfo.enddate.diff(start, 'days');
+        if (span > 90) {
+            progressConfig.options.scales.xAxes[0].time.stepSize = 2;
+        } else {
+            if (progressConfig.options.scales.xAxes[0].time.stepSize !== undefined)
+                delete progressConfig.options.scales.xAxes[0].time.stepSize;
+        }
         let tbsInstalled = [];
         status.communities.forEach(community => {
             if (community.tbsInstalled) {
@@ -298,10 +305,14 @@ InstallationPage = (function () {
             $('#installation-progress-deployment-range').text(range);
         }
 
+        // recompute basis
+        basis = dailyInstalls.reduce((prev, cur)=>prev+cur, 0);
+
         // Turn the daily installs into daily % completion.
         let sum = 0;
         let hasgap = false;
         let prevpoint = {x:start.toDate().valueOf(), y:0};
+        // let prevpoint = {x:earliest.toDate().valueOf(), y:0};
         for (let ix = 0; ix < span; ix++) {
             sum += dailyInstalls[ix] || 0;
             let date = start.clone().add(ix, 'days');
@@ -315,7 +326,8 @@ InstallationPage = (function () {
                     dsix = 1;
                 }
                 if (!datasets[dsix].data) {
-                    datasets[dsix].data = ix ? [prevpoint] : [];
+                    // datasets[dsix].data = ix ? [prevpoint] : [];
+                    datasets[dsix].data = [prevpoint];
                 }
                 datasets[dsix].data.push(point);
                 prevpoint = point;
@@ -333,6 +345,7 @@ InstallationPage = (function () {
                     // keep if different from previous or next values
                     return d.y !== ary[ix-1].y || d.y !== ary[ix+1].y;
                 });
+                // Make a circle at start, end, and days on their own.
                 ds.pointRadius = ds.data.map((d,ix,ary)=>(d.daily||ix===0||ix===(ary.length-1)?2.5:0));
             }
         });

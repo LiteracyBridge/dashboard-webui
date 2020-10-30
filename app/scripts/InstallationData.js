@@ -236,7 +236,7 @@ let InstallationData = function () {
             //                  region, district, num_HHs, num_TBs, supportentity, model, languagecode, coordinates} ]
 
             // Copy the data before modifying it, to avoid polluting the source.
-            let recipients = $.extend(true, [], allRecipients).filter( recip => recip.partner && recip.affiliate && recip.component);
+            let recipients = $.extend(true, [], allRecipients).filter( recip => recip.partner /*&& recip.affiliate*/ && recip.component);
             tbsDeployed = $.extend(true, [], tbsDeployed)
             tbsDeployed = tbsDeployed.filter(elem => !elem.testing || options.includeTestInstalls );
 
