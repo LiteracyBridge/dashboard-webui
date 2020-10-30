@@ -21,10 +21,10 @@ var LocalFileLoader = function () {
             </div>`;
 
         let html = `<div>
-               <div class="row comment ${options.commentPrompt ? '':'hidden'}" style="margin-bottom: 2rem;"> 
+               <div class="row comment ${options.commentPrompt ? '':'hidden'}" style="margin-bottom: 2rem;">
                     <div class="col-xs-12">
                         <input class="form-control" placeholder="${options.commentPrompt}" type="text">
-                    </div>                
+                    </div>
                 </div>
                  <div>
                     <p>Drag and drop the ${options.longPrompt} file on the box below. Or click the "Browse" button
@@ -46,7 +46,7 @@ var LocalFileLoader = function () {
             </div>`;
         let $dialog = $(dialog)
         let $html = $(html)
-        $('.modal-body', $dialog).append(html);
+        $('.modal-body', $dialog).append($html);
         return $dialog;
     }
 
@@ -84,7 +84,7 @@ var LocalFileLoader = function () {
                 var reader = new FileReader();
                 reader.onload = function(readerEvt) {
                     var binaryString = readerEvt.target.result;
-                    deferred.resolve(btoa(binaryString))
+                    deferred.resolve({data:btoa(binaryString), filename:file.name})
                 };
 
                 reader.readAsBinaryString(file);
@@ -144,8 +144,9 @@ var LocalFileLoader = function () {
             $ok.prop('disabled', missingData || missingComment);
         }
 
-        let needComment = !!options.commentPrompt;
+        let needComment = !!options.commentPrompt && !options.commentOptional;
         var data;
+        var filename;
         let deferred = $.Deferred();
         let $dialog = getDialog(options);
         let $ok = $('.ok-button', $dialog);
@@ -161,7 +162,7 @@ var LocalFileLoader = function () {
         // User clicks OK.
         $('.ok-button', $dialog).on('click', ()=>{
             let comment =$('.comment input', $dialog).val();
-            deferred.resolve({data:data, comment:comment});
+            deferred.resolve({data:data, comment:comment, filename:filename});
             $dialog.modal('hide');
         });
         // Check whether to enable OK when comment changes.
@@ -169,7 +170,8 @@ var LocalFileLoader = function () {
         // Drag & Drop and file open dialog.
         setupDragAndDrop($dialog)
              .done(result=>{
-                 data = result;
+                 data = result.data;
+                 filename = result.filename;
                  enableButton();
              })
             .fail((err)=>{

@@ -10,9 +10,21 @@ StatisticsData = (function () {
     let statsUrl = 'https://y06knefb5j.execute-api.us-west-2.amazonaws.com/Devo'
     let twbxUrl = 'https://lkh9z46j7e.execute-api.us-west-2.amazonaws.com/prod'
 
-    function query(url, queryParameters) {
+    function query(url, path, queryParameters, data) {
+        let queryKeys = Object.keys(queryParameters || {});
+        let queryString = queryKeys.length > 0
+            ? ('?' + queryKeys.map(x => `${x}=${encodeURIComponent(queryParameters[x])}`)
+                .join('&'))
+            : '';
+        if (url[url.length-1] !== '/' && path.length>0 && path[0] !== '/') {
+            path = '/' + path;
+        }
+        if (path.length > 0 && path[path.length-1] !== '/') {
+            path = path + '/';
+        }
+        let uri = url + path + queryString;
         var request = {
-            url: url,
+            url: uri,
             type: 'get',
             contentType: 'text/plain',
             headers: {
@@ -20,8 +32,9 @@ StatisticsData = (function () {
                 'Accept': 'application/json'
             }
         }
-        if (queryParameters) {
-            request.data = queryParameters
+        if (data) {
+            request.data = data;
+            request.type = 'POST';
         }
 
         return $.ajax(request)
@@ -54,8 +67,7 @@ StatisticsData = (function () {
 
     function getProgramList() {
         let deferred = $.Deferred()
-        let url = statsUrl + '/projects'
-        query(url)
+        query('statsUrl', '/projects')
             .done(result => {
                 if (result.errorMessage) {
                     deferred.reject(result.errorMessage);
@@ -70,8 +82,8 @@ StatisticsData = (function () {
 
     function getWorkbookLinks(program) {
         let deferred = $.Deferred()
-        let url = twbxUrl + '/getlinks?all=1&program=' + program;
-        query(url)
+        // let url = twbxUrl + '/getlinks?all=1&program=' + program;
+        query(twbxUrl, '/getlinks', {'all': 1, 'program': program})
             .done(result => {
                 result = result.result
                 result = {workbook: result.workbook, preview: result.preview}
@@ -81,10 +93,51 @@ StatisticsData = (function () {
         return deferred.promise();
     }
 
+    function refreshWorkbook(program) {
+        let deferred = $.Deferred()
+        // let url = twbxUrl + '/refresh?program=' + program;
+        query(twbxUrl, '/refresh', {'program': program})
+            .done(result => {
+                result = result.result
+                result = {workbook: result.workbook, preview: result.preview}
+                deferred.resolve(result)
+            })
+            .fail(deferred.reject)
+        return deferred.promise();
+    }
+
+    function removeWorkbookPreviews(program) {
+        let deferred = $.Deferred()
+        // let url = twbxUrl + '/removePreviews?program=' + program;
+        query(twbxUrl, '/removePreviews', {'program': program})
+            .done(result => {
+                result = result.result
+                result = {workbook: result.workbook, preview: result.preview}
+                deferred.resolve(result)
+            })
+            .fail(deferred.reject)
+        return deferred.promise();
+    }
+
+    function uploadWorkbook(program, comment, filename, data) {
+        let deferred = $.Deferred();
+        query(twbxUrl, 'upload', {'program': program, 'comment': comment, 'filename': filename}, data)
+            .done(result => {
+                result = result.result;
+                deferred.resolve(result);
+            })
+            .fail(deferred.reject);
+        return deferred.promise();
+    }
+
+
     return {
         getUsage: getUsage,
         getProgramList: getProgramList,
-        getWorkbookLinks: getWorkbookLinks
+        getWorkbookLinks: getWorkbookLinks,
+        refreshWorkbook: refreshWorkbook,
+        removeWorkbookPreviews: removeWorkbookPreviews,
+        uploadWorkbook: uploadWorkbook,
     }
 
 })();

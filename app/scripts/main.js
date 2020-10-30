@@ -151,6 +151,10 @@ Main = (function () {
         $('#wait-spinner').hide();
     }
 
+    function userHasRoleInProgram(role, program) {
+        let roles = userRoles[program];
+        return roles && roles.length && roles.indexOf(role) >= 0;
+    }
 
     function onSignedIn() {
         function setGreeting() {
@@ -257,6 +261,7 @@ Main = (function () {
 
         getProgramsForUser: ()=>userPrograms,
         getProgramsForAdminUser: ()=>userAdmin,
+        userHasRoleInProgram: userHasRoleInProgram,
 
     }
 })();
