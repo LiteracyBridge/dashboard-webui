@@ -43,13 +43,13 @@ StatisticsData = (function () {
 
     function getUsage(program, deployment, columns) {
         var deferred = $.Deferred()
-        var url = statsUrl + '/usage/' + program
+        var path = '/usage/' + program
 
         if (deployment) {
-            url += '/' + deployment
+            path += '/' + deployment
         }
 
-        query(url, {cols: columns.join(',')})
+        query(statsUrl, path, {cols: columns.join(',')})
             .done(result => {
                 if (result.errorMessage) {
                     deferred.reject(result.errorMessage);
