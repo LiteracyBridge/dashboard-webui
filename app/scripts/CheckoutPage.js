@@ -29,20 +29,12 @@ CheckoutPage = (function () {
 
     function confirmUncheckout2(row) {
         function undoCheckout() {
-            // API Gateway URL for revokeCheckOut
-            var url = 'https://7z4pu4vzqk.execute-api.us-west-2.amazonaws.com/prod/';
+            // API Gateway URL for acm access control
+            let ACCESS_CONTROL_API = 'https://cqmltfugtl.execute-api.us-west-2.amazonaws.com/prod';
+            let url = ACCESS_CONTROL_API + '/acm/revokeCheckout/' + row.acm_name + '?key=' + row.now_out_key;
 
-            var payload = {
-                action: 'revokeCheckOut',
-                db: row.acm_name,
-                key: row.now_out_key
-            }
             var request = {
                 url: url,
-                data: JSON.stringify(payload),
-                contentType: 'application/json; charset=utf-8',
-                type: 'post',
-                dataType: 'json',
                 headers: {Authorization: CognitoWrapper.getIdToken()}
             }
             $.ajax(request)
