@@ -1,5 +1,5 @@
 /* jshint esversion:6, asi:true */
-/* global $, User, CognitoWrapper,console, Main, ProgramDetailsData, DataTable, Chart, ProgramPicker, Utils */
+/* global $, Authentication ,console, Main, ProgramDetailsData, DataTable, Chart, ProgramPicker, Utils */
 
 var RolesData = RolesData || {};
 
@@ -7,13 +7,14 @@ RolesData = (function () {
 
     'use strict';
 
-    let baseUrl = 'https://1cr03lc4tl.execute-api.us-west-2.amazonaws.com/PROD';
-
 
     function query(url, queryParameters) {
         const request = {
-            url: url, type: 'get', contentType: 'text/plain', headers: {
-                Authorization: CognitoWrapper.getIdToken(), 'Accept': 'application/json'
+            url: url,
+            type: 'get',
+            contentType: 'text/plain',
+            headers: {
+                Authorization: Authentication.getIdToken(), 'Accept': 'application/json'
             }
         };
         if (queryParameters) {
@@ -24,6 +25,9 @@ RolesData = (function () {
     }
 
     function buildRequest(path, data, json) {
+        // Authentication.ROLES
+        let baseUrl = Authentication.ROLES();
+
         if (path.length>0 && path[0] !== '/') {
             path = '/' + path;
         }
@@ -31,7 +35,7 @@ RolesData = (function () {
             url: baseUrl + path,
             type: 'GET',
             headers: {
-                Authorization: CognitoWrapper.getIdToken(),
+                Authorization: Authentication.getIdToken(),
                 'Accept': 'application/json'
             },
             contentType: 'application/text',
@@ -79,6 +83,9 @@ RolesData = (function () {
 
 
     function getPrograms() {
+        // Authentication.ROLES
+        let baseUrl = Authentication.ROLES();
+
         let deferred = $.Deferred();
         let url = baseUrl + '/getPrograms';
         query(url)

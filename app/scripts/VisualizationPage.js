@@ -3,7 +3,6 @@
 $,
 BootstrapDialog,
 Chart,
-CognitoWrapper,
 DataTable,
 DataTable,
 DropdownButton,
@@ -12,7 +11,7 @@ ProgramDetailsData,
 ProgramPicker,
 Sortable,
 StatisticsData,
-User,
+Authentication,
 Utils,
 console,
 */
@@ -181,7 +180,7 @@ var VisualizationPage = function () {
         }
 
         let mAndE =  (Main.userHasRoleInProgram('AD', currentProgram) && Main.userHasRoleInProgram('PM', currentProgram) &&
-            User.getUserAttributes()['email'].endsWith('@amplio.org'));
+            Authentication.getUserAttributes()['email'].endsWith('@amplio.org'));
         $refresh_button.toggleClass('hidden', !mAndE);
         $upload_button.toggleClass('hidden', !mAndE);
         $clear_previews_button.toggleClass('hidden', !mAndE);

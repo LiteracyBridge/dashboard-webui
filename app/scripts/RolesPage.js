@@ -8,7 +8,7 @@ console,
 RolesData,
 RolesEditor,
 Main,
-User,
+Authentication,
 Utils,
 */
 
@@ -237,7 +237,7 @@ RolesPage = function () {
     function show() {
         if (!initialized) {
             // initialized = true;
-            let user = User.getUserAttributes();
+            let user = Authentication.getUserAttributes();
             // if (user && user.email && user.email.startsWith('bill@amplio')) {
             //     $('#usage-test-query').on('click', () => {
             //         // get3()

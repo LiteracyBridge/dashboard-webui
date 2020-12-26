@@ -1,9 +1,10 @@
 /* jshint esversion:6, asi:true */
-/* global $, DataTable, DropdownButton, StatisticsData, User, CognitoWrapper,console, Main, ProgramDetailsData, DataTable, Chart, ProgramPicker, Utils, UsageQueries */
+/* global $, DataTable, DropdownButton, StatisticsData, Authentication,console, Main, ProgramDetailsData, DataTable, Chart, ProgramPicker, Utils, UsageQueries */
 
 var ProgramSpecificationData = function () {
     'use strict';
 
+    // Authentication.PROGRAM_SPEC
     let URL = 'https://ftgnui9zvf.execute-api.us-west-2.amazonaws.com/PROD';
 
     function makeRequest(path, data) {
@@ -14,7 +15,7 @@ var ProgramSpecificationData = function () {
             url: URL + path,
             type: 'GET',
             headers: {
-                Authorization: CognitoWrapper.getIdToken(),
+                Authorization: Authentication.getIdToken(),
                 'Accept': 'application/json'
             },
             contentType: 'application/text',

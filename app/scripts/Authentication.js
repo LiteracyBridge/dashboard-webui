@@ -4,8 +4,8 @@
 /* jshint undef:true, esversion:6, asi:true */
 /* global $, BootstrapDialog, console, CognitoWrapper, Main, AWS */
 
-
-let User = (function () {
+// noinspection JSCheckFunctionSignatures
+let Authentication = (function () {
     'use strict';
 
     /**
@@ -75,26 +75,30 @@ let User = (function () {
         </div>
         <div class="panel-body container-fluid">
             <div>
-                <input id="newusername" type="text" class="form-control"
+                <!--input id="newusername" type="text" class="form-control"
                        placeholder="User Name"
+                       aria-describedby="basic-addon1" autofocus
+                       autocorrect="off" autocapitalize="none"-->
+                <input id="newusername" type="text" class="form-control"
+                       placeholder="Please enter your full name"
                        aria-describedby="basic-addon1" autofocus
                        autocorrect="off" autocapitalize="none">
                 <input id="newuseremail" type="text" class="form-control"
                        placeholder="Email Address"
                        aria-describedby="basic-addon1"
                        autocorrect="off" autocapitalize="none">
-                <input id="newphone" type="text" class="form-control"
+                <!--input id="newphone" type="text" class="form-control"
                        placeholder="Phone Number"
                        aria-describedby="basic-addon1"
-                       autocorrect="off" autocapitalize="none">
+                       autocorrect="off" autocapitalize="none"-->
                 <input id="newpassword" type="password" class="password newpassword form-control"
                        placeholder="Passw0rd!"
                        aria-describedby="basic-addon1"
                        autocorrect="off" autocapitalize="none" autocomplete="new-password">
-                <input id="newpassword2" type="password" class="password newpassword form-control"
+                <!--input id="newpassword2" type="password" class="password newpassword form-control"
                        placeholder="Repeat Passw0rd!"
                        aria-describedby="basic-addon1"
-                       autocorrect="off" autocapitalize="none" autocomplete="new-password">
+                       autocorrect="off" autocapitalize="none" autocomplete="new-password"-->
                 <span>
                     <input type="checkbox" id="show-password" class="nested-tab">
                     <label for="show-password" class="light-checkbox"> Show password</label>
@@ -113,9 +117,7 @@ let User = (function () {
 </div>`;
 
     const createAccountHelpHtml = `<h3>Create An Account</h3>
-        <p>Pick a user name, whatever you like, but all user names must be unique, so you may not get
-         your first choice. That's OK, because your email address is what really identifies you uniquely
-         to the system.</p>
+        <p>Please enter your name, as you prefer to be addressed.</p>
          <p>Enter your 'work' email address. Your phone number is optional, but if you want to provide it,
          you must use the format +18887771234.</p>
          <p>Passwords must be at least 8 characters, with at least one capital letter, one lower case letter,
@@ -514,7 +516,7 @@ let User = (function () {
     //     setFilters('', '');
     // }
     // function gotUserProperties() {
-    //     setFilters(userProperties.edit||'', userProperties.view||'')
+    //     setFilters(userAttributes.edit||'', userAttributes.view||'')
     // }
 
     /**
@@ -533,7 +535,7 @@ let User = (function () {
             evt.preventDefault();
             const newPassword = $('#newpassword', $dialog).val();
             const code = $('#confirmation-code', $dialog).val();
-            CognitoWrapper.confirmPassword({username: username, password: newPassword, code: code}).then(() => {
+            cognitoHelper.confirmPassword({username: username, password: newPassword, code: code}).then(() => {
                 password = newPassword;
                 persist();
                 dialog.close();
@@ -566,7 +568,7 @@ let User = (function () {
         const alerter = addNotificationArea($('.panel-footer', $dialog));
         addPasswordUtils($dialog);
 
-        const oldGreeting = userAttributes['custom:greeting'];
+        const oldGreeting = userAttributes['name'];
         if (oldGreeting) {
             $('#old-greeting-reminder', $dialog).removeClass('hidden');
             $('#old-greeting', $dialog).text(oldGreeting);
@@ -576,10 +578,10 @@ let User = (function () {
         $('form', $dialog).on('submit', (evt) => {
             evt.preventDefault();
             const newGreeting = $('#new-greeting', $dialog).val();
-            const attrs = {'custom:greeting': newGreeting};
-            CognitoWrapper.updateAttributes({attributes:attrs}).then(() => {
-                userAttributes['custom:greeting'] = newGreeting;
-                $('body').trigger('custom:greeting');
+            const attrs = {'name': newGreeting};
+            cognitoHelper.updateAttributes({attributes:attrs}).then(() => {
+                userAttributes['name'] = newGreeting;
+                $('body').trigger('name');
                 dialog.close();
                 promise.resolve();
             }, (err) => {
@@ -610,7 +612,7 @@ let User = (function () {
      */
     function doVerifyEmail() {
         const gotCodePromise = $.Deferred();
-        CognitoWrapper.getEmailVerificationCode(gotCodePromise);
+        cognitoHelper.getEmailVerificationCode(gotCodePromise);
 
         const promise = $.Deferred();
         const $dialog = $(confirmAccountHtml);
@@ -625,7 +627,7 @@ let User = (function () {
                 promise.resolve();
         });
         $('#resend-code', $dialog).on('click', () => {
-            CognitoWrapper.resendConfirmationCode({username: username});
+            cognitoHelper.resendConfirmationCode({username: username});
             alerter.notify('New confirmation code requested');
         });
 
@@ -656,7 +658,7 @@ let User = (function () {
         $('form', $dialog).on('submit', (evt) => {
             evt.preventDefault();
             const code = $('#confirmation-code', $dialog).val();
-            CognitoWrapper.confirmRegistration({username: username, code: code}).then(() => {
+            cognitoHelper.confirmRegistration({username: username, code: code}).then(() => {
                 dialog.close();
                 promise.resolve();
             }, (err) => {
@@ -664,7 +666,7 @@ let User = (function () {
             });
         });
         $('#resend-code', $dialog).on('click', () => {
-            CognitoWrapper.resendConfirmationCode({username: username});
+            cognitoHelper.resendConfirmationCode({username: username});
             alerter.notify('New confirmation code requested');
         });
 
@@ -703,7 +705,7 @@ let User = (function () {
 
         $('#do-delete', $dialog).on('click', (evt) => {
             evt.preventDefault();
-            CognitoWrapper.deleteCurrentUser().then(()=>{
+            cognitoHelper.deleteCurrentUser().then(()=>{
                 dialog.close();
                 promise.resolve();
             }, (err)=>{
@@ -748,7 +750,7 @@ let User = (function () {
             evt.preventDefault();
             const oldPassword = $('#oldpassword', $dialog).val();
             const newPassword = $('#newpassword', $dialog).val();
-            CognitoWrapper.changePassword({
+            cognitoHelper.changePassword({
                 username: username,
                 oldPassword: oldPassword,
                 newPassword: newPassword
@@ -799,13 +801,14 @@ let User = (function () {
         // $('#do-create', $dialog).on('click', () => {
         $('form', $dialog).on('submit', (evt) => {
             evt.preventDefault();
-            username = $('#newusername', $dialog).val();
+            const name = $('#newusername', $dialog).val();
             password = $('#newpassword', $dialog).val();
-            const email = $('#newuseremail', $dialog).val();
+            username = $('#newuseremail', $dialog).val();
             const phone = $('#newphone', $dialog).val();
-            CognitoWrapper.createAccount({
+            cognitoHelper.createAccount({
+                name: name,
                 username: username,
-                email: email,
+                email: username,
                 password: password,
                 phone: phone
             }).then(function resolved(data) {
@@ -898,10 +901,11 @@ let User = (function () {
         /**
          * Helper to sign in after credentials entered, password reset, or account created.
          */
-        function cognitoSignin() {
+        function cognitoSignin(trialHelper) {
+            let cgHelper = trialHelper || cognitoHelper;
             alerter.notify('Signing in...');
             Main.incrementWait();
-            CognitoWrapper.signIn({username: username, password: password})
+            cgHelper.signIn({username: username, password: password})
                 .done((result => {
                     Main.decrementWait();
                     persist();
@@ -918,15 +922,33 @@ let User = (function () {
                     if (err.code === 'NotAuthorizedException' && err.message.startsWith('Logins don\'t match') && retryCount === 0) {
                         alerter.notify('Retrying...');
                         retryCount++;
-                        cognitoSignin();
+                        cognitoSignin(cgHelper);
                         return;
                     }
                     const msg = (err && err.message || err) || 'Error signing in.';
-                    alerter.error(msg);
                     if (err.code === 'PasswordResetRequiredException') {
+                        alerter.error(msg);
                         doResetPassword().done(() => {
-                            cognitoSignin();
+                            cognitoSignin(cgHelper);
                         });
+                    } else {
+                        // If we're not already, try with the fallback cognito info. If that works, keep the fallback.
+                        if (cgHelper === cognitoHelper) {
+                            let fallbackHelper = CognitoWrapper.cognitoHelper(CognitoWrapper.FALLBACK_CONFIG);
+                            fallbackHelper.signIn({username: username, password: password})
+                                .done((result) => {
+                                    cognitoHelper = fallbackHelper;
+                                    persist();
+                                    dialog.close();
+                                    promise.resolve();
+                                })
+                                .fail((err) => {
+                                    const msg = (err && err.message || err) || 'Error signing in.';
+                                    alerter.error(msg);
+                                });
+                        } else {
+                            alerter.error(msg);
+                        }
                     }
                 });
         }
@@ -963,11 +985,11 @@ let User = (function () {
         $('#forgot-password', $dialog).on('click', () => {
             username = $('#username', $dialog).val();
             if (!username) {
-                alerter.error('Please provide username (Who forgot their password?)');
+                alerter.error('Please provide email address (Who forgot their password?)');
                 $('#username', $dialog).focus();
                 return;
             }
-            CognitoWrapper.forgotPassword({username: username}).then(() => {
+            cognitoHelper.forgotPassword({username: username}).then(() => {
                 doResetPassword().then(cognitoSignin);
             }, (err) => {
                 alerter.error(err.message || 'Error resetting password')
@@ -995,6 +1017,24 @@ let User = (function () {
         return promise;
     }
 
+    function resolveWithMod() {
+        let mod = userAttributes['mod'];
+        let modButton = userAttributes['modButton'] || 'OK';
+        if (mod) {
+            BootstrapDialog.show({
+                title: 'Message From Amplio',
+                message: mod,
+                buttons: [{
+                    label: modButton,
+                    action: dialogItself=>dialogItself.close()
+                }],
+                onhide: ()=>authenticationPromise.resolve(userAttributes),
+            });
+        } else {
+            authenticationPromise.resolve(userAttributes);
+        }
+    }
+
     function doAuthenticate() {
         if (!authenticationPromise) {
             if (Main.hasParam('demo')) {
@@ -1008,7 +1048,6 @@ let User = (function () {
                 rememberMe=false;
                 authenticationPromise = $.Deferred();
                 authenticationPromise.resolve({});
-                userProperties = {admin:true, edit:'*', view:'*'};
                 return authenticationPromise;
             }
 
@@ -1016,7 +1055,7 @@ let User = (function () {
             const signin = $.Deferred();
 
             // userAttributes.email='bill@literacybridge.org';
-            // userAttributes['custom:greeting'] = 'TEST:bill';
+            // userAttributes['name'] = 'TEST:bill';
             // authenticationPromise.resolve(userAttributes);
             // gotUserProperties({edit:'.*', admin:true});
             // return authenticationPromise;
@@ -1028,7 +1067,7 @@ let User = (function () {
             signin.done(() => {
                 let booleanProperties = ['admin', 'email_verified', 'phone_number_verified'];
                 console.log('Signin done');
-                let _userProperties = CognitoWrapper.getJwtParams();
+                let _userProperties = cognitoHelper.getJwtParams();
                 booleanProperties.forEach(prop=>{
                     if (_userProperties.hasOwnProperty(prop)) {
                         if (typeof _userProperties[prop]  === 'string') {
@@ -1037,18 +1076,18 @@ let User = (function () {
                     }
                 });
                 userAttributes = _userProperties;
-                userProperties = _userProperties;
                 // gotUserProperties(_userProperties);
-                console.log(userProperties);
+                console.log(userAttributes);
 
                 function doResolve() {
-                    authenticationPromise.resolve(_userProperties);
+                    resolveWithMod();
+                    // authenticationPromise.resolve(_userProperties);
                 }
                 setTimeout(doResolve, 0);
             });
 
             // Get us to a "signed-in" state.
-            CognitoWrapper.getCurrentUser().done(() => {
+            cognitoHelper.getCurrentUser().done(() => {
                 Main.decrementWait();
                 signin.resolve();
             }).fail(() => {
@@ -1070,13 +1109,14 @@ let User = (function () {
         authenticationPromise = null;
         username = password = '';
         persist(false);
-        CognitoWrapper.signOut();
-        userProperties = null;
+        cognitoHelper.signOut();
         // resetUserProperties();
+        cognitoHelper = CognitoWrapper.cognitoHelper(CognitoWrapper.AMPLIO_CONFIG);
     }
 
+    var cognitoHelper = CognitoWrapper.cognitoHelper(CognitoWrapper.AMPLIO_CONFIG);
+
     var authenticationPromise;
-    var userProperties = null;
     var userAttributes = {};
     var username = '';
     var password = '';
@@ -1097,6 +1137,15 @@ let User = (function () {
         changeGreeting: doChangeGreeting,
         verifyEmail: doVerifyEmail,
         getUserAttributes: () => userAttributes,
+
+        getIdToken: ()=> cognitoHelper.getIdToken(),
+        ACCESS_CONTROL_API: ()=>cognitoHelper.ACCESS_CONTROL_API,
+        LIST_CHECKOUTS: ()=>cognitoHelper.LIST_CHECKOUTS,
+        PROGRAM_SPEC: ()=>cognitoHelper.PROGRAM_SPEC,
+        ROLES: ()=>cognitoHelper.ROLES,
+        STATS_QUERY: ()=>cognitoHelper.STATS_QUERY,
+        TWBX: ()=>cognitoHelper.TWBX,
+
 
     };
 })();

@@ -2,7 +2,7 @@
  * Created by bill on 4/18/17.
  */
 /* jshint undef:true, esversion:6, asi:true */
-/* global $, BootstrapDialog, console, CognitoWrapper, AWS, DataTable, User, Main */
+/* global $, BootstrapDialog, console, Authentication, AWS, DataTable, Authentication, Main */
 
 var CheckoutPage = CheckoutPage || {};
 
@@ -30,12 +30,13 @@ CheckoutPage = (function () {
     function confirmUncheckout2(row) {
         function undoCheckout() {
             // API Gateway URL for acm access control
-            let ACCESS_CONTROL_API = 'https://cqmltfugtl.execute-api.us-west-2.amazonaws.com/prod';
+            // Authentication.ACCESS_CONTROL_API
+            let ACCESS_CONTROL_API = Authentication.ACCESS_CONTROL_API();
             let url = ACCESS_CONTROL_API + '/acm/revokeCheckout/' + row.acm_name + '?key=' + row.now_out_key;
 
             var request = {
                 url: url,
-                headers: {Authorization: CognitoWrapper.getIdToken()}
+                headers: {Authorization: Authentication.getIdToken()}
             }
             $.ajax(request)
                 .done((result)=>{
@@ -199,9 +200,11 @@ CheckoutPage = (function () {
      */
     function refreshData() {
         // API Gateway call to listAcmCheckouts.
-        var url = 'https://7z4pu4vzqk.execute-api.us-west-2.amazonaws.com/prod';
+        // Authentication.LIST_CHECKOUTS
+        // var url = 'https://7z4pu4vzqk.execute-api.us-west-2.amazonaws.com/prod';
+        let url = Authentication.LIST_CHECKOUTS();
 
-        var user = User.getUserAttributes();
+        var user = Authentication.getUserAttributes();
         var input = {username: user.username, email: user.email};
 
         Main.incrementWait();
@@ -218,7 +221,7 @@ CheckoutPage = (function () {
                 url: url,
                 type: 'get',
                 dataType: 'json',
-                headers: {Authorization: CognitoWrapper.getIdToken()}
+                headers: {Authorization: Authentication.getIdToken()}
             }
 
             $.ajax(request)

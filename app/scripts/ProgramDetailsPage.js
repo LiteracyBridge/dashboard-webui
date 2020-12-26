@@ -1,5 +1,5 @@
 /* jshint esversion:6, asi:true */
-/* global $, User, CognitoWrapper,console, Main, ProgramDetailsData, DataTable, Chart, ProgramPicker, Utils */
+/* global $, Authentication, console, Main, ProgramDetailsData, DataTable, Chart, ProgramPicker, Utils */
 
 let ProgramDetailsPage = function () {
     'use strict';

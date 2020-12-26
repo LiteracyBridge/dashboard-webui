@@ -2,7 +2,7 @@
  * Created by bill on 8/4/17.
  */
 /* jshint undef:true, esversion:6, asi:true */
-/* globals console, $, DataTable, Main, User, DropdownButton, ProgramDetailsData */
+/* globals console, $, DataTable, Main, Authentication, DropdownButton, ProgramDetailsData */
 
 var InventoryPage = InventoryPage || {};
 

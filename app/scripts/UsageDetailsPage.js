@@ -3,7 +3,7 @@
 $,
 BootstrapDialog,
 Chart,
-CognitoWrapper,
+Authentication,
 DataTable,
 DataTable,
 DropdownButton,
@@ -12,7 +12,6 @@ ProgramDetailsData,
 ProgramPicker,
 Sortable,
 StatisticsData,
-User,
 Utils,
 console,
 */
@@ -473,10 +472,10 @@ UsageDetailsPage = function () {
      * @returns {*|jQuery}
      */
     function get2() {
-        let url = 'https://y06knefb5j.execute-api.us-west-2.amazonaws.com/Devo';
+        let url = Authentication.STATS_QUERY();
         var deferred = $.Deferred();
 
-        var user = User.getUserAttributes();
+        var user = Authentication.getUserAttributes();
         var payload = {
             username: user.username,
             email: user.email
@@ -487,7 +486,7 @@ UsageDetailsPage = function () {
             // dataType: 'json',
             // data: payload,
             headers: {
-                Authorization: CognitoWrapper.getIdToken(),
+                Authorization: Authentication.getIdToken(),
                 'Accept': 'application/json'
             }
         };
@@ -564,7 +563,7 @@ UsageDetailsPage = function () {
     function show() {
         if (!initialized) {
             initialized = true;
-            let user = User.getUserAttributes();
+            let user = Authentication.getUserAttributes();
             if (user && user.email && user.email.startsWith('bill@amplio')) {
                 $('#usage-test-query').on('click', () => {
                     get3()

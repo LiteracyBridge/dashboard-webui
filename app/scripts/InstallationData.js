@@ -1,5 +1,5 @@
 /* jshint esversion:6, asi:true*/
-/* global $, console, Main, User, Utils, moment, ProgramDetailsData */
+/* global $, console, Main, Authentication, Utils, moment, ProgramDetailsData */
 
 let InstallationData = function () {
     'use strict';

@@ -1,5 +1,5 @@
 /* jshint esversion:6, asi:true */
-/* global $, DataTable, DropdownButton, StatisticsData, User, CognitoWrapper,console, Main, ProgramDetailsData,
+/* global $, DataTable, DropdownButton, StatisticsData, Authentication,console, Main, ProgramDetailsData,
    DataTable, Chart, moment, ProgramSpecificationData, ProgramSpecificationDownloader, ProgramPicker, Utils, UsageQueries,
     LocalFileLoader, BootstrapDialog */
 

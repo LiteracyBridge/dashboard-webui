@@ -2,7 +2,7 @@
  * Created by bill on 10/23/17.
  */
 /* jshint undef:true, esversion:6, asi:true */
-/* globals console, $, DropdownButton, DataTable, Main, User, Chart, ProgramPicker, ProgramDetailsData, InstallationData, Utils, moment */
+/* globals console, $, DropdownButton, DataTable, Main, Authentication, Chart, ProgramPicker, ProgramDetailsData, InstallationData, Utils, moment */
 
 var InstallationDetailPage = InstallationDetailPage || {};
 

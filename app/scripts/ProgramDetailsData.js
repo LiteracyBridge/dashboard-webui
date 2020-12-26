@@ -1,5 +1,5 @@
 /* jshint esversion:6, asi:true */
-/* global $, console, Main, User, Utils, moment */
+/* global $, console, Main, Authentication, Utils, moment */
 
 
 let ProgramDetailsData = function () {

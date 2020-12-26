@@ -1,14 +1,11 @@
 /* jshint esversion:6, asi:true */
-/* global $, User, CognitoWrapper,console, Main, ProgramDetailsData, DataTable, Chart, ProgramPicker, Utils */
+/* global $, Authentication,console, Main, ProgramDetailsData, DataTable, Chart, ProgramPicker, Utils */
 
 var StatisticsData = StatisticsData || {};
 
 StatisticsData = (function () {
 
     'use strict';
-
-    let statsUrl = 'https://y06knefb5j.execute-api.us-west-2.amazonaws.com/Devo'
-    let twbxUrl = 'https://lkh9z46j7e.execute-api.us-west-2.amazonaws.com/prod'
 
     function query(url, path, queryParameters, data) {
         let queryKeys = Object.keys(queryParameters || {});
@@ -28,7 +25,7 @@ StatisticsData = (function () {
             type: 'get',
             contentType: 'text/plain',
             headers: {
-                Authorization: CognitoWrapper.getIdToken(),
+                Authorization: Authentication.getIdToken(),
                 'Accept': 'application/json'
             }
         }
@@ -49,6 +46,8 @@ StatisticsData = (function () {
             path += '/' + deployment
         }
 
+        let statsUrl = Authentication.STATS_QUERY();
+
         query(statsUrl, path, {cols: columns.join(',')})
             .done(result => {
                 if (result.errorMessage) {
@@ -67,6 +66,7 @@ StatisticsData = (function () {
 
     function getProgramList() {
         let deferred = $.Deferred()
+        let statsUrl = Authentication.STATS_QUERY();
         query('statsUrl', '/projects')
             .done(result => {
                 if (result.errorMessage) {
@@ -82,6 +82,7 @@ StatisticsData = (function () {
 
     function getWorkbookLinks(program) {
         let deferred = $.Deferred()
+        let twbxUrl = Authentication.TWBX();
         // let url = twbxUrl + '/getlinks?all=1&program=' + program;
         query(twbxUrl, '/getlinks', {'all': 1, 'program': program})
             .done(result => {
@@ -95,6 +96,7 @@ StatisticsData = (function () {
 
     function refreshWorkbook(program) {
         let deferred = $.Deferred()
+        let twbxUrl = Authentication.TWBX();
         // let url = twbxUrl + '/refresh?program=' + program;
         query(twbxUrl, '/refresh', {'program': program})
             .done(result => {
@@ -108,6 +110,7 @@ StatisticsData = (function () {
 
     function removeWorkbookPreviews(program) {
         let deferred = $.Deferred()
+        let twbxUrl = Authentication.TWBX();
         // let url = twbxUrl + '/removePreviews?program=' + program;
         query(twbxUrl, '/removePreviews', {'program': program})
             .done(result => {
@@ -121,6 +124,7 @@ StatisticsData = (function () {
 
     function uploadWorkbook(program, comment, filename, data) {
         let deferred = $.Deferred();
+        let twbxUrl = Authentication.TWBX();
         query(twbxUrl, 'upload', {'program': program, 'comment': comment, 'filename': filename}, data)
             .done(result => {
                 result = result.result;

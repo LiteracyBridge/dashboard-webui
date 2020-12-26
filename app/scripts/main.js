@@ -2,7 +2,7 @@
  * Created by bill on 3/2/17.
  */
 /* jshint undef:true, esversion:6, asi:true */
-/* globals console, $, ProgramDetailsData, RolesData, BootstrapDialog, User, AWS, CognitoWrapper, URLSearchParams */
+/* globals console, $, ProgramDetailsData, RolesData, BootstrapDialog, AWS, Authentication, URLSearchParams */
 
 var Main = Main || {};
 
@@ -158,51 +158,51 @@ Main = (function () {
 
     function onSignedIn() {
         function setGreeting() {
-            var attributes = User.getUserAttributes();
-            var greeting = attributes['custom:greeting'] || attributes.email;
+            var attributes = Authentication.getUserAttributes();
+            var greeting = attributes['name'] || attributes.email;
             if (greeting) {
                 $('#greeting').text(greeting);
             }
         }
-        $('body').on('custom:greeting', setGreeting);
+        $('body').on('name', setGreeting);
         setGreeting();
 
-        let programsPromise = RolesData.getPrograms();
-
         getApplicationPath().then(() => {
-            programsPromise.done(rolesList => {
-                userRoles = rolesList;
-                // Is the user an admin for any program?
-                userPrograms = Object.keys(userRoles).sort();
-                userAdmin = userPrograms.filter(p=>userRoles[p].indexOf('AD')>=0||userRoles[p].indexOf('*')>=0);
-                _isAdmin = userAdmin.length > 0;
-                if (_isAdmin) {
-                    $('#admin-menu').removeClass('hidden');
-                }
-                // Enable Bootstrap tabbing.
-                $('#main-nav a.main-nav').on('click', function (e) {
-                    e.preventDefault();
-                    $(this).tab('show')
-                });
-                $('#splash h3').removeClass('invisible');
-
-                let gotoPage = ';';
-                if (initialParams && (initialParams.get(PAGE_PARAM) || initialParams.get('q'))) {
-                    let tab = initialParams.get(PAGE_PARAM) || initialParams.get('q');
-                    let longPage = shortToLong[tab] || tab;
-                    if (tab) {
-                        gotoPage = longPage;
-                    }
-                } else if (initialHash) {
-                    gotoPage = initialHash;
-                }
-                if (gotoPage && adminPages.indexOf(gotoPage) < 0 || _isAdmin) {
-                    $('#main-nav a[href="#' + gotoPage + '"]').tab('show');
-                }
+            userRoles = {}
+            var attributes = Authentication.getUserAttributes();
+            attributes.programs.split(';')
+                .map(x=>x.split(':'))
+                .forEach(r=>userRoles[r[0]] = r[1]);
+            // Is the user an admin for any program?
+            userPrograms = Object.keys(userRoles).sort();
+            userAdmin = userPrograms.filter(p=>userRoles[p].indexOf('AD')>=0||userRoles[p].indexOf('*')>=0);
+            _isAdmin = userAdmin.length > 0;
+            if (_isAdmin) {
+                $('#admin-menu').removeClass('hidden');
+            }
+            // Enable Bootstrap tabbing.
+            $('#main-nav a.main-nav').on('click', function (e) {
+                e.preventDefault();
+                $(this).tab('show')
             });
+            $('#splash h3').removeClass('invisible');
+
+            let gotoPage = ';';
+            if (initialParams && (initialParams.get(PAGE_PARAM) || initialParams.get('q'))) {
+                let tab = initialParams.get(PAGE_PARAM) || initialParams.get('q');
+                let longPage = shortToLong[tab] || tab;
+                if (tab) {
+                    gotoPage = longPage;
+                }
+            } else if (initialHash) {
+                gotoPage = initialHash;
+            }
+            if (gotoPage && adminPages.indexOf(gotoPage) < 0 || _isAdmin) {
+                $('#main-nav a[href="#' + gotoPage + '"]').tab('show');
+            }
         });
 
-        var attributes = User.getUserAttributes();
+        var attributes = Authentication.getUserAttributes();
         if (!attributes.email_verified) {
             $('li.verify-email').removeClass('hidden');
         }
@@ -214,7 +214,7 @@ Main = (function () {
      * @param evt
      */
     function doSignout(evt) {
-        User.signout();
+        Authentication.signout();
         // Disable tabbing.
         $('#main-nav a.main-nav').off('click');
         // Re-show splash screen.
@@ -225,21 +225,21 @@ Main = (function () {
         // Whereas hidden takes things out of the flow.
         $('#admin-menu').addClass('hidden');
         $('li.verify-email').addClass('hidden');
-        User.authenticate().done(onSignedIn);
+        Authentication.authenticate().done(onSignedIn);
     }
 
     function doDeleteAccount() {
-        User.deleteAccount().then(doSignout);
+        Authentication.deleteAccount().then(doSignout);
     }
 
     function init() {
         getApplicationPath();
-        User.authenticate().done(onSignedIn);
+        Authentication.authenticate().done(onSignedIn);
         $('a#menu-signout').on('click', doSignout);
-        $('a#menu-change-password').on('click', User.changePassword);
-        $('a#menu-change-greeting').on('click', User.changeGreeting);
+        $('a#menu-change-password').on('click', Authentication.changePassword);
+        $('a#menu-change-greeting').on('click', Authentication.changeGreeting);
         $('a#menu-delete-account').on('click', doDeleteAccount);
-        $('a#menu-verify-email').on('click', User.verifyEmail);
+        $('a#menu-verify-email').on('click', Authentication.verifyEmail);
 
         $('[data-toggle="tooltip"]').tooltip();
     }
