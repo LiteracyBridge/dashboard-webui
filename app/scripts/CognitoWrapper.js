@@ -38,23 +38,6 @@ CognitoWrapper = (function () {
     }
 
     function CognitoHelper(configInfo) {
-        // const REGION = 'us-west-2';
-        // const IDENTITY_POOL_ID = 'us-west-2:a544b58b-8be0-46db-aece-e6fe14d29124';
-        // const USER_POOL_ID = 'us-west-2_6EKGzq75p';
-        // const CLIENT_ID = '5h9tg11mb73p4j2ca1oii7bhkn';
-
-        // Test pool
-        // var REGION = 'us-west-2';
-        // var USER_POOL_ID = 'us-west-2_x2lqWbAq6';
-        // var CLIENT_ID = '66fiihue6qtttbh3c1g3iqs1i6';
-        //
-        // var ACCESS_CONTROL_API = 'https://cqmltfugtl.execute-api.us-west-2.amazonaws.com/prod';
-        // var LIST_CHECKOUTS = 'https://7z4pu4vzqk.execute-api.us-west-2.amazonaws.com/prod';
-        // let PROGRAM_SPEC = 'https://ftgnui9zvf.execute-api.us-west-2.amazonaws.com/PROD';
-        // let ROLES = 'https://1cr03lc4tl.execute-api.us-west-2.amazonaws.com/PROD';
-        // let STATS_QUERY = 'https://y06knefb5j.execute-api.us-west-2.amazonaws.com/Devo';
-        // let TWBX = 'https://lkh9z46j7e.execute-api.us-west-2.amazonaws.com/prod';
-
         var REGION, USER_POOL_ID, CLIENT_ID, ACCESS_CONTROL_API, LIST_CHECKOUTS, PROGRAM_SPEC, ROLES, STATS_QUERY, TWBX;
         // setConfig(AMPLIO_CONFIG);
 
@@ -89,7 +72,7 @@ CognitoWrapper = (function () {
         // Currently unused AWS credential management. (Using CognitoWrapper only.)
         //
         // The code, here and in functions below, that starts with AWS. are for getting AWS
-        // credentials from a CognitoWrapper sign in. If we're not using AWS proper, but just the
+        // credentials from a CognitoWrapper login. If we're not using AWS proper, but just the
         // API Gateway, we don't need AWS, and can save 900K of the minimized code size!
         // However, if we do ever need AWS, say for S3, then we'll need to add this back.
         // AWS.config.region = REGION;
@@ -98,7 +81,7 @@ CognitoWrapper = (function () {
         // });
         // --------------------------------------------------------------------------------------
 
-        function signIn(options) {
+        function login(options) {
             let deferred = $.Deferred();
             let username = options.username;
             let password = options.password;
@@ -119,7 +102,7 @@ CognitoWrapper = (function () {
                 onSuccess: function (result) {
 
                     idToken = result.idToken.getJwtToken();
-                    console.log('SignIn, JWT Params:')
+                    console.log('Login, JWT Params:')
                     console.log(getJwtParams());
                     deferred.resolve();
 
@@ -545,7 +528,7 @@ CognitoWrapper = (function () {
         setConfig(configInfo);
 
         return {
-            signIn: signIn,
+            login: login,
             createAccount: createAccount,
             confirmRegistration: confirmRegistration,
             resendConfirmationCode: resendConfirmationCode,

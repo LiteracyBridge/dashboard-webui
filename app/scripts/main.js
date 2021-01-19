@@ -210,10 +210,10 @@ Main = (function () {
     }
 
     /**
-     * Sign out the user, and reset the UI.
+     * Logout the user, and reset the UI.
      * @param evt
      */
-    function doSignout(evt) {
+    function doLogout(evt) {
         Authentication.signout();
         // Disable tabbing.
         $('#main-nav a.main-nav').off('click');
@@ -229,13 +229,13 @@ Main = (function () {
     }
 
     function doDeleteAccount() {
-        Authentication.deleteAccount().then(doSignout);
+        Authentication.deleteAccount().then(doLogout);
     }
 
     function init() {
         getApplicationPath();
         Authentication.authenticate().done(onSignedIn);
-        $('a#menu-signout').on('click', doSignout);
+        $('a#menu-logout').on('click', doLogout);
         $('a#menu-change-password').on('click', Authentication.changePassword);
         $('a#menu-change-greeting').on('click', Authentication.changeGreeting);
         $('a#menu-delete-account').on('click', doDeleteAccount);

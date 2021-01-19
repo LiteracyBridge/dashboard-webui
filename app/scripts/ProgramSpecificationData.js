@@ -4,10 +4,8 @@
 var ProgramSpecificationData = function () {
     'use strict';
 
-    // Authentication.PROGRAM_SPEC
-    let URL = 'https://ftgnui9zvf.execute-api.us-west-2.amazonaws.com/PROD';
-
     function makeRequest(path, data) {
+        let URL = Authentication.PROGRAM_SPEC();
         if (path.length>0 && path[path.length-1] !== '/') {
             path = '/' + path;
         }

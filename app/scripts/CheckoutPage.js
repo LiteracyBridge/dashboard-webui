@@ -200,8 +200,6 @@ CheckoutPage = (function () {
      */
     function refreshData() {
         // API Gateway call to listAcmCheckouts.
-        // Authentication.LIST_CHECKOUTS
-        // var url = 'https://7z4pu4vzqk.execute-api.us-west-2.amazonaws.com/prod';
         let url = Authentication.LIST_CHECKOUTS();
 
         var user = Authentication.getUserAttributes();

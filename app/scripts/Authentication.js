@@ -26,12 +26,12 @@ let Authentication = (function () {
      * input fields, including passwords. Passwords won't autocorrect or autocapitalize,
      * but user may turn on "show passwords", which turns them to text fields.
      */
-    const signInHtml = `<div id="auth-dialog" class="auth-dialog">
+    const loginHtml = `<div id="auth-dialog" class="auth-dialog">
     <form class="panel panel-default">
       <div class="panel-body container-fluid">
             <div>
                 <input id="username" type="text" class="form-control"
-                       placeholder="User Name or Email Address"
+                       placeholder="Email Address"
                        aria-describedby="basic-addon1" autofocus
                        autocorrect="off" autocapitalize="none">
                 <input id="password" type="password" class="password form-control"
@@ -55,7 +55,7 @@ let Authentication = (function () {
         </div>
         <div class="panel-body container-fluid no-pad-top">
             <div class="btn-group" role="group">
-                <button id="do-signin" type="submit" class="btn btn-default nested-tab">Sign In</button>
+                <button id="do-login" type="submit" class="btn btn-default nested-tab">Login</button>
             </div>
             <div class="btn-group pull-right" role="group">
                 <button id="create-account" type="button"
@@ -127,7 +127,7 @@ let Authentication = (function () {
          <If your email address is @literacybridge.org or @centreforbcc.com, you can get an account
          automatically. If your email address is @ something else, contact your administrator to add your email
          address to the system first.
-        <p>When you sign in, you can use your email address, or your user name.</p>
+        <p>When you login, use your email address.</p>
         `;
 
     const changePasswordHtml = `<div class="auth-dialog">
@@ -175,7 +175,7 @@ let Authentication = (function () {
             <div>
                 <p>Are you sure you want to delete your account? This can not be un-done, however, no data
                 will be lost or removed. You can recreate your account again later.</p>
-                <p>Note that this is only the account used to sign in to the Dashboard and TB-Loader, and is
+                <p>Note that this is only the account used to login to the Dashboard and TB-Loader, and is
                  completely independent of any email or computer account.</p>
             </div>
         </div>
@@ -892,20 +892,20 @@ let Authentication = (function () {
     }
 
     /**
-     * Handler for the sign-in dialog.
-     * @returns {*} A promise that is resolved when (if) the sign in is successful.
+     * Handler for the login dialog.
+     * @returns {*} A promise that is resolved when (if) the login is successful.
      */
-    function signinDialog() {
+    function loginDialog() {
         let retryCount = 0;
 
         /**
-         * Helper to sign in after credentials entered, password reset, or account created.
+         * Helper to login after credentials entered, password reset, or account created.
          */
-        function cognitoSignin(trialHelper) {
+        function cognitoLogin(trialHelper) {
             let cgHelper = trialHelper || cognitoHelper;
-            alerter.notify('Signing in...');
+            alerter.notify('Logging in...');
             Main.incrementWait();
-            cgHelper.signIn({username: username, password: password})
+            cgHelper.login({username: username, password: password})
                 .done((result => {
                     Main.decrementWait();
                     persist();
@@ -922,20 +922,20 @@ let Authentication = (function () {
                     if (err.code === 'NotAuthorizedException' && err.message.startsWith('Logins don\'t match') && retryCount === 0) {
                         alerter.notify('Retrying...');
                         retryCount++;
-                        cognitoSignin(cgHelper);
+                        cognitoLogin(cgHelper);
                         return;
                     }
-                    const msg = (err && err.message || err) || 'Error signing in.';
+                    const msg = (err && err.message || err) || 'Error logging in.';
                     if (err.code === 'PasswordResetRequiredException') {
                         alerter.error(msg);
                         doResetPassword().done(() => {
-                            cognitoSignin(cgHelper);
+                            cognitoLogin(cgHelper);
                         });
                     } else {
                         // If we're not already, try with the fallback cognito info. If that works, keep the fallback.
                         if (cgHelper === cognitoHelper) {
                             let fallbackHelper = CognitoWrapper.cognitoHelper(CognitoWrapper.FALLBACK_CONFIG);
-                            fallbackHelper.signIn({username: username, password: password})
+                            fallbackHelper.login({username: username, password: password})
                                 .done((result) => {
                                     cognitoHelper = fallbackHelper;
                                     persist();
@@ -943,7 +943,7 @@ let Authentication = (function () {
                                     promise.resolve();
                                 })
                                 .fail((err) => {
-                                    const msg = (err && err.message || err) || 'Error signing in.';
+                                    const msg = (err && err.message || err) || 'Error logging in.';
                                     alerter.error(msg);
                                 });
                         } else {
@@ -956,7 +956,7 @@ let Authentication = (function () {
 
         var promise = $.Deferred();
 
-        const $dialog = $(signInHtml);
+        const $dialog = $(loginHtml);
         var alerter = addNotificationArea($('.panel-footer', $dialog));
         addPasswordUtils($dialog);
 
@@ -972,14 +972,13 @@ let Authentication = (function () {
             rememberMe = $('#remember-me', $dialog).prop('checked');
         });
         $('#create-account', $dialog).on('click', () => {
-            doCreateAccount().done(cognitoSignin);
+            doCreateAccount().done(cognitoLogin);
         });
-        // $('#do-signin', $dialog).on('submit', () => {
         $('form', $dialog).on('submit', (evt) => {
             console.log('submit');
             username = $('#username', $dialog).val();
             password = $('#password', $dialog).val();
-            cognitoSignin();
+            cognitoLogin();
             evt.preventDefault();
         });
         $('#forgot-password', $dialog).on('click', () => {
@@ -990,7 +989,7 @@ let Authentication = (function () {
                 return;
             }
             cognitoHelper.forgotPassword({username: username}).then(() => {
-                doResetPassword().then(cognitoSignin);
+                doResetPassword().then(cognitoLogin);
             }, (err) => {
                 alerter.error(err.message || 'Error resetting password')
             })
@@ -999,7 +998,7 @@ let Authentication = (function () {
         fixTabOrdering($dialog);
 
         const options = {
-            title: 'Dashboard Sign In',
+            title: 'Dashboard Login',
             message: $dialog,
             closable: false,
             draggable: true,
@@ -1011,7 +1010,7 @@ let Authentication = (function () {
         let dialog = BootstrapDialog.show(options);
 
         if (username && password) {
-            cognitoSignin()
+            cognitoLogin()
         }
 
         return promise;
@@ -1052,7 +1051,7 @@ let Authentication = (function () {
             }
 
             authenticationPromise = $.Deferred();
-            const signin = $.Deferred();
+            const login = $.Deferred();
 
             // userAttributes.email='bill@literacybridge.org';
             // userAttributes['name'] = 'TEST:bill';
@@ -1064,9 +1063,9 @@ let Authentication = (function () {
             Main.incrementWait();
 
             // When signed in, get the user attributes from our DynamoDB user database, and CognitoWrapper attributes.
-            signin.done(() => {
+            login.done(() => {
                 let booleanProperties = ['admin', 'email_verified', 'phone_number_verified'];
-                console.log('Signin done');
+                console.log('Login done');
                 let _userProperties = cognitoHelper.getJwtParams();
                 booleanProperties.forEach(prop=>{
                     if (_userProperties.hasOwnProperty(prop)) {
@@ -1089,11 +1088,11 @@ let Authentication = (function () {
             // Get us to a "signed-in" state.
             cognitoHelper.getCurrentUser().done(() => {
                 Main.decrementWait();
-                signin.resolve();
+                login.resolve();
             }).fail(() => {
                 Main.decrementWait();
-                signinDialog().done(() => {
-                    signin.resolve()
+                loginDialog().done(() => {
+                    login.resolve()
                 });
             });
 
@@ -1102,7 +1101,7 @@ let Authentication = (function () {
     }
 
     /**
-     * Sign out from CognitoWrapper, and reset user information, promises.
+     * Logout from CognitoWrapper, and reset user information, promises.
      */
     function doSignout() {
         userAttributes = {};
