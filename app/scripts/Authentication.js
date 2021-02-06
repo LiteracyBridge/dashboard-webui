@@ -92,11 +92,11 @@ let Authentication = (function () {
                        aria-describedby="basic-addon1"
                        autocorrect="off" autocapitalize="none"-->
                 <input id="newpassword" type="password" class="password newpassword form-control"
-                       placeholder="Passw0rd!"
+                       placeholder="Password"
                        aria-describedby="basic-addon1"
                        autocorrect="off" autocapitalize="none" autocomplete="new-password">
                 <!--input id="newpassword2" type="password" class="password newpassword form-control"
-                       placeholder="Repeat Passw0rd!"
+                       placeholder="Repeat Password"
                        aria-describedby="basic-addon1"
                        autocorrect="off" autocapitalize="none" autocomplete="new-password"-->
                 <span>
@@ -138,15 +138,15 @@ let Authentication = (function () {
         <div class="panel-body container-fluid">
             <div>
                 <input id="oldpassword" type="password" class="password form-control"
-                       placeholder="Current Passw0rd!"
+                       placeholder="Current Password"
                        aria-describedby="basic-addon1" autofocus
                        autocorrect="off" autocapitalize="none">
                 <input id="newpassword" type="password" class="password newpassword form-control"
-                       placeholder="New Passw0rd!"
+                       placeholder="New Password"
                        aria-describedby="basic-addon1"
                        autocorrect="off" autocapitalize="none">
                 <input id="newpassword2" type="password" class="password newpassword form-control"
-                       placeholder="Repeat Passw0rd!"
+                       placeholder="Repeat Password"
                        aria-describedby="basic-addon1"
                        autocorrect="off" autocapitalize="none">
                 <span>
@@ -223,11 +223,11 @@ let Authentication = (function () {
                 the Passwrd Reset Code from the server. If you do not have a Password Reset Code,
                 please contact the administrator.</p>
             <input id="newpassword"  type="password" class="password newpassword form-control"
-                   placeholder="Passw0rd!"
+                   placeholder="Password"
                    aria-describedby="basic-addon1" autofocus
                    autocorrect="off" autocapitalize="none" autocomplete="new-password">
             <input id="newpassword2"  type="password" class="password newpassword form-control"
-                   placeholder="Repeat Passw0rd!"
+                   placeholder="Repeat Password"
                    aria-describedby="basic-addon1"
                    autocorrect="off" autocapitalize="none" autocomplete="new-password">
 
