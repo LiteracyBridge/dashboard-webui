@@ -897,6 +897,7 @@ let Authentication = (function () {
      */
     function loginDialog() {
         let retryCount = 0;
+        let fallbackEnabled = false;
 
         /**
          * Helper to login after credentials entered, password reset, or account created.
@@ -933,7 +934,7 @@ let Authentication = (function () {
                         });
                     } else {
                         // If we're not already, try with the fallback cognito info. If that works, keep the fallback.
-                        if (cgHelper === cognitoHelper) {
+                        if (cgHelper === cognitoHelper && fallbackEnabled) {
                             let fallbackHelper = CognitoWrapper.cognitoHelper(CognitoWrapper.FALLBACK_CONFIG);
                             fallbackHelper.login({username: username, password: password})
                                 .done((result) => {
