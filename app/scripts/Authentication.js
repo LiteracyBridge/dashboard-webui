@@ -822,7 +822,15 @@ let Authentication = (function () {
 
             }, function rejected(err) {
                 // There was an error. Show it, but don't close the dialog.
-                alerter.error(err.message || 'Error creating account.');
+
+                // This is the message that Amazon returns when a user submits a proposed user name containing a space.
+                // "1 validation error detected: Value at 'username' failed to satisfy constraint: Member must satisfy regular expression pattern: [\\p{L}\\p{M}\\p{S}\\p{N}\\p{P}]+" = $1
+                // We'll substitute a more understandable message. Because we use email for the user id, we'll use that terminology.
+                let msg = err.message || 'Error creating account.'
+                if (err.message && err.message.includes('must satisfy regular expression')) {
+                    msg = 'The Email Address may not contain spaces.'
+                }
+                alerter.error(msg);
             });
         });
         fixTabOrdering($dialog);
