@@ -95,6 +95,11 @@ let UsageQueryBuilder = function () {
             tooltip: 'The unique identifier of an individual Talking Book',
             aggregateBase: 'Talking Books',
         }), ColumnDef({
+            name: 'deployment_uuid',
+            heading: 'Deployment ID',
+            tooltip: 'A unique ID associated with a single deployment to an individual Talking Book',
+            aggregateBase: 'Deployment IDs',
+        }), ColumnDef({
             name: 'category',
             heading: 'Category',
             tooltip: 'In what playlist category was the message published?',
@@ -150,6 +155,11 @@ let UsageQueryBuilder = function () {
             name: 'timestamp',
             heading: 'Collection Time',
             tooltip: 'When were the statistics in this line collected?',
+            type: 'date',
+        }), ColumnDef({
+            name: 'deployment_timestamp',
+            heading: 'Deployment Time',
+            tooltip: 'When was the content deployed to the Talking Book?',
             type: 'date',
         }), ColumnDef({
             name: 'played_seconds',
@@ -278,6 +288,7 @@ let UsageQueryBuilder = function () {
             groupname: 'g',
             agent: 'a',
             talkingbookid: 't',
+            deployment_uuid: 'dd',
             category: 'ca',
             contentid: 'con',
             title: 'ti',
@@ -285,6 +296,7 @@ let UsageQueryBuilder = function () {
             duration_seconds: 'du',
             position: 'p',
             timestamp: 'tim',
+            deployment_timestamp: 'tid',
             played_seconds: 'pl',
             completions: 'comp',
             threequarters: '3',
