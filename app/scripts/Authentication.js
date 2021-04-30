@@ -763,10 +763,14 @@ let Authentication = (function () {
 
             }, function rejected(err) {
                 // There was an error. Show it, but don't close the dialog.
-                alerter.error(err.message || 'Error changing password.');
+                // This is the message that Amazon returns when a user enters a new password with less than 6 characters: "1 validation error detected: Value at 'proposedPassword' failed to satisfy constraint: Member must have length greater than or equal to 6"
+                //Substituting this with a more user-friendly message
+                let msg=err.message || 'Error changing password.'
+                if (err.message && err.message.includes("Member must have length greater than or equal to 6")) {
+                    msg ='New password must have at least 6 characters'
+                }
+                alerter.error(msg);
             });
-
-
         });
 
         fixTabOrdering($dialog);
