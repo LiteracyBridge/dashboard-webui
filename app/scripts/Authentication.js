@@ -931,21 +931,6 @@ let Authentication = (function () {
                     /*
                      * For some reason, we sometimes the this error back, but simply retrying then works. So if we get
                      * this error, retry one time.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                      */
                     if (err.code === 'NotAuthorizedException' && err.message.startsWith('Logins don\'t match') && retryCount === 0) {
                         alerter.notify('Retrying...');
