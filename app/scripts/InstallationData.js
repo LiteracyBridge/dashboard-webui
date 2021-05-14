@@ -26,7 +26,7 @@ let InstallationData = function () {
             tbsdeployed = tbsdeployed.map((d) => {
                 d.deployedtimestamp = moment(d.deployedtimestamp);
                 d.newsn = csvTrue.test(d.newsn);
-                d.testing = csvTrue.test(d.testing)
+                d.testing = csvTrue.test(d.testing);
                 return d;
             });
             return tbsdeployed;
@@ -106,6 +106,8 @@ let InstallationData = function () {
                 r.num_HHs = Number(r.numhouseholds);
                 r.num_TBs = Number(r.numtbs);
                 r.languagecode = r.languagecode || r.language;
+                r.model = r.model || r.listening_model || '';
+                r.listening_model = r.model;
                 delete r.language;
                 return r;
             });
