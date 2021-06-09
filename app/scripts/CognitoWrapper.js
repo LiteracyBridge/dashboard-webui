@@ -11,19 +11,6 @@ var CognitoWrapper;
 CognitoWrapper = (function () {
     'use strict';
 
-    const FALLBACK_CONFIG = {
-        REGION: 'us-west-2',
-        USER_POOL_ID: 'us-west-2_6EKGzq75p',
-        CLIENT_ID: '5h9tg11mb73p4j2ca1oii7bhkn',
-
-        ACCESS_CONTROL_API: 'https://cqmltfugtl.execute-api.us-west-2.amazonaws.com/prod',
-        LIST_CHECKOUTS: 'https://7z4pu4vzqk.execute-api.us-west-2.amazonaws.com/prod',
-        PROGRAM_SPEC: 'https://ftgnui9zvf.execute-api.us-west-2.amazonaws.com/PROD',
-        ROLES: 'https://1cr03lc4tl.execute-api.us-west-2.amazonaws.com/PROD',
-        STATS_QUERY: 'https://y06knefb5j.execute-api.us-west-2.amazonaws.com/Devo',
-        TWBX: 'https://lkh9z46j7e.execute-api.us-west-2.amazonaws.com/prod',
-
-    }
     const AMPLIO_CONFIG = {
         REGION: 'us-west-2',
         USER_POOL_ID: 'us-west-2_3evpQGyi5',
@@ -558,7 +545,6 @@ CognitoWrapper = (function () {
 
     return {
         cognitoHelper: CognitoHelper,
-        AMPLIO_CONFIG: AMPLIO_CONFIG,
-        FALLBACK_CONFIG: FALLBACK_CONFIG
+        AMPLIO_CONFIG: AMPLIO_CONFIG
     }
 })();

@@ -766,7 +766,7 @@ let Authentication = (function () {
                 // This is the message that Amazon returns when a user enters a new password with less than 6 characters: "1 validation error detected: Value at 'proposedPassword' failed to satisfy constraint: Member must have length greater than or equal to 6"
                 //Substituting this with a more user-friendly message
                 let msg=err.message || 'Error changing password.'
-                if (err.message && err.message.includes("Member must have length greater than or equal to 6")) {
+                if (err.message && err.message.includes('Member must have length greater than or equal to 6')) {
                     msg ='New password must have at least 6 characters'
                 }
                 alerter.error(msg);
@@ -909,16 +909,14 @@ let Authentication = (function () {
      */
     function loginDialog() {
         let retryCount = 0;
-        let fallbackEnabled = false;
 
         /**
          * Helper to login after credentials entered, password reset, or account created.
          */
-        function cognitoLogin(trialHelper) {
-            let cgHelper = trialHelper || cognitoHelper;
+        function cognitoLogin() {
             alerter.notify('Logging in...');
             Main.incrementWait();
-            cgHelper.login({username: username, password: password})
+            cognitoHelper.login({username: username, password: password})
                 .done((result => {
                     Main.decrementWait();
                     persist();
@@ -935,44 +933,22 @@ let Authentication = (function () {
                     if (err.code === 'NotAuthorizedException' && err.message.startsWith('Logins don\'t match') && retryCount === 0) {
                         alerter.notify('Retrying...');
                         retryCount++;
-                        cognitoLogin(cgHelper);
+                        cognitoLogin();
                         return;
                     }
-                    const msg = (err && err.message || err) || 'Error logging in.';
+                    let msg = (err && err.message || err) || 'Error logging in.';
                     if (err.code === 'PasswordResetRequiredException') {
                         alerter.error(msg);
                         doResetPassword().done(() => {
-                            cognitoLogin(cgHelper);
+                            cognitoLogin();
                         });
                     } else {
-                        // If we're not already, try with the fallback cognito info. If that works, keep the fallback.
-                        if (cgHelper === cognitoHelper && fallbackEnabled) {
-                            let fallbackHelper = CognitoWrapper.cognitoHelper(CognitoWrapper.FALLBACK_CONFIG);
-                            fallbackHelper.login({username: username, password: password})
-                                .done((result) => {
-                                    cognitoHelper = fallbackHelper;
-                                    persist();
-                                    dialog.close();
-                                    promise.resolve();
-                                })
-                                .fail((err) => {
-                                    const msg = (err && err.message || err) || 'Error logging in.');
-                                });
-                        }, function rejected(err) {
-                            // This is the message that Amazon returns when a user submits a proposed user name containing a space.
-                            // "Error:2 validation errors detected: Value 'abc xyz' at 'userName' failed to satisfy constraint: Member must satisfy regular expression pattern: [\p{L}\p{M}\p{S}\p{N}\p{P}]+; Value 'abc xyz' at 'userAlias' failed to satisfy constraint: Member must satisfy regular expression pattern: [\p{L}\p{M}\p{S}\p{N}\p{P}]+"
-                            // We'll substitute with an easy to understand message.
-                            let msg = err.message || 'Error logging in.'
-                            if (err.message && err.message.includes('must satisfy regular expression')) {
-                                msg = 'Invalid email address'
-                                // Set focus on username
-                                $('#username', $dialog).focus();
-                            }
-                            alerter.error(msg);
-                         }
-                        else {
-                            alerter.error(msg);
+                        if (err.message && err.message.includes('must satisfy regular expression')) {
+                            msg = 'Invalid email address'
+                            // Set focus on username
+                            $('#username', $dialog).focus();
                         }
+                        alerter.error(msg);
                     }
                 });
         }
