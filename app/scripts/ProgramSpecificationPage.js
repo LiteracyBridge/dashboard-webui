@@ -70,7 +70,6 @@ var ProgramSpecificationPage = function () {
             return;
         }
         fillDone = true;
-        let programsList = Main.getProgramsForUser();
         function onProgramSelected(evt, proj) {
             var program = programsDropdown.selection();
             if (program) {
@@ -79,7 +78,7 @@ var ProgramSpecificationPage = function () {
         }
 
         var options = {
-            programs: programsList,
+            programs: Main.dropdownProgramsList(),
             defaultProgram: currentProgram
         };
         var $elem = $('#program-specification-project-placeholder');

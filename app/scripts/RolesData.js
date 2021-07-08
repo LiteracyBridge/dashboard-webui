@@ -93,7 +93,7 @@ RolesData = (function () {
                 if (result.errorMessage) {
                     deferred.reject(result.errorMessage);
                 } else {
-                    let projects = result.result.output;
+                    let projects = result.result;
                     deferred.resolve(projects);
                 }
             })

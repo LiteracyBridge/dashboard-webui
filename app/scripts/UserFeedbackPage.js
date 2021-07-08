@@ -48,7 +48,8 @@ UserFeedbackPage = (function () {
                 // { proj1 : { deployment1: uf-acmname1, deployment2: uf-acmname2, ...},
                 //   proj2 : { deployment3: uf-acmname3, deployment4: uf-acmname4, ...}, ...
 
-                var projectNames = Object.keys(feedbackByProject);
+                // Build the list with friendly names for labels. What we currently have is program ids, so add the names.
+                var projectNames = Object.keys(feedbackByProject).map((id)=>( {label: Main.getProgramNameForProgram(id), 'value':id}));
 
                 function getDeploymentsForProgram(proj) {
                     var promise = $.Deferred();

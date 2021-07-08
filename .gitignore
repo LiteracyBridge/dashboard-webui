@@ -6,3 +6,5 @@ test/bower_components
 .idea/
 .DS_Store
 vendor
+parked/
+.gradle

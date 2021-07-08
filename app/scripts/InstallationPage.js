@@ -85,7 +85,6 @@ InstallationPage = (function () {
         }
         fillDone = true;
         var preSelectDeployment = previousDeployment;
-        let programsList = Main.getProgramsForUser();
 
          function getDeploymentsForProgram(proj) {
             var promise = $.Deferred();
@@ -109,7 +108,7 @@ InstallationPage = (function () {
         }
 
         var options = {
-            programs: programsList,
+            programs: Main.dropdownProgramsList(),
             defaultProgram: previousProgram,
             getDeploymentsForProgram: getDeploymentsForProgram
         };

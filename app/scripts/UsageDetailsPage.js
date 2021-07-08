@@ -84,7 +84,6 @@ UsageDetailsPage = function () {
         }
         fillDone = true;
         var preSelectDeployment = currentDeployment;
-        let list = Main.getProgramsForUser();
 
         function getDeploymentsForProgram(proj) {
             var promise = $.Deferred();
@@ -109,7 +108,7 @@ UsageDetailsPage = function () {
         }
 
         var options = {
-            programs: list,
+            programs: Main.dropdownProgramsList(),
             defaultProgram: currentProject,
             getDeploymentsForProgram: getDeploymentsForProgram
         };

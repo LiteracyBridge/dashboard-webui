@@ -23,7 +23,7 @@ InventoryPage = (function () {
         }
         fillDone = true;
         var preSelectDeployment = previousDeployment;
-        let projectsList = Main.getProgramsForUser();
+        let projectsList = Main.dropdownProgramsList();
         var $elem = $('#inventory-project-placeholder');
         $elem.empty();
 

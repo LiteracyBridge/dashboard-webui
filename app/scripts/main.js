@@ -13,14 +13,16 @@ Main = (function () {
 
     var applicationPathPromise;
 
-    var allProjectsList;
-
-    // This will be a dictionary of {program : rolestr} where rolestr is a concatenation of one or more of
-    // *, AD, PM, CO, FO.
-    let userRoles = {};
-    let userPrograms = [];
-    let userAdmin = [];
+    // Does the user have an admin role in *any* program? If so, we'll show the admin menu items.
     let _isAdmin;
+
+    // Roles, friendly name, and repository of the user's programs.
+    let programsInfo = {};
+    // Map from (possibly decorated) friendly name back to program id.
+    let programNames2Id = {};
+    let programIds2Name = {};
+    // List of program ids and names, suitable for dropbdown program selection.
+    let dropdownProgramsList = []
 
     let PAGE_PARAM = 'pp';
 
@@ -40,38 +42,13 @@ Main = (function () {
     };
     let longToShort = {};
     let adminPages = ['checkout-page', 'roles-page'];
-    Object.keys(shortToLong).forEach(k=>longToShort[shortToLong[k]]=k);
+    Object.keys(shortToLong).forEach(k => longToShort[shortToLong[k]] = k);
 
 
     /**
      * Determines the path to statistics data. Uses trial-and-error.
      */
     function getApplicationPath() {
-        function parsePaths(list) {
-            // The projects list file is a .csv with data like:
-            // project,path
-            // UWR,UWR/
-            // MEDA,MEDA/
-            // ...
-            allProjectsList = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
-            allProjectsList.sort((a,b) => {
-                var nameA = a.project.toUpperCase(); // ignore upper and lowercase
-                var nameB = b.project.toUpperCase(); // ignore upper and lowercase
-                if (nameA < nameB) {
-                    return -1;
-                }
-                if (nameA > nameB) {
-                    return 1;
-                }
-
-                // names must be equal
-                return 0;
-            });
-            // Test ACMs at the end
-            allProjectsList.push({project:'TEST',path:'TEST/'});
-            allProjectsList.push({project:'DEMO',path:'DEMO/'});
-        }
-
         if (!applicationPathPromise) {
             applicationPathPromise = $.Deferred();
             // We know the file 'project_list.csv' should exist in a 'data' directory. If we can find it
@@ -82,7 +59,6 @@ Main = (function () {
                 .then((data) => {
                     ROOT_PATH = '/dashboard-lb-stats/';
                     applicationPathPromise.resolve(ROOT_PATH);
-                    parsePaths(data);
                 }, (err) => {
                     // But, if we can't find the data at '/dashboard-lb-stats/...', maybe this is a test running
                     // locally on the dev's machine. In that case, try to find the data relative to where this
@@ -91,7 +67,6 @@ Main = (function () {
                         .then((data) => {
                             ROOT_PATH = '';
                             applicationPathPromise.resolve(ROOT_PATH);
-                            parsePaths(data);
                         }, (err) => {
                             applicationPathPromise.reject(err);
                         })
@@ -106,8 +81,10 @@ Main = (function () {
 
     function setParams(page, values) {
         let params = new URLSearchParams();
-        Object.keys(values).forEach(k=>{
-            if (k===PAGE_PARAM) {throw('parameter collision');}
+        Object.keys(values).forEach(k => {
+            if (k === PAGE_PARAM) {
+                throw('parameter collision');
+            }
             params.set(k, values[k]);
         });
         let shortPage = longToShort[page] || page;
@@ -121,20 +98,23 @@ Main = (function () {
     var waitCount = 0;
     let delayTime = 500;
     var delayTimeout;
+
     function delayedSpinner() {
         $('#wait-spinner').show();
         delayTimeout = null;
         //console.log('setting wait spinner');
     }
+
     function incrementWait(immediate) {
         if (waitCount++ === 0 && !immediate) {
             //console.log('setting wait spinner timeout');
-            delayTimeout =setTimeout(delayedSpinner, delayTime);
+            delayTimeout = setTimeout(delayedSpinner, delayTime);
         }
         if (immediate) {
             delayedSpinner();
         }
     }
+
     function decrementWait() {
         if (--waitCount === 0) {
             //console.log('clearing wait spinner timeout');
@@ -143,6 +123,7 @@ Main = (function () {
             $('#wait-spinner').hide();
         }
     }
+
     function clearWait() {
         //console.log('*clearing wait spinner timeout');
         waitCount = 0;
@@ -151,9 +132,57 @@ Main = (function () {
         $('#wait-spinner').hide();
     }
 
+    /**
+     * Given a program name, either a program id or a (possibly decorated) friendly name, return the program name.
+     * @param program name or id
+     * @returns the program name
+     */
+    function getProgramNameForProgram(program) {
+        return programIds2Name[program] ? programIds2Name[program] : program;
+    }
+
+    /**
+     * Given a program name, either a program id or a (possibly decorated) friendly name, return the program id.
+     * @param program name or id
+     * @returns the programid
+     */
+    function getProgramIdForProgram(program) {
+        return programsInfo[program] ? program : programNames2Id[program];
+    }
+
     function userHasRoleInProgram(role, program) {
-        let roles = userRoles[program];
-        return roles && roles.length && roles.indexOf(role) >= 0;
+        let programid = getProgramIdForProgram(program);
+        let roles = programid && programsInfo[programid] && programsInfo[programid].roles;
+        return roles && roles.length && (roles.indexOf(role) >= 0 || roles.indexOf('*') >= 0);
+    }
+
+    /**
+     * Finishes setting up the UI after login is complete.
+     */
+    function finishUiSetup() {
+        // Enable Bootstrap tabbing.
+        $('#main-nav a.main-nav').on('click', function (e) {
+            e.preventDefault();
+            $(this).tab('show')
+        });
+        $('#splash h3').removeClass('invisible');
+
+        let gotoPage = ';';
+        if (initialParams && (initialParams.get(PAGE_PARAM) || initialParams.get('q'))) {
+            let tab = initialParams.get(PAGE_PARAM) || initialParams.get('q');
+            let longPage = shortToLong[tab] || tab;
+            if (tab) {
+                gotoPage = longPage;
+            }
+        } else if (initialHash) {
+            gotoPage = initialHash;
+        }
+        if (gotoPage && adminPages.indexOf(gotoPage) < 0 || _isAdmin) {
+            $('#main-nav a[href="#' + gotoPage + '"]').tab('show');
+        }
+        if (_isAdmin) {
+            $('#admin-menu').removeClass('hidden');
+        }
     }
 
     function onSignedIn() {
@@ -167,39 +196,42 @@ Main = (function () {
         $('body').on('name', setGreeting);
         setGreeting();
 
-        getApplicationPath().then(() => {
-            userRoles = {}
-            var attributes = Authentication.getUserAttributes();
-            attributes.programs.split(';')
-                .map(x=>x.split(':'))
-                .forEach(r=>userRoles[r[0]] = r[1]);
-            // Is the user an admin for any program?
-            userPrograms = Object.keys(userRoles).sort();
-            userAdmin = userPrograms.filter(p=>userRoles[p].indexOf('AD')>=0||userRoles[p].indexOf('*')>=0);
-            _isAdmin = userAdmin.length > 0;
-            if (_isAdmin) {
-                $('#admin-menu').removeClass('hidden');
-            }
-            // Enable Bootstrap tabbing.
-            $('#main-nav a.main-nav').on('click', function (e) {
-                e.preventDefault();
-                $(this).tab('show')
-            });
-            $('#splash h3').removeClass('invisible');
+        let programsPromise = RolesData.getPrograms();
 
-            let gotoPage = ';';
-            if (initialParams && (initialParams.get(PAGE_PARAM) || initialParams.get('q'))) {
-                let tab = initialParams.get(PAGE_PARAM) || initialParams.get('q');
-                let longPage = shortToLong[tab] || tab;
-                if (tab) {
-                    gotoPage = longPage;
-                }
-            } else if (initialHash) {
-                gotoPage = initialHash;
-            }
-            if (gotoPage && adminPages.indexOf(gotoPage) < 0 || _isAdmin) {
-                $('#main-nav a[href="#' + gotoPage + '"]').tab('show');
-            }
+        getApplicationPath().then(() => {
+            programsPromise.done((result)=>{
+                console.log(result);
+                let programNames = {};
+                let dupIds = {}; // ids with duplicate names
+                programsInfo = result.programs;
+                // Build a list of programs with duplicate names. In the list of programs, we'll decorate those
+                // with the program.
+                Object.keys(programsInfo).forEach(id => {
+                    let name = programsInfo[id].name.toLowerCase();
+                    if (programNames[name]) {
+                        // We've seen this name before; this id and the previous id are both duplicates.
+                        dupIds[id] = id;
+                        dupIds[programNames[name]] = programNames[name];
+                    }
+                    programNames[name] = id;
+                });
+                // Given a list of ids with duplicate names, build a map of (possibly decorated) program name to programid.
+                Object.keys(programsInfo).forEach(id => {
+                    let name = programsInfo[id].name + (dupIds[id] ? ' (' + id + ')' : '');
+                    programNames2Id[name] = id;
+                    programIds2Name[id] = name;
+                });
+                // Friendly names in a nice sorted order.
+                let userPrograms = Object.keys(programNames2Id).sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase()));
+                // Structure to populate the dropbodown list of programs, with programid as value, and friendly name as label.
+                dropdownProgramsList = userPrograms.map(name => ({'label':name, 'value':programNames2Id[name]}) );
+                // In which programs, if any, is the user an admin?
+                let userAdmin = userPrograms.filter(p=>userHasRoleInProgram('AD', p));
+                _isAdmin = userAdmin.length>0;
+
+                finishUiSetup();
+            });
+
         });
 
         var attributes = Authentication.getUserAttributes();
@@ -259,8 +291,10 @@ Main = (function () {
         decrementWait: decrementWait,
         clearWait: clearWait,
 
-        getProgramsForUser: ()=>userPrograms,
-        getProgramsForAdminUser: ()=>userAdmin,
+        dropdownProgramsList: ()=>dropdownProgramsList,
+        getProgramIdForProgram: (program)=>getProgramIdForProgram(program),
+        getProgramNameForProgram: (program)=>getProgramNameForProgram(program),
+        getProgramIdsForUser: ()=>Object.keys(programsInfo),
         userHasRoleInProgram: userHasRoleInProgram,
 
     }

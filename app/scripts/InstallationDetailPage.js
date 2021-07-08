@@ -22,7 +22,6 @@ InstallationDetailPage = (function () {
             return;
         }
         fillDone = true;
-        let programsList = Main.getProgramsForUser();
         function onProgramSelected(evt, proj) {
             var program = programsDropdown.selection();
             if (program) {
@@ -31,7 +30,7 @@ InstallationDetailPage = (function () {
         }
 
         var options = {
-            programs: programsList,
+            programs: Main.dropdownProgramsList(),
             defaultProgram: previousProgram
         };
         var $elem = $('#installation-detail-program-placeholder');

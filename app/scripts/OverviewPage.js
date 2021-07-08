@@ -48,6 +48,11 @@ OverviewPage = (function () {
         'deployed_tbs': '# Talking Books Deployed'
     };
 
+    var formatters = {
+        project: (x)=> {
+            return Main.getProgramNameForProgram(x.project);
+        }
+    };
 
     /**
      * initSummaryTable - reads a .csv file, populates a summary table from it.
@@ -58,7 +63,7 @@ OverviewPage = (function () {
         function createFromCsv(container, path, options) {
             $.get(path).done((csvData) => {
                 var data = $.csv.toObjects(csvData, {separator: ',', delimiter: '"'});
-                var filtered = data.filter(row=>Main.getProgramsForUser().indexOf(row.project)>=0);
+                var filtered = data.filter(row=>Main.getProgramIdsForUser().indexOf(row.project)>=0);
                 DataTable.create(container, filtered, options);
             });
         }
@@ -67,6 +72,7 @@ OverviewPage = (function () {
         var options = {
             headings: headings,
             tooltips: tooltips,
+            formatters: formatters,
             datatable: {searching: true}
         };
         createFromCsv($elem, path, options);

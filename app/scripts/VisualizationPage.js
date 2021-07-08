@@ -41,7 +41,6 @@ var VisualizationPage = function () {
             return;
         }
         fillDone = true;
-        let programsList = Main.getProgramsForUser();
         function onProgramSelected(evt, proj) {
             var program = programsDropdown.selection();
             if (program) {
@@ -50,7 +49,7 @@ var VisualizationPage = function () {
         }
 
         var options = {
-            programs: programsList,
+            programs: Main.dropdownProgramsList(),
             defaultProgram: currentProgram
         };
         var $elem = $('#usage-tableau-project-placeholder');
@@ -178,7 +177,7 @@ var VisualizationPage = function () {
             $download_button.addClass('disabled');
             $download_button.attr('href', '#').prop('disabled', true);
         }
-
+        // Is this an internal person?
         let mAndE =  (Main.userHasRoleInProgram('AD', currentProgram) && Main.userHasRoleInProgram('PM', currentProgram) &&
             Authentication.getUserAttributes()['email'].endsWith('@amplio.org'));
         $refresh_button.toggleClass('hidden', !mAndE);

@@ -700,7 +700,7 @@ UserFeedbackData = (function () {
 
                 var nl = /\s/
                 var ufAcmNames = ufProjects.split(nl); // like ['ACM-UWR-FB-2015-10', 'ACM-UWR-FB-2016-1', ...]
-                var projList = Main.getProgramsForUser();
+                var projList = Main.getProgramIdsForUser();
                 var result = {};
                 // For each user feedback project...
                 ufAcmNames.forEach((acmName) => {
