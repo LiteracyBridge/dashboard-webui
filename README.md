@@ -22,6 +22,7 @@ Installation:
 1. Sync this project from Git.
 1. Run `npm install` to install dependencies.
 1. Run `bower update` to install more dependencies.
+1. Change to the app directory and run `refreshData.sh` to sync test data.
 1. Run `gulp serve` to compile and test.
 1. Run `gulp` to build for production.
 1. From the `dist` directory, run `deploy.sh` to deploy the 
