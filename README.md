@@ -16,10 +16,11 @@ Technologies:
 
 Installation:
 1. Install Node.js. **Important:** See [this](https://github.com/sindresorhus/guides/blob/master/npm-global-without-sudo.md)
- page for instructions on installing global node modules without
- using sudo.
+ page for instructions on installing global node modules without using sudo.
+ **Note** At this time, the configured "Gulp" (3) is incompatible with the current "Node" (14). This is tested with
+ node [10.16.3](https://nodejs.org/download/release/v10.16.3/).
 1. Sync this project from Git.
-1. Run `npm update` to install dependencies.
+1. Run `npm install` to install dependencies.
 1. Run `bower update` to install more dependencies.
 1. Run `gulp serve` to compile and test.
 1. Run `gulp` to build for production.
