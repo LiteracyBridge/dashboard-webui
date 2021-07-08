@@ -956,16 +956,24 @@ let Authentication = (function () {
                                     promise.resolve();
                                 })
                                 .fail((err) => {
-                                    const msg = (err && err.message || err) || 'Error logging in.';
-                                    alerter.error(msg);
+                                    const msg = (err && err.message || err) || 'Error logging in.');
                                 });
-                        } else {
+                        }, function rejected(err) {
+                            // This is the message that Amazon returns when a user submits a proposed user name containing a space.
+                            // "Error:2 validation errors detected: Value 'abc xyz' at 'userName' failed to satisfy constraint: Member must satisfy regular expression pattern: [\p{L}\p{M}\p{S}\p{N}\p{P}]+; Value 'abc xyz' at 'userAlias' failed to satisfy constraint: Member must satisfy regular expression pattern: [\p{L}\p{M}\p{S}\p{N}\p{P}]+"
+                            // We'll substitute with an easy to understand message.
+                            let msg = err.message || 'Error logging in.'
+                            if (err.message && err.message.includes('must satisfy regular expression')) {
+                                msg = 'The Email Address may not contain spaces.'
+                            }
+                            alerter.error(msg);
+                         }
+                        else {
                             alerter.error(msg);
                         }
                     }
                 });
         }
-
 
         var promise = $.Deferred();
 
