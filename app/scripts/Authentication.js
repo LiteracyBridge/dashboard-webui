@@ -964,7 +964,9 @@ let Authentication = (function () {
                             // We'll substitute with an easy to understand message.
                             let msg = err.message || 'Error logging in.'
                             if (err.message && err.message.includes('must satisfy regular expression')) {
-                                msg = 'The Email Address may not contain spaces.'
+                                msg = 'Invalid email address'
+                                // Set focus on username
+                                $('#username', $dialog).focus();
                             }
                             alerter.error(msg);
                          }
