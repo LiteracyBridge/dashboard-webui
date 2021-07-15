@@ -4,6 +4,10 @@
 var ProgramSpecificationData = function () {
     'use strict';
 
+    // This shouldn't be necessary; the timeout should be infinite. However, I have seen timeouts, and have reports
+    // of "Submit" spinning and then doing nothing. Experimental. Doesn't hurt, might help.
+    const PS_TIMEOUT = 120000;
+
     function makeRequest(path, data) {
         let URL = Authentication.PROGRAM_SPEC();
         if (path.length>0 && path[path.length-1] !== '/') {
@@ -49,11 +53,15 @@ var ProgramSpecificationData = function () {
 
     function validateProgramSpec(data, projectName) {
         let request = makeRequest('validate?project='+projectName+'&fix_recips=f', data);
+        // See comment above.
+        request.timeout = PS_TIMEOUT;
         return submitRequest(request);
     }
 
     function submitProgramSpec(data, comment, projectName) {
         let request = makeRequest('submit?project='+projectName+'&fix_recips=t&comment='+comment, data);
+        // See comment above.
+        request.timeout = PS_TIMEOUT;
         return submitRequest(request);
     }
 
@@ -69,12 +77,16 @@ var ProgramSpecificationData = function () {
     function reviewPending(projectName) {
         let path = 'diff?project='+projectName+'&v1=current&v2=pending&fix_recips=t';
         let request = makeRequest(path);
+        // See comment above.
+        request.timeout = PS_TIMEOUT;
         return submitRequest(request);
     }
 
     function approve(projectName, currentVersion, pendingVersion, comment) {
         let path='approve?project='+projectName+'&current='+currentVersion+'&pending='+pendingVersion+'&comment='+comment;
         let request = makeRequest(path);
+        // See comment above.
+        request.timeout = PS_TIMEOUT;
         return submitRequest(request);
     }
 
@@ -87,6 +99,8 @@ var ProgramSpecificationData = function () {
     function getFile(projectName, version) {
         let path='getfile?project='+projectName+'&version='+version;
         let request = makeRequest(path);
+        // See comment above.
+        request.timeout = PS_TIMEOUT;
         return submitRequest(request);
     }
 
