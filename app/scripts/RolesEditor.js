@@ -73,6 +73,15 @@ let RolesEditor = function() {
         return roleList.join(',');
     }
 
+    /**
+     * Creates the row for one user, showing the user's roles. The roles are visible in one of two forms,
+     * a collapsed form that summarizes the roles, and an expanded form allows adding or removing roles
+     * for the user. By adding or removing the class 'collapsed', the short or long form can be shown.
+     *
+     * The jQuery item is saved in userRows, but is not added to the DOM.
+     * @param email for which to create the display elements.
+     * @returns {*|jQuery|HTMLElement|void}
+     */
     function makeRowForUser(email) {
         /**
          * Called when an individual permission is checked/unchecked. Will re-create
@@ -145,7 +154,11 @@ let RolesEditor = function() {
         return $tr;
     }
 
-    function showOnly(email) {
+    /**
+     * Expand one email's role list.
+     * @param email The email to be expanded; all others are collapsed.
+     */
+    function expandOneRoleList(email) {
         Object.keys(userRows).forEach(e=>{
             userRows[e].toggleClass('collapsed', e!==email);
         });
@@ -160,8 +173,15 @@ let RolesEditor = function() {
         okButton.disable();
     }
 
+    /**
+     * Creates a row in which user can type in a new email address.
+     * OK (green check) adds a new row for the new user, with no roles, ready to be edited. The new user is
+     *      expanded for editing, and this input row is removed.
+     * Cancel (red X) removes this input row, without doing anything.
+     * @returns {*|jQuery|HTMLElement|void}
+     */
     function makeRowForInput() {
-        showOnly('');
+        expandOneRoleList('');
         $inputRow = $('<tr></tr>');
         let $td = $('<td colspan="3" class="roles-table-new-email"></td>');
 
@@ -171,12 +191,12 @@ let RolesEditor = function() {
         $ok.on('click', ()=>{
             let newEmail = $input.val();
             if (userRows[newEmail]) {
-                showOnly(newEmail);
+                expandOneRoleList(newEmail);
             } else if (newEmail) {
                 userRoles[newEmail] = '';
                 let $tr = makeRowForUser(newEmail);
                 $tbody.append($tr);
-                showOnly(newEmail);
+                expandOneRoleList(newEmail);
             }
             $inputRow.remove();
             enableButtons();
@@ -196,12 +216,17 @@ let RolesEditor = function() {
         return $input;
     }
 
-    function rolesTable() {
+    /**
+     * Builds a table containing user emails and roles.
+     * @returns {void|jQuery|HTMLElement|*}
+     */
+    function buildRolesTable() {
 
         $table = $('<table class="roles-table"></table>table');
         $tbody = $table.append($('<tbody>'));
 
-
+        // Empty any left-over cached row elements
+        userRows = {}
         Object.keys(userRoles).forEach(email=>{
             let $tr = makeRowForUser(email);
             $tbody.append($tr);
@@ -251,7 +276,7 @@ let RolesEditor = function() {
         let roles = options.roles || {};
         Object.keys(roles).forEach(e=>{previousRoles[e] = normalizeRoleString(roles[e])});
         userRoles = $.extend({}, true, previousRoles);
-        $dialog = rolesTable(userRoles);
+        $dialog = buildRolesTable(userRoles);
 
         var dlgOptions = {
             title: 'Roles defined for '+label,
