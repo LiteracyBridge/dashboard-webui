@@ -502,6 +502,19 @@ tr.shown td.details-control {
     margin-right: 15px;
 }
 
+#progspec-diff-modal p.indent-1 {
+    padding-left: 1em;
+}
+#progspec-diff-modal p.indent-2 {
+    padding-left: 2em;
+}
+#progspec-diff-modal p.indent-3 {
+    padding-left: 3em;
+}
+#progspec-diff-modal p.indent-4 {
+    padding-left: 4em;
+}
+
 div#progspec-validate-results,
 div#progspec-validate-results-no-issues {
     background: floralwhite;
@@ -558,7 +571,7 @@ div.progspec-validation {
 #program-specification-page:not(.have-data) .when-have-data {
     display: none;
 }
-#program-specification-page:not(.have-current) .when-have-current {
+#program-specification-page:not(.have-published) .when-have-published {
     display: none;
 }
 #program-specification-page:not(.have-pending) .when-have-pending {
@@ -618,12 +631,25 @@ div.progspec-validation {
   margin-right: -4px;
   padding: 4px;
 }
+.progspec-action p {
+    min-height: 6em;
+}
 #program-specification-actions button {
   border-radius:4px;
 }
 #program-specification-actions h3 {
   padding: 4px;
 }
+#program-specification-operation-status {
+    margin-top: 0;
+    border: 1px dotted lightgray;
+}
+#program-specification-operation-status-line.faded {
+    opacity: .4;
+    transition: opacity 4s ease-in-out;
+}
+
+
 /* Incredibly over-specified styles for query builder. */
 
 /*!

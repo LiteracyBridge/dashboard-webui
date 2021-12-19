@@ -40,7 +40,7 @@ var ProgramSpecificationData = function () {
                 if (a && a.result) {
                     deferred.resolve(a.result);
                 } else {
-                    deferred.resolve({status:'Unexpected', result:a});
+                    deferred.resolve(a);
                 }
             })
             .fail((a,b)=>{
@@ -51,53 +51,67 @@ var ProgramSpecificationData = function () {
         return deferred.promise();
     }
 
-    function validateProgramSpec(data, projectName) {
-        let request = makeRequest('validate?project='+projectName+'&fix_recips=f', data);
+    function validate(programid, data) {
+        let path = `validate?programid=${programid}`;
+        let request = makeRequest(path, data);
         // See comment above.
         request.timeout = PS_TIMEOUT;
         return submitRequest(request);
     }
 
-    function submitProgramSpec(data, comment, projectName) {
-        let request = makeRequest('submit?project='+projectName+'&fix_recips=t&comment='+comment, data);
+    function upload(programid, data, comment, return_diff) {
+        let path = `upload?programid=${programid}&comment=${comment}&return_diff=${return_diff?'t':'f'}`
+        let request = makeRequest(path, data);
         // See comment above.
         request.timeout = PS_TIMEOUT;
         return submitRequest(request);
     }
 
-    function listObjects(projectName, getHistory) {
-        let path = 'list?project='+projectName;
-        if (getHistory) {
-            path += '&history=t';
+    function listObjects(programid) {
+        let path = `list?programid=${programid}`;
+        let request = makeRequest(path);
+        return submitRequest(request);
+    }
+
+    function compare(programid, delta, base) {
+        if (!delta) {
+            delta = 'pending';
+            if (!base) base = 'unpublished';
+        } else if (!base) {
+            base = 'published';
         }
-        let request = makeRequest(path);
-        return submitRequest(request);
-    }
-
-    function reviewPending(projectName) {
-        let path = 'diff?project='+projectName+'&v1=current&v2=pending&fix_recips=t';
+        let path = `review?programid=${programid}&v1=${base}&v2=${delta}`;
         let request = makeRequest(path);
         // See comment above.
         request.timeout = PS_TIMEOUT;
         return submitRequest(request);
     }
 
-    function approve(projectName, currentVersion, pendingVersion, comment) {
-        let path='approve?project='+projectName+'&current='+currentVersion+'&pending='+pendingVersion+'&comment='+comment;
+    function publish(programid, comment) {
+        if (!comment) comment = 'Published from Dashboard';
+        let path = `publish?programid=${programid}&comment=${comment}`;
         let request = makeRequest(path);
         // See comment above.
         request.timeout = PS_TIMEOUT;
         return submitRequest(request);
     }
 
-    function getLink(projectName, version) {
-        let path='getlink?project='+projectName+'&version='+version;
+    function accept(programid, comment, publish) {
+        let path=`accept?programid=${programid}&comment=${comment}&publish=${publish?'t':'f'}`;
+        let request = makeRequest(path);
+        // See comment above.
+        request.timeout = PS_TIMEOUT;
+        return submitRequest(request);
+    }
+
+    function getLink(programid, artifact) {
+        let path=`download?programid=${programid}&aslink=true&artifact=${artifact}`;
         let request = makeRequest(path);
         return submitRequest(request);
     }
 
-    function getFile(projectName, version) {
-        let path='getfile?project='+projectName+'&version='+version;
+    function getFile(programid, artifact) {
+        let path=`download?programid=${programid}&artifact=${artifact}`;
         let request = makeRequest(path);
         // See comment above.
         request.timeout = PS_TIMEOUT;
@@ -105,12 +119,13 @@ var ProgramSpecificationData = function () {
     }
 
     return {
-        validateProgramSpec: validateProgramSpec,
+        validateProgspec: validate,
         listProgramSpecObjects: listObjects,
-        submitProgramSpec: submitProgramSpec,
-        review: reviewPending,
-        approve: approve,
+        uploadProgspec: upload,
+        compareProgspecs: compare,
+        acceptProgspec: accept,
         getLink: getLink,
         getFile: getFile,
+        publishProgspec: publish,
     };
 }();

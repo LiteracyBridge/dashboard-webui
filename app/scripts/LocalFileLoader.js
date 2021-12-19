@@ -152,8 +152,12 @@ var LocalFileLoader = function () {
         let $ok = $('.ok-button', $dialog);
         $ok.prop('disabled', true);
 
+        if (options.comment) {
+            $('.comment input', $dialog).val(options.comment);
+        }
+
         // Show the dialog.
-        $dialog.modal({keyboard:false, backdrop:'static'});
+        $dialog.modal({backdrop:'static'});
         // After the dialog closes, remove it from the DOM.
         $dialog.on('hidden.bs.modal', () => {
             deferred.reject(); // no-op if already resolved.

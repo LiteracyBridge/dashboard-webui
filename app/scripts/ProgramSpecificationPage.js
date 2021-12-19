@@ -25,10 +25,10 @@ var ProgramSpecificationPage = function () {
     var currentProgram;
     var fillDone = false;
 
-    let currentSpecExists = false;
+    let publishedSpecExists = false;
     let pendingSpecExists = false;
 
-    let viewDiffHtml = `<div class="modal fade" id="progspec-diff-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    let viewLinesHtml = `<div class="modal fade" id="progspec-diff-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header bg-primary">
@@ -42,9 +42,11 @@ var ProgramSpecificationPage = function () {
                 <input id="progspec-approve-comment" class="form-control" placeholder="Comment for approved progam specification" type="text">
             </div>
         </div>
+        <div id="modal-buttons">
         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-danger reject-changes">Reject Changes</button>
-        <button type="button" class="btn btn-primary accept-changes">Approve Changes</button>
+<!--        <button type="button" class="btn btn-danger reject-changes">Reject Changes</button>-->
+<!--        <button type="button" class="btn btn-primary accept-changes">Approve Changes</button>-->
+        </div>
       </div>
     </div>
   </div>
@@ -70,6 +72,7 @@ var ProgramSpecificationPage = function () {
             return;
         }
         fillDone = true;
+
         function onProgramSelected(evt, proj) {
             var program = programsDropdown.selection();
             if (program) {
@@ -88,68 +91,63 @@ var ProgramSpecificationPage = function () {
         programsDropdown.update(options.programs, {default: options.defaultProgram});
     }
 
-    const SYNC_TIMEOUT = 10 * 60; // in seconds
-    let removeSyncMessageTime = moment(moment.now()).add(-1, 'day');;
-    let removeSyncMessageTimeout = 0;
-    function showSyncMessage(opts) {
-        function show() {
-            clearTimeout(removeSyncMessageTimeout);
-            removeSyncMessageTimeout = setTimeout(hide, removeSyncMessageTime.valueOf() - Date.now());
-            $('#program-specification-sync-message', $PAGE).removeClass('hidden');
-        }
-        function hide() {
-            clearTimeout(removeSyncMessageTimeout);
-            $('#program-specification-sync-message', $PAGE).addClass('hidden');
-        }
-        if (opts === 'check') {
-            if (removeSyncMessageTime.isBefore(moment(moment.now()))) {
-                hide();
-            } else {
-                show();
-            }
-        } else if (opts.hasOwnProperty('timeout')) {
-            let expiryStart = 0;
-            if (opts.hasOwnProperty('approvedOn')) {
-                expiryStart = moment(opts.approvedOn + 'Z'); // because the time is UTC time, despite missing 'z'
-            } else {
-                expiryStart = moment(moment.now());
-            }
-            let timeout = opts.timeout;
-            removeSyncMessageTime = expiryStart.add(timeout, 'seconds');
-            show();
-        }
-    }
+    /**
+     * Shows a list of lines of data.
+     * @param data an array of lines to be shown.
+     * @param options Options for showing:
+     *      buttons: [name, {'name':name, classes:'class'], name, ...] The names of buttons. Buttons with these names
+     *      will be added to the modal. The name of the button clicked to close the modal will be available in
+     *      the result, as 'clicked'.
+     * @returns {*}
+     */
+    function showLines(data, options) {
+        let regex = /^( *)/
 
-    function showDiff(diff, options) {
+        function _leading(str) {
+            let found = str.match(regex)
+            if (found[1] && found[1].length) {
+                // eslint-disable-next-line quotes
+                return `indent-${found[1].length}`
+            }
+            return ''
+        }
+
         options = options || {};
         let deferred = $.Deferred();
-        let $dialog = $(viewDiffHtml);
-
+        let $dialog = $(viewLinesHtml);
+        let $buttons = $('#modal-buttons', $dialog);
         let $comment = $('#progspec-approve-comment', $dialog);
-        let $accept = $('.accept-changes', $dialog);
-        let $reject = $('.reject-changes', $dialog);
+        let $title = $('#myModalLabel', $dialog);
+        $title.text(options.title);
 
-        if (options.hasOwnProperty('showAccept') && !options.showAccept) {$accept.addClass('hidden');}
-        if (options.hasOwnProperty('showReject') && !options.showReject) {$reject.addClass('hidden');}
+        if (options.noComment) {
+            $comment.addClass('hidden');
+        }
+        $('button', $buttons).on('click', () => deferred.resolve({action: 'close', comment: $comment.val()}));
 
-        if (options.hasOwnProperty('comment')) {
+        if (options.buttons) {
+            options.buttons.forEach((b) => {
+                let $b = $(`<button type="button" class="btn ${b.classes || ''}" data-dismiss="modal">${b.name || b}</button>`);
+                $buttons.append($b);
+                $b.on('click', () => {
+                    console.log(this);
+                    deferred.resolve({action: b.action || b.name || b, comment: $comment.val()})
+                });
+            });
+        }
+        if (options.comment) {
             $comment.val(options.comment);
         }
-        $accept.on('click', ()=>{
-            let comment = $comment.val();
-            $dialog.modal('hide');
-            deferred.resolve({action:'accept', comment:comment, diff:diff});
-        });
-        $reject.on('click', ()=>{
-            $dialog.modal('hide');
-            deferred.resolve({action:'reject', diff:diff})
-        });
 
         let $issues = $('.modal-body', $dialog);
         $issues.empty();
-        diff.output.forEach(issue=>$issues.append($('<p>').text(issue)));
+        data.forEach(issue => {
+            let $p = $('<p>').text(issue);
+            $p.addClass(_leading(issue));
+            $issues.append($p);
+        })
 
-        $dialog.modal({keyboard:false, backdrop:'static'});
+        $dialog.modal({backdrop: 'static'});
 
         // After the dialog closes, remove it from the DOM.
         $dialog.on('hidden.bs.modal', () => {
@@ -160,78 +158,150 @@ var ProgramSpecificationPage = function () {
         return deferred.promise();
     }
 
-    /**
-     * Diff options:
-     * - "Review" diff. From "current" to "pending". With "Approve" & "Disapprove" buttons.
-     * - "Validate" diff. From "current" to uploaded file.
-     * - "Submit" diff. From "current" to uploaded file.
-     * - "History" diff. From version A to version B.
-     * - "Revert" diff. From "current" to version A (not current, not pending). With "Revert to version" button.
-     *   TODO: Should the revert be immediate, or should it copy the old version to pending?
-     *
-     * Options: An object with:
-     *  'action': string. One of the options from above.
-     *  'data': string. The "uploaded file" data for a Validate or Submit diff.
-     *  'v1': string. Version of the "first" program spec for a History diff, or the program spec for Revert.
-     *  'v2': string. Version of the "second" program spec for a History diff. Can be a version, "current", or "pending".
-     */
-    function doDiff(options) {
-        ProgramSpecificationData.review(currentProgram).then(result=>{
-            if (result.output && result.output.length) {
-                showDiff(result);
-            }
-        });
+    function showDiff(diff, options) {
+        let lines = diff.output || diff.diff || diff;
+        options = options || {};
+        if (!options.buttons) {
+            options.buttons = [];
+        }
+        if (options.showAccept) {
+            options.buttons.push({name: 'Accept', action: 'accept', classes: 'btn-primary'});
+        }
+        if (options.showPublish) {
+            options.buttons.push({name: 'Publish', action: 'publish', classes: 'btn-primary'});
+        }
+        if (options.showReject) {
+            options.buttons.push({name: 'Reject', action: 'reject', classes: 'btn-Danger'});
+        }
+        return showLines(lines, options);
     }
 
-    function doReview() {
+    function doPublish() {
         clearResults();
-        ProgramSpecificationData.review(currentProgram).then(result=>{
-            if (result.status === 'ok' && result.output && result.output.length) {
-                return showDiff(result, {showAccept:true, showReject:false});
+        ProgramSpecificationData.compareProgspecs(currentProgram, 'unpublished', 'published')
+            .then(result => {
+                if (result.status === 'ok' && result.diff) {
+                    if (result.diff.length) {
+                        return showDiff(result, {showAccept: true, showReject: false});
+                    } else {
+                        const options = {
+                            type: BootstrapDialog.TYPE_SUCCESS,
+                            title: 'Program Specification Already Published',
+                            message: 'The Amplio Suite program specification has already been published. No action is needed.',
+                            closable: true,
+                            draggable: true,
+                            onshown: function () {
+                                $dialog.find('input[autofocus]').focus();
+                            }
+                        };
+                        let dialog = BootstrapDialog.alert(options);
+                    }
+                } else if (result.status === 'failure' && result.v1 && result.v1.name === 'not found') {
+                    result.output = ['No current program specification'];
+                    result.v1.VersionId = 'None';
+                    return showDiff(result, {showReject: false, comment: 'Initial Program Specification'});
+                }
+            })
+            .then(reviewResult => {
+                reviewResult = reviewResult || {action: 'close'}
+                if (reviewResult.action === 'accept') {
+                    return ProgramSpecificationData.publishProgspec(currentProgram)
+                } else if (reviewResult.action === 'reject') {
+                    return new $.Deferred().reject();
+                }
+            })
+            .then(publishResult => {
+                showOverview();
+            });
+    }
+
+
+    function doImport() {
+        clearResults();
+        ProgramSpecificationData.compareProgspecs(currentProgram).then(result => {
+            if (result.status === 'ok' && result.diff && result.diff.length) {
+                return showDiff(result, {showAccept: true, showReject: false});
             } else if (result.status === 'failure' && result.v1 && result.v1.name === 'not found') {
                 result.output = ['No current program specification'];
                 result.v1.VersionId = 'None';
                 return showDiff(result, {showReject: false, comment: 'Initial Program Specification'});
             }
         }).then(reviewResult => {
+            reviewResult = reviewResult || {action: 'close'};
             if (reviewResult.action === 'accept') {
-                let currentVersion = reviewResult.diff.v1.VersionId;
-                let pendingVersion = reviewResult.diff.v2.VersionId;
                 let comment = reviewResult.comment;
-                return ProgramSpecificationData.approve(currentProgram, currentVersion, pendingVersion, comment)
+                return ProgramSpecificationData.acceptProgspec(currentProgram, comment)
             } else if (reviewResult.action === 'reject') {
                 return new $.Deferred().reject();
             }
         }).then(approveResult => {
+            approveResult = approveResult || {action: 'close'};
             if (approveResult.output) {
                 showOutput(approveResult.output, 'approve');
             }
-            showSyncMessage({timeout:SYNC_TIMEOUT});
             showOverview();
         })
 
     }
 
-    function doSubmit() {
-        let fileoptions = {shortPrompt: '.xls', longPrompt: 'Program Specification .xlsx', title: 'Choose Program Specification',
+    function doUpload(event) {
+        let comment = '';
+        let specialKeyPressed = (event.originalEvent && (event.originalEvent.altKey || event.originalEvent.ctrlKey));
+        let fileoptions = {
+            shortPrompt: '.xls', longPrompt: 'Program Specification .xlsx', title: 'Choose Program Specification',
             commentPrompt: 'Comment for submitted progam specification'
         };
+        let filename = '';
         clearResults();
-        LocalFileLoader.loadFile(fileoptions).then(fileResult => {
-            return ProgramSpecificationData.submitProgramSpec(fileResult.data, fileResult.comment, currentProgram);
+        showStatus('');
+        LocalFileLoader.loadFile(fileoptions)
+            .then(fileResult => {
+                filename = fileResult.filename;
+                comment = fileResult.comment;
+                return ProgramSpecificationData.uploadProgspec(currentProgram, fileResult.data, fileResult.comment, true);
+            }).then(uploadResult => {
+            if (uploadResult.status === 'ok') {
+                let diffOptions = {showPublish: true, comment: comment};
+                if (specialKeyPressed) {
+                    diffOptions.showAccept = true;
+                }
+                let diff = uploadResult.diff || ['No differences found'];
+                return showDiff(uploadResult.diff, diffOptions)
+            }
+        },uploadErrors=>{
+                showOutput(uploadErrors.responseJSON.errors, 'upload');
+                return new $.Deferred().reject(uploadErrors);
+        }).then(diffResult => {
+            if (diffResult.action === 'accept' || diffResult.action === 'publish') {
+                return ProgramSpecificationData.acceptProgspec(currentProgram, diffResult.comment, diffResult.action === 'publish')
+            }
         }).then(result => {
             showOverview();
-            showOutput(result.output, 'submit');
+            if (result.status == 'ok') {
+                showStatus(`Spreadsheet file ${filename} uploaded and published.`);
+            }
         });
+    }
+
+    let clearStatusTimer = null;
+    function showStatus(status) {
+        function fadeStatus() {
+            $('#program-specification-operation-status-line').addClass('faded');
+        }
+        $('#program-specification-operation-status-line').text(status);
+        if (clearStatusTimer) {
+            clearTimeout(clearStatusTimer);
+            clearStatusTimer = null;
+        }
+        if (status) {
+            $('#program-specification-operation-status-line').removeClass('faded');
+            clearStatusTimer = setTimeout(fadeStatus, 10000);
+        }
     }
 
     function showOutput(output, label) {
         if (output && output.length) {
-            label = label || 'validation';
-            $('#progspec-validate-results-label').text(label);
-            $('#progspec-validate-results', $PAGE).removeClass('hidden');
-            let $issues = $('#progspec-validate-issues', $PAGE);
-            output.forEach(line => $issues.append($('<p>').text(line)))
+            showLines(output, {noComment: true, title: `Results of ${label}`})
         }
     }
 
@@ -239,20 +309,26 @@ var ProgramSpecificationPage = function () {
         $('#progspec-validate-results', $PAGE).addClass('hidden');
         $('#progspec-validate-results-no-issues', $PAGE).addClass('hidden');
         $('#progspec-validate-issues', $PAGE).empty();
-        showSyncMessage('check');
     }
 
     function doValidate() {
-        let projectName = $('#progspec-project-name').val();
-        let fileoptions = {shortPrompt: '.xlsx', longPrompt: 'Program Specification .xlsx', title: 'Choose Program Specification'};
+        let projectName = $('#progspec-project-name').val() || currentProgram;
+        let fileoptions = {
+            shortPrompt: '.xlsx',
+            longPrompt: 'Program Specification .xlsx',
+            title: 'Choose Program Specification'
+        };
+        let filename = '';
         clearResults();
+        showStatus('');
         LocalFileLoader.loadFile(fileoptions).then(fileResult => {
-            return ProgramSpecificationData.validateProgramSpec(fileResult.data, projectName);
+            filename = fileResult.filename;
+            return ProgramSpecificationData.validateProgspec(projectName, fileResult.data);
         }).then(result => {
             if (result.output && result.output.length) {
-                showOutput(result.output);
+                showLines(result.output, {noComment: true, title: 'Validation Results'})
             } else {
-                $('#progspec-validate-results-no-issues', $PAGE).removeClass('hidden')
+                showStatus(`No issues detected in file ${filename}`)
             }
         }).fail(err => {
             console.log('Error: ' + JSON.stringify(err));
@@ -260,42 +336,24 @@ var ProgramSpecificationPage = function () {
 
     }
 
-    function doDownload() {
+    function doDownload(event) {
+        let specialKeyPressed = (event.originalEvent && (event.originalEvent.altKey || event.originalEvent.ctrlKey));
         clearResults();
-        ProgramSpecificationDownloader.download(currentProgram, currentSpecExists, pendingSpecExists);
+        showStatus('');
+        ProgramSpecificationDownloader.download(currentProgram, publishedSpecExists, pendingSpecExists, specialKeyPressed)
+            .done(result=>{
+                showStatus(result);
+            })
+            .fail(result=>{
+                showStatus('Download failed or was cancelled by user.');
+            });
     }
 
-    let nl=/[\n\r]/gi;
+    let nl = /[\n\r]/gi;
+
     function showContent(data, options) {
-        let opts = {
-            columns: ['deployment_num',
-                'playlist_title', 'message_title',
-                'key_points', 'language', 'variant',
-                'sdg_goals', 'sdg_targets'],
-            headings: {deployment_num: 'Depl #',
-                playlist_title: 'Playlist',
-                message_title: 'Title',
-                key_points: 'Key Points',
-                language: 'Language',
-                variant: 'Variant',
-                sdg_goals: 'SDG Goals',
-                sdg_targets: 'SDG Targets'
-            },
-            formatters: {
-
-                key_points: (row, row_ix, cell) => {
-                    // eslint-disable-next-line quotes
-                    let noNl = cell.replace(nl, '<br/>')
-                    return `<p>${noNl}</p>`;
-                }
-            },
-            size: BootstrapDialog.SIZE_WIDE,
-            datatable: {paging: false, searching: true, colReorder: true}
-
-        };
-
         options = options || {};
-        options.size = options.size ||  BootstrapDialog.SIZE_WIDE;
+        options.size = options.size || BootstrapDialog.SIZE_WIDE;
         options.datatable = options.datatable || {paging: false, searching: true, colReorder: true};
 
         let deferred = $.Deferred();
@@ -304,24 +362,31 @@ var ProgramSpecificationPage = function () {
         let $close = $('.close', $dialog);
         let $body = $('.modal-body', $dialog);
 
+        if (options.title) {
+            $('#myModalLabel', $dialog).text(options.title);
+        }
+
         $close.on('click', () => {
             $dialog.modal('hide');
             deferred.resolve();
         });
 
         DataTable.create($body, data, options);
-        $dialog.modal({keyboard:true, closeByBackdrop:true, backdrop:'static'});
+        $dialog.modal({keyboard: true, closeByBackdrop: true, backdrop: 'static'});
 
         return deferred.promise();
     }
 
     let contentOptions = {
+        title: 'Published Content Calendar',
         filename: 'content.csv',
+        artifact: 'content',
         columns: ['deployment_num',
             'playlist_title', 'message_title',
             'key_points', 'language', 'variant',
             'sdg_goals', 'sdg_targets'],
-        headings: {deployment_num: 'Depl #',
+        headings: {
+            deployment_num: 'Depl #',
             playlist_title: 'Playlist',
             message_title: 'Title',
             key_points: 'Key Points',
@@ -341,11 +406,13 @@ var ProgramSpecificationPage = function () {
 
     };
     let recipientsOptions = {
+        title: 'Published Recipients',
         columns: ['recipientid', // 'project',
             // 'partner',
             'region', 'district',
             'communityname', 'groupname', // 'affiliate',
             'agent',
+            'language',
             // 'component', 'country',
             'numhouseholds', 'numtbs',
             //'supportentity',
@@ -359,29 +426,30 @@ var ProgramSpecificationPage = function () {
             numhouseholds: '# HHs', numtbs: '# TBs',
             variant: 'Variant'
         },
-        filename: 'recipients.csv'
+        filename: 'recipients.csv',
+        artifact: 'recipients'
     };
     let deploymentOptions = {
+        title: 'Published Deployments',
         columns: [
-            'deployment_num', 'startdate', 'enddate', 'component', 'name'
+            'deploymentnumber', 'startdate', 'enddate', 'deployment'
         ],
         headings: {
-            deployment_num: 'Depl #',
+            deploymentnumber: 'Depl #',
             startdate: 'Start', enddate: 'End',
-            component: 'Component', name: 'Deployment Name'
+            component: 'Component', deployment: 'Deployment Name'
         },
-        filename: 'deployment_spec.csv'
+        filename: 'deployment_spec.csv',
+        artifact: 'deployments'
     };
 
 
     function loadAndView(options) {
-        ProgramSpecificationData.getFile(currentProgram, options.filename).done(result => {
+        ProgramSpecificationData.getFile(currentProgram, options.artifact).done(result => {
             let data = $.csv.toObjects(result.data, {separator: ',', delimiter: '"'});
             console.log(data);
             showContent(data, options);
-
         }).fail(err => {
-
         });
     }
 
@@ -398,13 +466,14 @@ var ProgramSpecificationPage = function () {
     }
 
     function showOverview() {
-        if (!currentProgram) {return}
+        if (!currentProgram) {
+            return
+        }
 
         function enableButtons(haveData, havePending) {
-            let noData = !(currentSpecExists || pendingSpecExists);
+            let noData = !(publishedSpecExists || pendingSpecExists);
             let noPending = !pendingSpecExists;
-            $review.prop('disabled', noPending);
-            $history.prop('disabled', noData);
+            $import.prop('disabled', noPending);
             $download.prop('disabled', noData);
         }
 
@@ -414,39 +483,37 @@ var ProgramSpecificationPage = function () {
             $specSubmittedBy, $specSubmittedOn, $specSubmittedComment,
             $pendingSubmittedBy, $pendingSubmittedOn, $pendingSubmittedComment];
         fieldsToClear.map($f => $f.text(''));
-        $div.removeClass('have-current have-pending');
+        $div.removeClass('have-published have-pending have-data');
 
-        $div.removeClass('have-data have-pending');
-        showSyncMessage('check');
         enableButtons();
-        currentSpecExists = pendingSpecExists = false;
+        publishedSpecExists = pendingSpecExists = false;
         ProgramSpecificationData.listProgramSpecObjects(currentProgram)
             .done(result => {
-                let xls = result.objects['program_spec.xlsx'] || {};
+                let xls = result.objects['pub_progspec.xlsx'] || {};
                 let md = xls.Metadata;
                 if (md) {
-                    currentSpecExists = true;
-                    $div.addClass('have-current');
+                    publishedSpecExists = true;
+                    $div.addClass('have-published');
                     $specApprovedBy.text(md['approver-email']);
                     $specApprovedOn.text(Utils.formatDateTime(md['approval-date']));
                     $specApprovedComment.text(md['approver-comment']);
-                    showSyncMessage({approvedOn:md['approval-date'], timeout:SYNC_TIMEOUT});
+                    // showSyncMessage({approvedOn:md['approval-date'], timeout:SYNC_TIMEOUT});
 
                     $specSubmittedBy.text(md['submitter-email']);
                     $specSubmittedOn.text(Utils.formatDateTime(md['submission-date']));
                     $specSubmittedComment.text(md['submitter-comment']);
                 }
 
-                xls = result.objects['pending_spec.xlsx'] || {};
-                md = xls.Metadata;
-                if (md) {
-                    pendingSpecExists = true;
-                    $div.addClass('have-pending');
-                    $pendingSubmittedBy.text(md['submitter-email']);
-                    $pendingSubmittedOn.text(Utils.formatDateTime(md['submission-date']));
-                    $pendingSubmittedComment.text(md['submitter-comment']);
-                }
-                if (currentSpecExists || pendingSpecExists) {
+                // xls = result.objects['pending_progspec.xlsx'] || {};
+                // md = xls.Metadata;
+                // if (md) {
+                //     pendingSpecExists = true;
+                //     $div.addClass('have-pending');
+                //     $pendingSubmittedBy.text(md['submitter-email']);
+                //     $pendingSubmittedOn.text(Utils.formatDateTime(md['submission-date']));
+                //     $pendingSubmittedComment.text(md['submitter-comment']);
+                // }
+                if (publishedSpecExists || pendingSpecExists) {
                     $div.addClass('have-data');
                 }
                 enableButtons();
@@ -469,32 +536,38 @@ var ProgramSpecificationPage = function () {
             Main.setParams(PAGE_ID, {p: currentProgram});
         }
     }
+
     function restoreState() {
         let params = Main.getParams();
         if (params) {
             currentProgram = params.get('p') || '';
             let valStr = params.get('t');
             let val = false;
-            try { val = JSON.parse(valStr); } catch(x) {}
+            try {
+                val = JSON.parse(valStr);
+            } catch (x) {
+            }
         } else {
             currentProgram = localStorage.getItem('progspec.program') || '';
         }
     }
 
-    var $validate, $submit, $review, $history, $download;
+    var $validate, $upload, $import, $download, $publish;
     var $showDeployments, $showContent, $showRecipients;
     let initialized = false;
+
     function show() {
         if (!initialized) {
             $validate = $('#progspec-validate button');
-            $submit = $('#progspec-submit button');
-            $review = $('#progspec-review button');
-            $history = $('#progspec-history button');
+            $upload = $('#progspec-upload button');
+            $import = $('#progspec-import button');
             $download = $('#progspec-download button');
+            $publish = $('#progspec-publish button');
             $validate.on('click', doValidate);
-            $submit.on('click', doSubmit);
-            $review.on('click', doReview);
+            $upload.on('click', doUpload);
+            $import.on('click', doImport);
             $download.on('click', doDownload);
+            $publish.on('click', doPublish);
 
             $showDeployments = $('#view-deployments-spec');
             $showContent = $('#view-content-spec');
@@ -508,8 +581,9 @@ var ProgramSpecificationPage = function () {
         } else {
             persistState();
         }
-        showSyncMessage('check');
+        // showSyncMessage('check');
     }
+
     function hide() {
         $('#progspec-nav a.progspec-nav').off('click')
     }

@@ -4,7 +4,6 @@
 
 let ProgramSpecificationDownloader = function () {
     'use strict';
-    let useAnchor = false;
 
     function getModalHtml() {
         let modalHtml = `<div class="modal fade" id="download-progspec-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
@@ -14,9 +13,25 @@ let ProgramSpecificationDownloader = function () {
                 <h4 class="modal-title" id="myModalLabel">Download Program Specification</h4>
               </div>
               <div class="modal-body">
-                <div class="input-group" id="download-pending-progspec-group">
-                    <label style="font-weight:normal"> <input id="download-pending-progspec" type="checkbox"
-                                                              value="option1"> Download Pending Program Specification </label>
+                <div class="input-group" id="download-artifact-chooser">
+                    <div id="download-published-artifact" >
+                        <label style="font-weight:normal">
+                            <input type="radio" name="artifact" checked value="published">
+                             Download the published Program Specification. This will <b>not</b> include un-published changes from the Amplio Suite.
+                        </label>
+                    </div>
+                    <div id="download-unpublished-artifact">
+                        <label style="font-weight:normal">
+                            <input type="radio" name="artifact" value="unpublished">
+                             Download the Program Specification from the Amplio Suite (it may be unpublished).
+                        </label>
+                    </div>
+                    <div id="download-pending-artifact">
+                        <label style="font-weight:normal">
+                            <input type="radio" name="artifact" value="pending">
+                             Download the pending Program Specification.
+                        </label>
+                    </div>
                 </div>
                 <div id="download-progspec-description">
                 </div>
@@ -25,10 +40,7 @@ let ProgramSpecificationDownloader = function () {
                 <div class="row comment" style="margin-bottom: 2rem;">
                 </div>
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                ${useAnchor
-            ? '<a id="download-progspec-button" download href="#" class="btn btn-primary" role="button">Download</a>'
-            : '<button id="download-progspec-button" type="button"  class="btn btn-primary" role="button">Save File</button>'}
-
+                <a id="download-progspec-button" download href="#" class="btn btn-primary" role="button">Download</a>
               </div>
             </div>
           </div>
@@ -40,12 +52,14 @@ let ProgramSpecificationDownloader = function () {
     function getDescription(result) {
         let obj = result.object;
         var version;
-        if (result.version === 'current')
-            version = 'Current Program Specification';
-        else if (result.version === 'pending')
+        if (obj.artifact === 'published')
+            version = 'Published Program Specification';
+        else if (obj.artifact === 'unpublished')
+            version = 'Unpublished Program Specification';
+        else if (obj.artifact === 'pending')
             version = 'Pending Program Specification';
         else
-            version = 'Program Specification Version ' + result.version;
+            version = 'Program Specification';
 
         let infoHtml = `<h4>${version}</h4>`;
         if (obj.Metadata && obj.Metadata['approval-date']) {
@@ -63,34 +77,10 @@ let ProgramSpecificationDownloader = function () {
         return $(infoHtml);
     }
 
-
-    function  b64toBlob(b64Data, contentType='', sliceSize=512) {
-        const byteCharacters = atob(b64Data);
-        const byteArrays = [];
-
-        for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-            const slice = byteCharacters.slice(offset, offset + sliceSize);
-
-            const byteNumbers = new Array(slice.length);
-            for (let i = 0; i < slice.length; i++) {
-                byteNumbers[i] = slice.charCodeAt(i);
-            }
-
-            const byteArray = new Uint8Array(byteNumbers);
-            byteArrays.push(byteArray);
-        }
-
-        const blob = new Blob(byteArrays, {type: contentType});
-        return blob;
-    }
-
-    function download(program, currentExists, pendingExists) {
-        var filename, data;
-        function saveFile() {
-            $.fn.dataTable.fileSave(b64toBlob(data), filename, true);
-            $dialog.modal('hide');
-        }
-        let ProgramSpecificationDataGetFunction = useAnchor ? ProgramSpecificationData.getLink : ProgramSpecificationData.getFile;
+    function download(program, publishedExists, pendingExists, specialKeyPressed) {
+        let deferred = $.Deferred();
+        let ProgramSpecificationDataGetFunction = ProgramSpecificationData.getLink;
+        let filename = '';
         // Refresh the link when user toggles between 'current' and 'pending' program specification. Note that
         // "refreshing" the link means downloading the program specification.
         function refreshLink(version) {
@@ -100,16 +90,11 @@ let ProgramSpecificationDownloader = function () {
                 if (result && result.status && result.status === 'ok') {
                     $descr.append(getDescription(result));
                     // Like DEMO-ProgramSpecification.xlsx or TEST-PendingSpecification.xlsx.
-                    filename = program + (version === 'current' ? '-Program' : '-Pending') + 'Specification.xlsx';
-                    // $button.attr('download', filename); // doesn't work due to same-domain security restrictions.
-                    if (useAnchor) {
-                        $button.attr('href', result.url);
-                    } else {
-                        let $fn = $(`<p>Save file as <span class="progspec-metadata">${filename}</span>.</p>`);
-                        $descr.append($fn);
-                        data = result.data;
-                    }
+                    $button.attr('href', result.url);
                     $button.prop('disabled', false);
+                    if (result.object && result.object.filename) {
+                        filename = ` as ${result.object.filename}`
+                    }
                 } else {
                     $descr.append($('<p>An error occurred getting the file.</p>'));
                     if (result && result.exception) {
@@ -117,35 +102,42 @@ let ProgramSpecificationDownloader = function () {
                     }
                 }
             }).fail(err => {
-                $descr.append($('<p>An error occurred getting the file: '+err.toString()+'</p>'))
+                $descr.append($('<p>An error occurred getting the file: ' + err.toString() + '</p>'))
             });
         }
 
         let $dialog = $(getModalHtml());
-        if (!(currentExists && pendingExists)) {
-            $('#download-pending-progspec-group', $dialog).addClass('hidden')
+        if (!specialKeyPressed) {
+            $('#download-pending-artifact', $dialog).addClass('hidden');
+            $('#download-unpublished-artifact', $dialog).addClass('hidden');
+        } else {
+            if (!pendingExists) {
+                $('#download-pending-artifact', $dialog).addClass('hidden');
+            }
         }
-        $('#download-pending-progspec', $dialog).on('click', ()=>{
-            let pending = $('#download-pending-progspec', $dialog).prop('checked');
-            refreshLink(pending?'pending':'current');
+        $('input:radio[name=artifact]', $dialog).change(function () {
+            // Arrow functions bind "this" differently. This must be a function.
+            let artifact = this.value;
+            refreshLink(artifact);
         });
         let $button = $('#download-progspec-button', $dialog);
         $button.prop('disabled', true);
-        if (!useAnchor) {
-            $button.on('click', saveFile);
-        }
+        $button.on('click', () => {
+            $dialog.modal('hide')
+            deferred.resolve(`File downloaded${filename}.`);
+        });
         let $descr = $('#download-progspec-description', $dialog);
 
-        refreshLink(currentExists?'current':'pending');
+        refreshLink('published');
         $dialog.modal('show');
         // After the dialog closes, remove it from the DOM.
         $dialog.on('hidden.bs.modal', () => {
-            // deferred.reject(); // no-op if already resolved.
+            deferred.reject(); // no-op if already resolved.
             $dialog.remove()
         });
 
+        return deferred.promise();
     }
-
 
     return {
         download: download

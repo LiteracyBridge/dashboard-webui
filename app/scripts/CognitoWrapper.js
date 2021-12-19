@@ -18,11 +18,14 @@ CognitoWrapper = (function () {
 
         ACCESS_CONTROL_API: 'https://ot0ietjo23.execute-api.us-west-2.amazonaws.com/prod',
         LIST_CHECKOUTS: 'https://9qh2jxd5tc.execute-api.us-west-2.amazonaws.com/prod',
-        PROGRAM_SPEC: 'https://ogm62f19c1.execute-api.us-west-2.amazonaws.com/prod',
+        PROGRAM_SPEC: 'https://v853rt57t9.execute-api.us-west-2.amazonaws.com/Prod',
         ROLES: 'https://uomgzti07c.execute-api.us-west-2.amazonaws.com/prod',
         STATS_QUERY: 'https://l0im73yun2.execute-api.us-west-2.amazonaws.com/prod',
         TWBX: 'https://c8ul32rlr8.execute-api.us-west-2.amazonaws.com/prod',
+
+        PS_HELPER: 'https://v853rt57t9.execute-api.us-west-2.amazonaws.com/Prod',
     }
+
 
     function CognitoHelper(configInfo) {
         var REGION, USER_POOL_ID, CLIENT_ID, ACCESS_CONTROL_API, LIST_CHECKOUTS, PROGRAM_SPEC, ROLES, STATS_QUERY, TWBX;
