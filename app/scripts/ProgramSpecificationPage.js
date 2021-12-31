@@ -265,8 +265,9 @@ var ProgramSpecificationPage = function () {
                 if (specialKeyPressed) {
                     diffOptions.showAccept = true;
                 }
-                let diff = uploadResult.diff || ['No differences found'];
-                return showDiff(uploadResult.diff, diffOptions)
+                let diff = uploadResult.diff || [];
+                if (diff.length == 0) diff = ['No changes found'];
+                return showDiff(diff, diffOptions)
             }
         },uploadErrors=>{
                 showOutput(uploadErrors.responseJSON.errors, 'upload');
