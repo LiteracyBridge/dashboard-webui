@@ -380,7 +380,7 @@ var ProgramSpecificationPage = function () {
 
     let contentOptions = {
         title: 'Published Content Calendar',
-        filename: 'content.csv',
+        filename: 'pub_content.csv',
         artifact: 'content',
         columns: ['deployment_num',
             'playlist_title', 'message_title',
@@ -427,7 +427,7 @@ var ProgramSpecificationPage = function () {
             numhouseholds: '# HHs', numtbs: '# TBs',
             variant: 'Variant'
         },
-        filename: 'recipients.csv',
+        filename: 'pub_recipients.csv',
         artifact: 'recipients'
     };
     let deploymentOptions = {
@@ -440,7 +440,7 @@ var ProgramSpecificationPage = function () {
             startdate: 'Start', enddate: 'End',
             component: 'Component', deployment: 'Deployment Name'
         },
-        filename: 'deployment_spec.csv',
+        filename: 'pub_deployments.csv',
         artifact: 'deployments'
     };
 

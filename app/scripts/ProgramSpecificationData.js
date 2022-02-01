@@ -60,7 +60,7 @@ var ProgramSpecificationData = function () {
     }
 
     function upload(programid, data, comment, return_diff) {
-        let path = `upload?programid=${programid}&comment=${comment}&return_diff=${return_diff?'t':'f'}`
+        let path = `upload?programid=${programid}&return_diff=${return_diff?'t':'f'}&comment=${comment}`
         let request = makeRequest(path, data);
         // See comment above.
         request.timeout = PS_TIMEOUT;
@@ -97,7 +97,7 @@ var ProgramSpecificationData = function () {
     }
 
     function accept(programid, comment, publish) {
-        let path=`accept?programid=${programid}&comment=${comment}&publish=${publish?'t':'f'}`;
+        let path=`accept?programid=${programid}&publish=${publish?'t':'f'}&comment=${comment}`;
         let request = makeRequest(path);
         // See comment above.
         request.timeout = PS_TIMEOUT;
