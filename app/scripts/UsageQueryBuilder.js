@@ -45,6 +45,9 @@ let UsageQueryBuilder = function () {
             name: 'deployment',
             heading: 'Deployment',
         }), ColumnDef({
+            name: 'deploymentname',
+            heading: 'Deployment Name',
+        }), ColumnDef({
             name: 'startdate',
             heading: 'Deployment Start',
             tooltip: 'The date on which the Deployment was scheduled to start.',
@@ -277,6 +280,7 @@ let UsageQueryBuilder = function () {
         let abbreviations = {
             deploymentnumber: 'd',
             deployment: 'de',
+            deploymentname: 'dn',
             startdate: 's',
             contentpackage: 'c',
             languagecode: 'l',
