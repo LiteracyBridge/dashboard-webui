@@ -4,14 +4,8 @@
 /* jshint undef:true, esversion:6, asi:true */
 /* globals console, $, ProgramDetailsData, RolesData, BootstrapDialog, AWS, Authentication, URLSearchParams */
 
-var Main = Main || {};
-
-Main = (function () {
+var Main = (function () {
     'use strict';
-
-    var ROOT_PATH;
-
-    var applicationPathPromise;
 
     // Does the user have an admin role in *any* program? If so, we'll show the admin menu items.
     let _isAdmin;
@@ -44,36 +38,6 @@ Main = (function () {
     let adminPages = ['checkout-page', 'roles-page'];
     Object.keys(shortToLong).forEach(k => longToShort[shortToLong[k]] = k);
 
-
-    /**
-     * Determines the path to statistics data. Uses trial-and-error.
-     */
-    function getApplicationPath() {
-        if (!applicationPathPromise) {
-            applicationPathPromise = $.Deferred();
-            // We know the file 'project_list.csv' should exist in a 'data' directory. If we can find it
-            // at the absolute path '/dashboard-lb-stats/data/project_list.csv', then our code can be in
-            // any other path, but we can still find the data. That's great! We can run multiple versions
-            // of the code, for production and testing, and can all read the same data.
-            $.get('/dashboard-lb-stats/data/project_list.csv')
-                .then((data) => {
-                    ROOT_PATH = '/dashboard-lb-stats/';
-                    applicationPathPromise.resolve(ROOT_PATH);
-                }, (err) => {
-                    // But, if we can't find the data at '/dashboard-lb-stats/...', maybe this is a test running
-                    // locally on the dev's machine. In that case, try to find the data relative to where this
-                    // code is running. If we find it, cool, we can test with some local data.
-                    $.get('data/project_list.csv')
-                        .then((data) => {
-                            ROOT_PATH = '';
-                            applicationPathPromise.resolve(ROOT_PATH);
-                        }, (err) => {
-                            applicationPathPromise.reject(err);
-                        })
-                })
-        }
-        return applicationPathPromise;
-    }
 
     // slice off the leading ? or #
     let initialParams = new URLSearchParams(location.search.slice(1));
@@ -198,40 +162,37 @@ Main = (function () {
 
         let programsPromise = RolesData.getPrograms();
 
-        getApplicationPath().then(() => {
-            programsPromise.done((result)=>{
-                console.log(result);
-                let programNames = {};
-                let dupIds = {}; // ids with duplicate names
-                programsInfo = result.programs;
-                // Build a list of programs with duplicate names. In the list of programs, we'll decorate those
-                // with the program.
-                Object.keys(programsInfo).forEach(id => {
-                    let name = programsInfo[id].name.toLowerCase();
-                    if (programNames[name]) {
-                        // We've seen this name before; this id and the previous id are both duplicates.
-                        dupIds[id] = id;
-                        dupIds[programNames[name]] = programNames[name];
-                    }
-                    programNames[name] = id;
-                });
-                // Given a list of ids with duplicate names, build a map of (possibly decorated) program name to programid.
-                Object.keys(programsInfo).forEach(id => {
-                    let name = programsInfo[id].name + (dupIds[id] ? ' (' + id + ')' : '');
-                    programNames2Id[name] = id;
-                    programIds2Name[id] = name;
-                });
-                // Friendly names in a nice sorted order.
-                let userPrograms = Object.keys(programNames2Id).sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase()));
-                // Structure to populate the dropbodown list of programs, with programid as value, and friendly name as label.
-                dropdownProgramsList = userPrograms.map(name => ({'label':name, 'value':programNames2Id[name]}) );
-                // In which programs, if any, is the user an admin?
-                let userAdmin = userPrograms.filter(p=>userHasRoleInProgram('AD', p));
-                _isAdmin = userAdmin.length>0;
-
-                finishUiSetup();
+        programsPromise.done((result)=>{
+            console.log(result);
+            let programNames = {};
+            let dupIds = {}; // ids with duplicate names
+            programsInfo = result.programs;
+            // Build a list of programs with duplicate names. In the list of programs, we'll decorate those
+            // with the program.
+            Object.keys(programsInfo).forEach(id => {
+                let name = programsInfo[id].name.toLowerCase();
+                if (programNames[name]) {
+                    // We've seen this name before; this id and the previous id are both duplicates.
+                    dupIds[id] = id;
+                    dupIds[programNames[name]] = programNames[name];
+                }
+                programNames[name] = id;
             });
+            // Given a list of ids with duplicate names, build a map of (possibly decorated) program name to programid.
+            Object.keys(programsInfo).forEach(id => {
+                let name = programsInfo[id].name + (dupIds[id] ? ' (' + id + ')' : '');
+                programNames2Id[name] = id;
+                programIds2Name[id] = name;
+            });
+            // Friendly names in a nice sorted order.
+            let userPrograms = Object.keys(programNames2Id).sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase()));
+            // Structure to populate the dropbodown list of programs, with programid as value, and friendly name as label.
+            dropdownProgramsList = userPrograms.map(name => ({'label':name, 'value':programNames2Id[name]}) );
+            // In which programs, if any, is the user an admin?
+            let userAdmin = userPrograms.filter(p=>userHasRoleInProgram('AD', p));
+            _isAdmin = userAdmin.length>0;
 
+            finishUiSetup();
         });
 
         var attributes = Authentication.getUserAttributes();
@@ -265,7 +226,6 @@ Main = (function () {
     }
 
     function init() {
-        getApplicationPath();
         Authentication.authenticate().done(onSignedIn);
         $('a#menu-logout').on('click', doLogout);
         $('a#menu-change-password').on('click', Authentication.changePassword);
@@ -280,9 +240,6 @@ Main = (function () {
 
     // Services that are global can be exposed here.
     return {
-        getApplicationPath: ()=>applicationPathPromise,
-        getRootPath: ()=>{return ROOT_PATH},
-
         hasParam: ()=>false,
         getParams: ()=>{let r=initialParams; initialParams=undefined; return r},
         setParams: setParams,

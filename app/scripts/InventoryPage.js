@@ -4,12 +4,11 @@
 /* jshint undef:true, esversion:6, asi:true */
 /* globals console, $, DataTable, Main, Authentication, DropdownButton, ProgramDetailsData */
 
-var InventoryPage = InventoryPage || {};
-
-InventoryPage = (function () {
+var InventoryPage = (function () {
     'use strict'
     let PAGE_ID = 'inventory-page';
     let PAGE_HREF = 'a[href="#' + PAGE_ID + '"]';
+    // noinspection JSUnusedLocalSymbols
     let $PAGE = $('#' + PAGE_ID);
 
     var previousProject;
@@ -22,7 +21,6 @@ InventoryPage = (function () {
             return;
         }
         fillDone = true;
-        var preSelectDeployment = previousDeployment;
         let projectsList = Main.dropdownProgramsList();
         var $elem = $('#inventory-project-placeholder');
         $elem.empty();
@@ -35,9 +33,9 @@ InventoryPage = (function () {
 
     function deploymentDetails(data) {
         var options = {
-            columns: ['community', 'count'],
+            columns: ['communityname', 'count'],
             headings: {
-                community: 'Community',
+                communityname: 'Community',
                 count: 'Count'
             },
             tooltips: {
@@ -50,14 +48,14 @@ InventoryPage = (function () {
         var deplStats = data.deploymentByCommunityData || [];
         // Initial sort order. Sort by community, then by deployment number
         deplStats.sort((a, b) => {
-            var cmp = a.community.toLocaleLowerCase().localeCompare(b.community.toLocaleLowerCase());
+            var cmp = a.communityname.toLocaleLowerCase().localeCompare(b.communityname.toLocaleLowerCase());
             return cmp || (a.deploymentnumber - b.deploymentnumber);
         });
         // unpivot from (depl1, comm1), (depl2, comm1) => (comm1, depl1, depl2)
         var unPivoted = {};
         var depls = {};
         deplStats.forEach((ds) => {
-            let community = unPivoted[ds.community.toLocaleLowerCase()] || (unPivoted[ds.community.toLocaleLowerCase()] = {community: ds.community, count: 0});
+            let community = unPivoted[ds.communityname.toLocaleLowerCase()] || (unPivoted[ds.communityname.toLocaleLowerCase()] = {communityname: ds.communityname, count: 0});
             community[ds.deploymentnumber] = ds.deployed_tbs;
             community.count++;
             depls[ds.deploymentnumber] = undefined;
@@ -80,7 +78,7 @@ InventoryPage = (function () {
             previousProject = program;
             previousDeployment = deployment;
             persistState();
-        }).fail((err) => {
+        }).fail(() => {
         });
     }
 
@@ -107,7 +105,6 @@ InventoryPage = (function () {
         if (!initialized) {
             initialized = true;
             restoreState();
-            let params = Main.getParams();
             fillProjects();
         } else {
             persistState();

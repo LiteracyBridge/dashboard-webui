@@ -6,59 +6,96 @@ let InstallationData = function () {
 
     let csvTrue = /^(t|true|y|yes|1)$/i;
 
+    let tbsProgram = '';
+    let tbsDeferred;
+
+    /**
+     * Obtain the contents of tbsdeployed table for one program.
+     * @param program for which to obtain the data
+     * @returns {*} a promise for the data.
+     */
+    function getTbsDeployed(program) {
+        if (tbsProgram !== program) {
+            tbsDeferred = $.Deferred();
+            tbsProgram = program;
+            StatisticsData.getTbsDeployed(program)
+                .done(data => {
+                    let tbsdeployed = $.csv.toObjects(data, {separator: ',', delimiter: '"'});
+                    tbsdeployed = tbsdeployed.map((d) => {
+                        // javascript date handling is so broken. To parse ISO date requires the 'T' between date and time.
+                        d.deployedtimestamp = new Date(d.deployedtimestamp.replace(' ', 'T'));
+                        d.newsn = csvTrue.test(d.newsn);
+                        d.testing = csvTrue.test(d.testing);
+                        return d;
+                    });
+                    tbsDeferred.resolve(tbsdeployed);
+                })
+                .fail(tbsDeferred.reject);
+        }
+        return tbsDeferred.promise();
+    }
+
     function Set(values) {
         let set = {}
-        values.forEach( v => set[v]=true );
-        set.contains = function(value) {
+        values.forEach(v => set[v] = true);
+        set.contains = function (value) {
             return this.hasOwnProperty(value)
         }
         return set;
     }
 
+    /**
+     * Build a list of days on which TBs were deployed.
+     * @param program for which the data is desired.
+     * @returns {*} a promise on the list.
+     */
     function getTbDailiesListForProgram(program) {
-        return Utils.getFileCached(program, 'tbsdaily.json');
-    }
-
-    function getTbDailiesDataForProgram(program, year, month, day) {
-        let name = (year === undefined) ? 'tbsdeployed.csv' : year+'/'+ month+'/'+day+'/tbsdeployed.csv';
-        return Utils.getFileCached(program, name, (list) => {
-            let tbsdeployed = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
-            tbsdeployed = tbsdeployed.map((d) => {
-                d.deployedtimestamp = moment(d.deployedtimestamp);
-                d.newsn = csvTrue.test(d.newsn);
-                d.testing = csvTrue.test(d.testing);
-                return d;
+        let deferred = $.Deferred();
+        getTbsDeployed(program).done(data => {
+            let dailies = {};
+            data.forEach(d => {
+                let year = d.deployedtimestamp.getFullYear();
+                let yearlies = dailies[year] || (dailies[year] = {});
+                let month = Utils.pad(d.deployedtimestamp.getMonth() + 1, 2);
+                let monthlies = yearlies[month] || (yearlies[month] = {});
+                let day = Utils.pad(d.deployedtimestamp.getDate(), 2);
+                monthlies[day] = true;
+            })
+            Object.keys(dailies).forEach(year => {
+                Object.keys(dailies[year]).forEach(month => {
+                    dailies[year][month] = Object.keys(dailies[year][month]).sort((a,b)=>b-a);
+                })
             });
-            return tbsdeployed;
+            deferred.resolve(dailies);
         });
+        return deferred.promise();
     }
 
-    function getComponentDeploymentsForProgram(program) {
-        return Utils.getFileCached(program, 'component_deployments.csv', (list) => {
-            // deploymentnumber,component
-            // 1,"Jirapa Groups"
-            // 1,"Jirapa HH Rotation"
-            // 2,"Jirapa Groups"
-            // 2,"NOYED-GHANA"
-            // ...
-            let componentDeployments = $.csv.toObjects(list, {separator: ',', delimiter: '"'});
-            componentDeployments = componentDeployments.map((d) => {
-                d.deploymentnumber = 1 * d.deploymentnumber;
-                return d;
-            }).sort((a,b)=>{return a.deploymentnumber - b.deploymentnumber});
-            console.log(`Got ${componentDeployments.length} component deployments for ${program}.`)
-            return componentDeployments;
-        });
-    }
+    /**
+     * Get the TBs deployed, for a single day, or for the entire program.
+     * @param program for which the TBs deployed is desired.
+     * @param year [Optional] Year of interest.
+     * @param month [Optional] Along with year, month of interest.
+     * @param day [Optional] Along with year and month, day of interest.
+     * @returns {*} A promise on the data.
+     */
+    function getTbDailiesDataForProgram(program, year, month, day) {
+        let deferred = $.Deferred();
+        getTbsDeployed(program).done(data => {
+            if (year === undefined) {
+                deferred.resolve(data);
+            }
+            // noinspection EqualityComparisonWithCoercionJS
+            let filtered = data.filter(d =>
+                d.deployedtimestamp.getFullYear() == year &&
+                (d.deployedtimestamp.getMonth() + 1) == month &&
+                d.deployedtimestamp.getDate() == day
+            );
+            deferred.resolve(filtered);
+        })
+            .fail(deferred.reject);
 
-    function getComponentsForProgramAndDeployment(program, deploymentnumber) {
-        let promise = $.Deferred();
-        getComponentDeploymentsForProgram(program).then((components)=>{
-            components = components.filter(d=>d.deploymentnumber == deploymentnumber); // jshint ignore:line
-            console.log(`Got ${components.length} component deployments for ${program}/${deploymentnumber}.`)
-            promise.resolve(components);
-        }, promise.reject);
-        return promise;
+        return deferred.promise();
     }
 
     /**
@@ -70,8 +107,9 @@ let InstallationData = function () {
     function getDeploymentInfo(program, deploymentnumber) {
         let deployment = ('' + deploymentnumber).toUpperCase();
         let promise = $.Deferred();
-        ProgramDetailsData.getDeploymentsList(program).then((deployments)=>{
-            promise.resolve(deployments.find(d=>d.deployment.toUpperCase()===deployment || d.deploymentnumber==deploymentnumber)); // jshint ignore:line
+        ProgramDetailsData.getDeploymentsList(program).then((deployments) => {
+            // noinspection EqualityComparisonWithCoercionJS
+            promise.resolve(deployments.find(d => d.deployment.toUpperCase() === deployment || d.deploymentnumber == deploymentnumber)); // jshint ignore:line
         }, promise.reject);
         return promise;
     }
@@ -85,16 +123,21 @@ let InstallationData = function () {
      */
     function getDeploymentNames(program, deploymentnumber) {
         let promise = $.Deferred();
-        ProgramDetailsData.getDeploymentsList(program).then((deployments)=>{
+        ProgramDetailsData.getDeploymentsList(program).then((deployments) => {
             let result = []
-            deployments.forEach((elem, ix) => { if (elem.deploymentnumber === deploymentnumber) { result=result.concat(elem.deploymentnames) }})
+            deployments.forEach((elem) => {
+                if (elem.deploymentnumber === deploymentnumber) {
+                    result = result.concat(elem.deploymentnames)
+                }
+            })
             promise.resolve(result);
         }, promise.reject);
         return promise;
     }
 
     function getRecipientsForProgram(program) {
-        return Utils.getFileCached(program, 'recipients.csv', (list) => {
+        let promise = $.Deferred();
+        StatisticsData.getRecipients(program).done((list) => {
             // recipients: [ {recipientid, program, partner, communityname, groupname, affiliate, component, country,
             //                  region, district, num_HHs, num_TBs, supportentity, model, languagecode, coordinates} ]
             // LBG,UNICEF,Jirapa HH Rotation,Ghana,Upper West,Jirapa,Goziel,,Goziel,105,27,,Robert Yaw,HHR,dga
@@ -112,8 +155,10 @@ let InstallationData = function () {
                 return r;
             });
             console.log(`Got ${recipients.length} recipients for ${program}.`)
-            return recipients;
-        });
+            promise.resolve(recipients);
+        })
+            .fail(promise.reject);
+        return promise;
     }
 
     /**
@@ -126,20 +171,11 @@ let InstallationData = function () {
     function getRecipientsForProgramAndDeployment(program, deploymentnumber) {
         let promise = $.Deferred();
         let recips = getRecipientsForProgram(program);
-        let comps = getComponentsForProgramAndDeployment(program, deploymentnumber);
 
         recips.then((recipients) => {
-            // We don't have a "components for program" file for every program. If we don't have one, simply use the
-            // unfiltered list.
-            comps.then((components) => {
-                let componentsInDeployment = Set( components.map( c => c.component ));
-                let r2 = recipients.filter( r  => componentsInDeployment.contains(r.component) );
-                console.log(`Got ${r2.length} recipients for ${program}/${deploymentnumber}.`)
-                promise.resolve(r2)
-            }, (err) => {
-                console.log(`Got ${recipients.length} recipients for ${program} without deployment filter.`)
-                promise.resolve(recipients)
-            });
+            // TODO: Filter by recipients.deployments
+            console.log(`Got ${recipients.length} recipients for ${program} without deployment filter.`)
+            promise.resolve(recipients)
         }, promise.reject);
 
         return promise;
@@ -151,14 +187,15 @@ let InstallationData = function () {
         if (!tbsDeployedPromises[program]) {
             tbsDeployedPromises[program] = $.Deferred();
 
-            let path = Utils.pathForFile(program, 'tbsdeployed.csv');
-            let tbsDeployed = $.get(path);
+            let tbsDeployed = StatisticsData.getTbsDeployed(program);
             $.when(tbsDeployed, ProgramDetailsData.getProgramDeploymentNames(program)).done((tbList, deploymentNamesList) => {
                 // Deployments, sadly, often were given multiple names. Here we have a list of them, separated by ';'
                 let deploymentNamesMap = {};
-                deploymentNamesList.forEach((elem)=> {
+                deploymentNamesList.forEach((elem) => {
                     let nameList = elem.deploymentname.split(';');
-                    nameList.forEach((name)=>{deploymentNamesMap[name] = elem.deploymentnumber});
+                    nameList.forEach((name) => {
+                        deploymentNamesMap[name] = elem.deploymentnumber
+                    });
                 });
                 // The projects list file is a .csv with data like:
                 // tbsDeployed: [ {talkingbookid,deployedtimestamp,program,deployment,contentpackage,community,firmware,location,coordinates,username,tbcdid,action,newsn,testing} ]
@@ -173,7 +210,7 @@ let InstallationData = function () {
                     if (!(d.hasOwnProperty('deploymentnumber')) || d.deploymentnumber === '') {
                         d.deploymentnumber = deploymentNamesMap[d.deployment];
                     }
-                    d.tbcdid = (d.tbcdid||'').toLowerCase();
+                    d.tbcdid = (d.tbcdid || '').toLowerCase();
                     d.newsn = csvTrue.test(d.newsn);
                     d.testing = csvTrue.test(d.testing);
                     return d;
@@ -240,7 +277,7 @@ let InstallationData = function () {
             // Copy the data before modifying it, to avoid polluting the source.
             let recipients = $.extend(true, [], allRecipients);
             tbsDeployed = $.extend(true, [], tbsDeployed)
-            tbsDeployed = tbsDeployed.filter(elem => !elem.testing || options.includeTestInstalls );
+            tbsDeployed = tbsDeployed.filter(elem => !elem.testing || options.includeTestInstalls);
 
 
             // From the array of tbsDeployed, create lists of talking books installed per recipient:
@@ -248,7 +285,10 @@ let InstallationData = function () {
             let installedPerRecipient = {};
             let duplicateInstallations = 0;
             tbsDeployed.forEach((singleTbDeployment) => {
-                if (singleTbDeployment.deploymentnumber != deploymentnumber) { return } // jshint ignore:line
+                // noinspection EqualityComparisonWithCoercionJS
+                if (singleTbDeployment.deploymentnumber != deploymentnumber) {
+                    return
+                } // jshint ignore:line
 
                 // Get the record of TBs for this recipient, creating if first time seen.
                 let installedThisRecipient = installedPerRecipient[singleTbDeployment.recipientid] || (installedPerRecipient[singleTbDeployment.recipientid] = {});
@@ -291,7 +331,7 @@ let InstallationData = function () {
                     delete installedThisRecipient[talkingbookid];
                     days += tbDaysToInstall;
                 });
-                installedThisRecipient.daystoinstall = Math.round(days/installedThisRecipient.num_TBsInstalled);
+                installedThisRecipient.daystoinstall = Math.round(days / installedThisRecipient.num_TBsInstalled);
             });
 
             // Add the TBs installed-per-recipient to the recipient records as recipient.tbsInstalled = {tbid: {}, ...}
@@ -335,7 +375,11 @@ let InstallationData = function () {
                     }
                     // Common properties are almost always the same for all groups in a community. But that's not a hard requirement,
                     // so if they are different, include them only in the group details.
-                    sameInMostGroupsOfACommunity.forEach((p) => {if (community[p] !== recip[p]) {community[p] = ''} });
+                    sameInMostGroupsOfACommunity.forEach((p) => {
+                        if (community[p] !== recip[p]) {
+                            community[p] = ''
+                        }
+                    });
                 } else {
                     // New community.
                     community = $.extend(true, {}, recip);
@@ -355,15 +399,15 @@ let InstallationData = function () {
             let communitiesList = Object.keys(communitiesByName).map(name => communitiesByName[name]);
 
             // Now get daystoinstall for the communities with multiple groups.
-            communitiesList.forEach((community)=>{
+            communitiesList.forEach((community) => {
                 if (community.numGroups) {
                     let days = 0;
-                    community.groups.forEach((group)=>{
-                        Object.keys(group.tbsInstalled).forEach((talkingbookid)=>{
+                    community.groups.forEach((group) => {
+                        Object.keys(group.tbsInstalled).forEach((talkingbookid) => {
                             days += group.tbsInstalled[talkingbookid].daystoinstall;
                         });
                     });
-                    community.daystoinstall = Math.round(days/community.num_TBsInstalled);
+                    community.daystoinstall = Math.round(days / community.num_TBsInstalled);
                 }
             });
 
@@ -372,7 +416,7 @@ let InstallationData = function () {
                 // and daystoinstall, and possibly a num_TBTestsInstalled; Just add the recipientid, and we're good.
                 let extraneousRecipient = installedPerRecipient[recipientid];
                 extraneousRecipient.recipientid = recipientid;
-                let recipient = allRecipients.find(elem => elem.recipientid===recipientid);
+                let recipient = allRecipients.find(elem => elem.recipientid === recipientid);
                 // If we can get the community name, do so, otherwise just use the recipientid.
                 extraneousRecipient.communityname = recipient ? recipient.communityname : recipientid;
                 extraneousRecipient.supportentity = recipient ? recipient.supportentity : '';
@@ -380,10 +424,16 @@ let InstallationData = function () {
             });
 
             let summary = {
-                num_TBs: communitiesList.reduce((s,v)=>{return s+v.num_TBs}, 0),
-                num_TBsInstalled: communitiesList.reduce((s,v)=>{return s+v.num_TBsInstalled}, 0),
+                num_TBs: communitiesList.reduce((s, v) => {
+                    return s + v.num_TBs
+                }, 0),
+                num_TBsInstalled: communitiesList.reduce((s, v) => {
+                    return s + v.num_TBsInstalled
+                }, 0),
                 num_communities: communitiesList.length,
-                num_groups: communitiesList.reduce((s,v)=>{return s+(v.numGroups||0)}, 0)
+                num_groups: communitiesList.reduce((s, v) => {
+                    return s + (v.numGroups || 0)
+                }, 0)
             };
 
             let result = {

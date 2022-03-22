@@ -16,12 +16,11 @@ Utils,
 console,
 */
 
-var UsageDetailsPage = UsageDetailsPage || {};
-
-UsageDetailsPage = function () {
+var UsageDetailsPage = function () {
     'use strict';
     let PAGE_ID = 'usage-details-page';
     let PAGE_HREF = 'a[href="#' + PAGE_ID + '"]';
+    // noinspection JSUnusedLocalSymbols
     let $PAGE = $('#' + PAGE_ID);
 
     let queryEditHtml = `<div class="query-builder form-inline" id="builder-basic">
@@ -134,7 +133,6 @@ UsageDetailsPage = function () {
 
     function persistState() {
         if (currentProject && currentDeployment) {
-            let previousColumns = '';
             let limitDeployments = $limitByDeployment.prop('checked');
             let queryString = currentQuerySpecs.map(qs=>qs.toString()).join(';');
             localStorage.setItem('usage.details.project', currentProject);
@@ -146,9 +144,9 @@ UsageDetailsPage = function () {
     }
 
     function restoreState() {
-        var limitDeploymentsFlag = true;
+        var limitDeploymentsFlag;
         let params = Main.getParams();
-        let queryString = '';
+        let queryString;
         if (params) {
             currentProject = params.get('p') || '';
             currentDeployment = params.get('d') || '';
@@ -350,12 +348,9 @@ UsageDetailsPage = function () {
      * Builds a table with details about the messages in the deployment.
      * @param stats An object with a {messageData} member.
      */
-    function makeUsageTable(querySpecs, stats) {
-        if (!stats.data || !stats.data.length) {
+    function makeUsageTable(querySpecs, data) {
 
-        }
-
-        let usageData = stats.data || [];
+        let usageData = data || [];
         let columns = columnOptions(querySpecs, usageData);
 
         var buttonMap = []; // will be computed just before export
@@ -450,20 +445,7 @@ UsageDetailsPage = function () {
             $('#limit-by-deployment-prompt').text('')
         }
 
-        var deferred = $.Deferred();
-        StatisticsData.getUsage(program, deployment, columns)
-            .done(result => {
-                if (result.errorMessage) {
-                    deferred.reject(result.errorMessage);
-                } else {
-                    let data = result.data;
-                    let resolution = {data: data, columns: columns};
-                    deferred.resolve(resolution);
-                }
-            })
-            .fail(deferred.reject);
-
-        return deferred.promise()
+        return StatisticsData.getUsage(program, deployment, columns);
     }
 
     function refreshProgram(program, deployment, querySpecs) {
@@ -475,13 +457,14 @@ UsageDetailsPage = function () {
         currentQuerySpecs = querySpecs;
 
         Main.incrementWait(true);
-        getUsage(program, deployment, columns).then((stats) => {
-            let haveData = stats.data && stats.data.length && stats.data.length > 0;
+        getUsage(program, deployment, columns).then((data) => {
+            // let haveData = stats.data && stats.data.length && stats.data.length > 0;
+            let haveData = data && data.length && data.length > 0;
             if (haveData) {
                 $('#usage-details-page .have_data').removeClass('hidden');
                 $('#usage-details-page .have_no_data').addClass('hidden');
 
-                makeUsageTable(querySpecs, stats);
+                makeUsageTable(querySpecs, data);
 
                 persistState();
 

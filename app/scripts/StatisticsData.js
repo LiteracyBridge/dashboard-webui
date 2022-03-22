@@ -1,9 +1,7 @@
 /* jshint esversion:6, asi:true */
 /* global $, Authentication,console, Main, ProgramDetailsData, DataTable, Chart, ProgramPicker, Utils */
 
-var StatisticsData = StatisticsData || {};
-
-StatisticsData = (function () {
+var StatisticsData = (function () {
 
     'use strict';
 
@@ -13,14 +11,14 @@ StatisticsData = (function () {
             ? ('?' + queryKeys.map(x => `${x}=${encodeURIComponent(queryParameters[x])}`)
                 .join('&'))
             : '';
-        if (url[url.length-1] !== '/' && path.length>0 && path[0] !== '/') {
+        if (url[url.length - 1] !== '/' && path.length > 0 && path[0] !== '/') {
             path = '/' + path;
         }
-        if (path.length > 0 && path[path.length-1] !== '/') {
+        if (path.length > 0 && path[path.length - 1] !== '/') {
             path = path + '/';
         }
         let uri = url + path + queryString;
-        var request = {
+        let request = {
             url: uri,
             type: 'get',
             contentType: 'text/plain',
@@ -39,97 +37,90 @@ StatisticsData = (function () {
 
 
     function getUsage(program, deployment, columns) {
-        var deferred = $.Deferred()
-        var path = '/usage/' + program
+        let deferred = $.Deferred()
+        let path = '/usage2'
 
+        let queryParams = {programid: program, columns: columns.join(',')};
         if (deployment) {
-            path += '/' + deployment
+            queryParams.deployment = deployment;
         }
 
         let statsUrl = Authentication.STATS_QUERY();
 
-        query(statsUrl, path, {cols: columns.join(',')})
+        query(statsUrl, path, queryParams)
             .done(result => {
-                let err = result.errorMessage;
-                if (!err && (result instanceof String)) err = result;
-                if (err) {
-                    deferred.reject(err);
-                } else {
-                    // Older versions of the server returned {result: {foo:bar, baz:biz}}.
-                    // Newer versions return {foo:bar, baz:biz} directly.
-                    if (result.hasOwnProperty('result')) result = result.result;
-                    let data = $.csv.toObjects(result.values, {separator: ',', delimiter: '"'});
-                    let resolution = {data: data, columns: result.columns}
-                    deferred.resolve(resolution);
-                }
+                let data = $.csv.toObjects(result, {separator: ',', delimiter: '"'});
+                deferred.resolve(data);
             })
             .fail(deferred.reject)
 
         return deferred.promise()
     }
 
-
-    function getWorkbookLinks(program) {
+    function getDeployments(program) {
         let deferred = $.Deferred()
-        let twbxUrl = Authentication.TWBX();
-        // let url = twbxUrl + '/getlinks?all=1&program=' + program;
-        query(twbxUrl, '/getlinks', {'all': 1, 'program': program})
-            .done(result => {
-                result = result.result
-                result = {workbook: result.workbook, preview: result.preview}
-                deferred.resolve(result)
-            })
+        let path = '/deployments';
+        let queryParams = {programid: program};
+
+        let statsUrl = Authentication.STATS_QUERY();
+
+        query(statsUrl, path, queryParams)
+            .done(deferred.resolve)
             .fail(deferred.reject)
-        return deferred.promise();
+
+        return deferred.promise()
     }
 
-    function refreshWorkbook(program) {
-        let deferred = $.Deferred()
-        let twbxUrl = Authentication.TWBX();
-        // let url = twbxUrl + '/refresh?program=' + program;
-        query(twbxUrl, '/refresh', {'program': program})
-            .done(result => {
-                result = result.result
-                result = {workbook: result.workbook, preview: result.preview}
-                deferred.resolve(result)
-            })
-            .fail(deferred.reject)
-        return deferred.promise();
-    }
-
-    function removeWorkbookPreviews(program) {
-        let deferred = $.Deferred()
-        let twbxUrl = Authentication.TWBX();
-        // let url = twbxUrl + '/removePreviews?program=' + program;
-        query(twbxUrl, '/removePreviews', {'program': program})
-            .done(result => {
-                result = result.result
-                result = {workbook: result.workbook, preview: result.preview}
-                deferred.resolve(result)
-            })
-            .fail(deferred.reject)
-        return deferred.promise();
-    }
-
-    function uploadWorkbook(program, comment, filename, data) {
+    function getDeploymentsByCommunity(program) {
         let deferred = $.Deferred();
-        let twbxUrl = Authentication.TWBX();
-        query(twbxUrl, 'upload', {'program': program, 'comment': comment, 'filename': filename}, data)
-            .done(result => {
-                result = result.result;
-                deferred.resolve(result);
-            })
-            .fail(deferred.reject);
-        return deferred.promise();
+        let path = '/depl_by_community';
+        let queryParams = {programid: program};
+
+        let statsUrl = Authentication.STATS_QUERY();
+
+        query(statsUrl, path, queryParams)
+            .done(deferred.resolve)
+            .fail(deferred.reject)
+
+        return deferred.promise()
+    }
+
+    function getRecipients(program) {
+        let deferred = $.Deferred();
+        let path = '/recipients';
+        let queryParams = {programid: program};
+
+        let statsUrl = Authentication.STATS_QUERY();
+
+        query(statsUrl, path, queryParams)
+            .done(deferred.resolve)
+            .fail(deferred.reject)
+
+        return deferred.promise()
+    }
+
+
+    function getTbsDeployed(program) {
+        let deferred = $.Deferred();
+        let path = '/tbsdeployed';
+        let queryParams = {programid: program};
+
+        let statsUrl = Authentication.STATS_QUERY();
+
+        query(statsUrl, path, queryParams)
+            .done(deferred.resolve)
+            .fail(deferred.reject)
+
+        return deferred.promise()
     }
 
 
     return {
         getUsage: getUsage,
-        getWorkbookLinks: getWorkbookLinks,
-        refreshWorkbook: refreshWorkbook,
-        removeWorkbookPreviews: removeWorkbookPreviews,
-        uploadWorkbook: uploadWorkbook,
+        getDeployments: getDeployments,
+        getDeploymentsByCommunity: getDeploymentsByCommunity,
+        getRecipients: getRecipients,
+        getTbsDeployed: getTbsDeployed,
     }
 
 })();

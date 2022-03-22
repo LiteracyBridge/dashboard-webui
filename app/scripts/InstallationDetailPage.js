@@ -4,12 +4,11 @@
 /* jshint undef:true, esversion:6, asi:true */
 /* globals console, $, DropdownButton, DataTable, Main, Authentication, Chart, ProgramPicker, ProgramDetailsData, InstallationData, Utils, moment */
 
-var InstallationDetailPage = InstallationDetailPage || {};
-
-InstallationDetailPage = (function () {
+var InstallationDetailPage = (function () {
     'use strict'
     let PAGE_ID = 'installation-detail-page';
     let PAGE_HREF = 'a[href="#' + PAGE_ID + '"]';
+    // noinspection JSUnusedLocalSymbols
     let $PAGE = $('#' + PAGE_ID);
 
     var recipientMap;
@@ -22,7 +21,7 @@ InstallationDetailPage = (function () {
             return;
         }
         fillDone = true;
-        function onProgramSelected(evt, proj) {
+        function onProgramSelected() {
             var program = programsDropdown.selection();
             if (program) {
                 programSelected(program);
@@ -73,7 +72,7 @@ InstallationDetailPage = (function () {
                 component: (row)=>{let recip=row&&row.recipientid&&recipientMap[row.recipientid]; return recip&&recip.component;},
                 communityname: (row)=>{let recip=row&&row.recipientid&&recipientMap[row.recipientid]; return recip&&recip.communityname;},
                 groupname: (row)=>{let recip=row&&row.recipientid&&recipientMap[row.recipientid]; return recip&&(recip.groupname||('SE:'+recip.supportentity));},
-                deployedtimestamp: (row, row_ix, cell)=>{return cell.format('Y-MM-DD HH:mma')},
+                deployedtimestamp: (row, row_ix, cell)=>{return moment(cell).format('YYYY-MM-DD hh:mma')},
                 testing: (row, row_ix, cell)=>cell?'Yes':'No'
             },
             datatable: {colReorder: true,
@@ -84,8 +83,9 @@ InstallationDetailPage = (function () {
             }
         };
 
-        $('#installation-details-detail').empty();
-        let table = DataTable.create($('#installation-details-detail'), tbsDeployed, options);
+        let $detail = $('#installation-details-detail');
+        $detail.empty();
+        let table = DataTable.create($detail, tbsDeployed, options);
         // This says sort by deployedtimestamp, then by communityname (not the other way around, as one is likely to read it).
         table.order([[options.columns.indexOf('deployedtimestamp'),'asc'],[options.columns.indexOf('communityname'),'asc']]).draw();
     }
@@ -140,7 +140,6 @@ InstallationDetailPage = (function () {
         /**
          * Project Details was chosen. Clear the 'Months' and 'Days' widgets, and populate Years with the years
          * having data. Attach a click handler to each year to drill into that year.
-         * @param year that was chosen.
          */
         function onProjectDetailsChosen() {
             $years.empty().append('  Year:  ');
@@ -172,7 +171,6 @@ InstallationDetailPage = (function () {
         /**
          * A year was chosen. Clear the 'Days' widget, and populate Months with the months having data.
          * Attach a click handler to each month to drill into that month.
-         * @param year that was chosen.
          */
         function onYearChosen() {
             $allData.prop('checked', false);
@@ -204,7 +202,6 @@ InstallationDetailPage = (function () {
         /**
          * A month was chosen. Populate Days with the days having data.
          * Attach a click handler to each day to display data for that day.
-         * @param year that was chosen.
          */
         function onMonthChosen() {
             $allData.prop('checked', false);
@@ -233,9 +230,6 @@ InstallationDetailPage = (function () {
 
         /**
          * A day was chosen. Show tbsloaded for that day.
-         * @param year The chosen year.
-         * @param month The chosen month.
-         * @param day The chosen day.
          */
         function onDayChosen() {
             $allData.prop('checked', false);
@@ -289,7 +283,7 @@ InstallationDetailPage = (function () {
 
             previousProgram = program;
             persistState();
-        }).fail((err)=>{
+        }).fail(()=>{
             Main.decrementWait();
         });
 
@@ -322,7 +316,7 @@ InstallationDetailPage = (function () {
     }
 
     function hidden() {
-        recipientMap = undefined;
+        // recipientMap = undefined;
     }
 
     $('#installation-details-all-holder').tooltip();

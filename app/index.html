@@ -13,7 +13,7 @@
 
     <!-- build:css styles/vendor.css -->
     <!-- bower:css -->
-    <link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap.css"/>
     <!-- endbower -->
     <!-- endbuild -->
 
@@ -49,9 +49,6 @@
             <!-- Application menus -->
             <ul class="nav navbar-nav">
                 <li role="navigation" style="display:none;"><a class="main-nav" href="#splash">Splash</a></li>
-                <li role="navigation"><a class="main-nav" href="#overview-page">Overview</a></li>
-                <li role="navigation"><a class="main-nav" href="#project-details-page">Details</a>
-                    <!-- li role="navigation"><a class="main-nav" href="#inventory-page">Inventories</a></li -->
                 <li class="dropdown" id="idm-menu">
                     <a aria-expanded="false" aria-haspopup="true" class="dropdown-toggle" data-toggle="dropdown"
                        href="#"
@@ -65,25 +62,7 @@
                     </ul>
                 </li>
 
-                <!-- li role="navigation"><a class="main-nav" href="#usage-details-page">Usage</a></li -->
-                <!--
-                <li class="dropdown" id="idm-usage-menu">
-                    <a aria-expanded="false" aria-haspopup="true" class="dropdown-toggle" data-toggle="dropdown"
-                       href="#"
-                       role="button">Usage <span class="caret"></span> </a>
-                    <ul class="dropdown-menu">
-                -->
-                        <li role="navigation"><a class="main-nav" href="#usage-details-page">Usage Queries</a></li>
-                        <li role="navigation"><a class="main-nav" href="#visualization-page">Visualizations</a>
-                <!--
-                        </li>
-                    </ul>
-                </li>
-                -->
-
-                <li role="navigation"><a class="main-nav" href="#userfeedback-page">User Feedback</a>
-                </li>
-
+                <li role="navigation"><a class="main-nav" href="#usage-details-page">Usage Queries</a></li>
                 <li role="navigation"><a class="main-nav" href="#program-specification-page">ProgSpec</a></li>
 
                 <!-- Admin dropdown menu. Hidden except for admins -->
@@ -134,53 +113,6 @@
             <h3 class="bg-info text-center invisible fade-in">Choose a function from the list above.</h3>
         </div>
         <img class="img-responsive center-block" src="images/slide2.jpg"/>
-    </div>
-
-    <!-- Overview Report -->
-    <div class="tab-pane fade" id="overview-page" role="tabpanel">
-        <div class="container-fluid">
-            <h2 class="bg-primary">Overview</h2>
-            <p>Simple dashboard for ACM usage and deployment statistics. Created on <span id="report_date">server</span>.
-            </p>
-
-
-            <h2>Usage</h2>
-            <div class='usage detailtable' id='usage-container'></div>
-            <h2>Deployment</h2>
-            <div class='deployment detailtable' id='deployment-container'></div>
-        </div>
-    </div>
-
-    <!-- Details Report -->
-    <div class="tab-pane fade" id="project-details-page" role="tabpanel">
-        <div class="container-fluid">
-            <h2 class="bg-primary">Details
-                &nbsp;<span id="details-project-placeholder"></span>
-            </h2>
-
-            <div class="have_data">
-
-                <h2 id='deployment_header'>Deployment <span id='deployment_header_name'></span> at a glance.</h2>
-                <div class="detailtable" id='deployment-summary'></div>
-                <h2>Deployment Performance By Categories</h2>
-                <div class="row deployment-performance">
-                    <div class="col-md-5" id='durations-radar'>
-                        <canvas></canvas>
-                    </div>
-                    <!-- div id='completions-radar' class="col-md-3">
-                        <canvas></canvas>
-                    </div -->
-                    <div class="col-md-7 detailtable" id='deployment-performance-chart'></div>
-                </div>
-                <h2>Message Performance</h2>
-                <div class="detailtable" id='message-performance'></div>
-
-            </div>
-            <div class="have_no_data">
-                <h3>No data is available for this program and deployment.</h3>
-            </div>
-
-        </div>
     </div>
 
     <!-- Inventories Report -->
@@ -245,16 +177,16 @@
                     <div class="row">
                         <div class="col-sm-4">
                             <h3>
-                                The Deployment has been installed to</br><span
+                                The Deployment has been installed to<br/><span
                                 id="installation-num-tbs-installed"></span> <span class="only-with-tb-count"> of <span
                                 id="installation-num-tbs"></span></span> Talking Books <span class="only-with-tb-count"> (<span
-                                id="installation-pct-tbs-installed"></span>%)</span></br>in <span
+                                id="installation-pct-tbs-installed"></span>%)</span><br/>in <span
                                 id="installation-num-communities"></span> communities<span
-                                class="only-with-group-count"></br> and <span id="installation-num-groups"></span> groups</span>.
+                                class="only-with-group-count"><br/> and <span id="installation-num-groups"></span> groups</span>.
                             </h3>
                             <h4>
                                 Deployment #<span id="installation-progress-deployment-number"></span>, '<span
-                                id="installation-progress-deployment-name"></span>',</br>from <span
+                                id="installation-progress-deployment-name"></span>',<br/>from <span
                                 id="installation-progress-deployment-start"></span> to <span
                                 id="installation-progress-deployment-end"></span>.
                             </h4>
@@ -303,7 +235,7 @@
     <!-- Usage Details Report -->
     <div class="tab-pane fade" id="usage-details-page" role="tabpanel">
         <div class="container-fluid">
-            <h2 class="bg-primary", id="usage-details-page-header">Usage
+            <h2 class="bg-primary" id="usage-details-page-header">Usage
                 &nbsp;<span id="usage-details-project-placeholder"></span>
             </h2>
 
@@ -316,8 +248,10 @@
                         <i class="glyphicon glyphicon-refresh"></i>
                     </button>
                     <span id="usage-query-selection" data-toggle="tooltip" title="Choose the query"></span>
-                    <button class="btn btn-success pull-right btn-small" id="usage-customize-query" style="border-radius:4px"
-                            type="button" data-toggle="tooltip" title="Customize the query with any selection of columns">
+                    <button class="btn btn-success pull-right btn-small" id="usage-customize-query"
+                            style="border-radius:4px"
+                            type="button" data-toggle="tooltip"
+                            title="Customize the query with any selection of columns">
                         <i class="glyphicon glyphicon-cog"></i>Customize
                     </button>
                 </h3>
@@ -332,7 +266,7 @@
                     </label>
                     <label class="pull-right" style="font-weight:normal"> Click
                         <a href="https://dashboard.amplio.org/db-docs/index.html#dashboard-reports"
-                            target="_blank">here</a> for help on using this page.
+                           target="_blank">here</a> for help on using this page.
                     </label>
                     &nbsp;&nbsp;&nbsp;
                 </div>
@@ -350,87 +284,6 @@
         </div>
     </div>
 
-    <!-- Usage Tableau Report -->
-    <div class="tab-pane fade" id="visualization-page" role="tabpanel">
-        <div class="container-fluid">
-            <h2 class="bg-primary", id="visualization-page-header">Tableau Workbook
-                &nbsp;<span id="usage-tableau-project-placeholder"></span>
-            </h2>
-
-
-            <div>
-                <div id="tableau-workbook-download" class="thumbnail">
-                    <h4 class="bg-success">Download the Tableau workbook
-                        <a id="tableau-workbook-download-button" download href="#" class="btn btn-success" role="button">Download&hellip;</a>
-                        <a id="tableau-workbook-refresh-button" download href="#" class="btn btn-primary hidden" role="button">Refresh Workbook&hellip;</a>
-                        <a id="tableau-workbook-upload-button" download href="#" class="btn btn-info hidden" role="button">Upload&hellip;</a>
-                        <a id="tableau-workbook-clear-previews-button" download href="#" class="btn btn-danger hidden" role="button">Clear Previews&hellip;</a>
-                        <!-- button id="tableau-workbook-download-button" class="btn btn-success" type="button">Download&hellip;</button -->
-                    </h4>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-sm-1"></div>
-                <div class="col-sm-10">
-                    <p id="tableau-preview-text" class="tableau-preview hidden">
-                        Note that the image below is for illustrative purposes only. Please download the Tableau workbook to view the latest data.
-                    </p>
-                    <p id="tableau-no-preview-text" class="tableau-preview">We're sorry, no preview is available.</p>
-                    <img id="tableau-preview-image" class="img-responsive center-block tableau-preview"/>
-                </div>
-                <div class="col-sm-1"></div>
-            </div>
-
-
-        </div>
-    </div>
-
-    <div>
-
-    </div>
-
-    <!-- User Feedback Report -->
-    <div class="tab-pane fade" id="userfeedback-page" role="tabpanel">
-        <div class="container-fluid">
-            <h2 class="bg-primary form-inline">Breakdown as of <span id="breakdown-date"></span>
-                &nbsp;<span id="uf-project-placeholder"></span>
-            </h2>
-            <label style="font-weight:normal"> <input id="feedback-with-uncategorized" type="checkbox"> Include
-                uncategorized feedback </label>
-
-            <div class="row">
-                <div class="col-sm-1">&nbsp;</div>
-                <div class="col-sm-6 category-breakdown-wrapper">
-                    <div class="h3">Categorization of <span id="category-breakdown"></span></div>
-                    <h4><span id="hover-pie2"></span>&nbsp;</h4>
-                    <canvas id="feedback-categorization-placeholder"></canvas>
-                </div>
-
-                <div class="col-sm-4 message-length-wrapper">
-                    <h3>Lengths of <span id="category-durations">Messages</span></h3>
-                    <h4><span id="hover-pie3"></span>&nbsp;</h4>
-                    <canvas id="message-length-placeholder"></canvas>
-                </div>
-            </div>
-
-            <div class="row" id="categorization-progress-view">
-                <h2 class="bg-primary">Categorization Progress for <span id="project-name">User Feedback</span></h2>
-                <h5 class="bg-default"><em>Progress in User Feedback Processing.</em></h5>
-
-                <div class="col-sm-2">&nbsp;</div>
-                <div class="col-sm-7">
-                    <div class="demo-container">
-                        <h3>Progress Over Time</h3>
-                        <canvas class="progress-placeholder" id="progress-placeholder"></canvas>
-                        <h4 id="clickdata"></h4>
-                    </div>
-                </div>
-                <div class="col-sm-3">&nbsp;</div>
-            </div>
-        </div>
-    </div>
-
     <!-- Program Specification Page -->
     <div class="tab-pane fade" id="program-specification-page" role="tabpanel">
         <div class="container-fluid">
@@ -443,8 +296,8 @@
             </span -->
                 <span class="pull-right">
                  Click <a href="https://dashboard.amplio.org/db-docs/index.html#program-specification"
-                                               target="_blank">here</a> for help on using this page.</span>
-                </br>
+                          target="_blank">here</a> for help on using this page.</span>
+                <br/>
             </p>
             <div class="when-not-have-project">
                 <h4>Please select a program.</h4>
@@ -461,11 +314,16 @@
                         <h4>Published Program Specification</h4>
                         <p>Approved by <span class="progspec-metadata" id="program-spec-approved-by"></span>
                             on <span class="progspec-metadata" id="program-spec-approved-on"></span>.</p>
-                        <p class="progspec-comment">Approval comment: <span class="progspec-metadata progspec-comment-text" id="program-spec-approved-comment"></span></p>
+                        <p class="progspec-comment">Approval comment: <span
+                            class="progspec-metadata progspec-comment-text" id="program-spec-approved-comment"></span>
+                        </p>
                         <p>Submitted by <span class="progspec-metadata" id="program-spec-submitted-by"></span>
                             on <span class="progspec-metadata" id="program-spec-submitted-on"></span>.</p>
-                        <p class="progspec-comment">Submission comment: <span class="progspec-metadata progspec-comment-text" id="program-spec-submitted-comment"></span></p>
-                        <h4 class="hidden" id="program-specification-sync-message"><em>Please allow 10 minutes for the ACM to synchronize with the updated Program Specification.</em></h4>
+                        <p class="progspec-comment">Submission comment: <span
+                            class="progspec-metadata progspec-comment-text" id="program-spec-submitted-comment"></span>
+                        </p>
+                        <h4 class="hidden" id="program-specification-sync-message"><em>Please allow 10 minutes for the
+                            ACM to synchronize with the updated Program Specification.</em></h4>
                     </div>
                     <div class="pending-spec when-have-pending">
                         <br/>
@@ -473,7 +331,8 @@
                         <h5>Click "Import...", below, to review the changes and import them into the Amplio Suite.</h5>
                         <p>Submitted by <span class="progspec-metadata" id="pending-spec-submitted-by"></span>
                             on <span class="progspec-metadata" id="pending-spec-submitted-on"></span>.</p>
-                        <p class="progspec-comment">Submission comment: <span class="progspec-metadata progspec-comment-text" id="pending-spec-submitted-comment"></span>
+                        <p class="progspec-comment">Submission comment: <span
+                            class="progspec-metadata progspec-comment-text" id="pending-spec-submitted-comment"></span>
                         </p>
                     </div>
                     <div class="when-have-published">
@@ -506,7 +365,8 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-xs-6 col-sm-4 col-md-3 col-lg-2 progspec-action when-have-data when-have-pending hidden">
+                        <div
+                            class="col-xs-6 col-sm-4 col-md-3 col-lg-2 progspec-action when-have-data when-have-pending hidden">
                             <div id="progspec-import" class="thumbnail">
                                 <h3 class="bg-warning">Import</h3>
                                 <p>Review an uploaded program spec, and approve it to import into the Amplio Suite.</p>
@@ -587,7 +447,7 @@
     <!-- Users & roles page -->
     <div class="tab-pane fade" id="roles-page" role="tabpanel">
         <div class="container-fluid">
-        <ht class="bg-primary">User Roles in ACM Programs</ht>
+            <ht class="bg-primary">User Roles in ACM Programs</ht>
 
             <div id="roles-admin-container" class="container">
             </div>
@@ -670,13 +530,9 @@ script src="scripts/3p/aws-sdk-2.5.0.min.js"></script -->
 <script src="scripts/StatisticsData.js"></script>
 <script src="scripts/CheckoutPage.js"></script>
 <script src="scripts/ProgramDetailsData.js"></script>
-<script src="scripts/ProgramDetailsPage.js"></script>
 <script src="scripts/InventoryPage.js"></script>
 <script src="scripts/UsageQueryBuilder.js"></script>
 <script src="scripts/UsageDetailsPage.js"></script>
-<script src="scripts/VisualizationPage.js"></script>
-<script src="scripts/UserFeedbackData.js"></script>
-<script src="scripts/UserFeedbackPage.js"></script>
 <script src="scripts/InstallationData.js"></script>
 <script src="scripts/InstallationPage.js"></script>
 <script src="scripts/InstallationDetailPage.js"></script>
@@ -686,7 +542,6 @@ script src="scripts/3p/aws-sdk-2.5.0.min.js"></script -->
 <script src="scripts/RolesData.js"></script>
 <script src="scripts/RolesEditor.js"></script>
 <script src="scripts/RolesPage.js"></script>
-<script src="scripts/OverviewPage.js"></script>
 <script src="scripts/DropdownButton.js"></script>
 <script src="scripts/ProgramPicker.js"></script>
 <script src="scripts/Utils.js"></script>
