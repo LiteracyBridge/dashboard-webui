@@ -466,56 +466,6 @@ UsageDetailsPage = function () {
         return deferred.promise()
     }
 
-    /**
-     * This is a "testing" function. Not currently used.
-     * @returns {*|jQuery}
-     */
-    function get2() {
-        let url = Authentication.STATS_QUERY();
-        var deferred = $.Deferred();
-
-        var user = Authentication.getUserAttributes();
-        var payload = {
-            username: user.username,
-            email: user.email
-        };
-        var request = {
-            url: url + '/projects',
-            type: 'get',
-            // dataType: 'json',
-            // data: payload,
-            headers: {
-                Authorization: Authentication.getIdToken(),
-                'Accept': 'application/json'
-            }
-        };
-
-        $.ajax(request)
-            .done((result) => {
-                console.log(result);
-                if (result.errorMessage) {
-                    deferred.reject(result.errorMessage);
-                } else {
-                    let projects = result.result.values;
-                    console.log(projects);
-                    // latestData = result.result;
-                    // usageStats = $.csv.toObjects(latestData, {separator: ',', delimiter: '"'});
-                    // latestTimestamp = Date.now();
-                    deferred.resolve(result);
-                }
-            })
-            .fail((err) => {
-                console.log(err);
-                deferred.reject(err)
-            });
-
-        return deferred.promise()
-    }
-
-    function get3() {
-        console.log('test fn')
-    }
-
     function refreshProgram(program, deployment, querySpecs) {
         if (!program || !querySpecs || !querySpecs.length) {return;}
         let columns = querySpecs.map(qs=>qs.query);

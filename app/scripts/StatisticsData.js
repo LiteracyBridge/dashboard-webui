@@ -50,11 +50,16 @@ StatisticsData = (function () {
 
         query(statsUrl, path, {cols: columns.join(',')})
             .done(result => {
-                if (result.errorMessage) {
-                    deferred.reject(result.errorMessage);
+                let err = result.errorMessage;
+                if (!err && (result instanceof String)) err = result;
+                if (err) {
+                    deferred.reject(err);
                 } else {
-                    let data = $.csv.toObjects(result.result.values, {separator: ',', delimiter: '"'});
-                    let resolution = {data: data, columns: result.result.columns}
+                    // Older versions of the server returned {result: {foo:bar, baz:biz}}.
+                    // Newer versions return {foo:bar, baz:biz} directly.
+                    if (result.hasOwnProperty('result')) result = result.result;
+                    let data = $.csv.toObjects(result.values, {separator: ',', delimiter: '"'});
+                    let resolution = {data: data, columns: result.columns}
                     deferred.resolve(resolution);
                 }
             })
@@ -63,22 +68,6 @@ StatisticsData = (function () {
         return deferred.promise()
     }
 
-
-    function getProgramList() {
-        let deferred = $.Deferred()
-        let statsUrl = Authentication.STATS_QUERY();
-        query('statsUrl', '/projects')
-            .done(result => {
-                if (result.errorMessage) {
-                    deferred.reject(result.errorMessage);
-                } else {
-                    let programs = result.result.values
-                    deferred.resolve(programs);
-                }
-            })
-            .fail(deferred.reject)
-        return deferred.promise()
-    }
 
     function getWorkbookLinks(program) {
         let deferred = $.Deferred()
@@ -137,7 +126,6 @@ StatisticsData = (function () {
 
     return {
         getUsage: getUsage,
-        getProgramList: getProgramList,
         getWorkbookLinks: getWorkbookLinks,
         refreshWorkbook: refreshWorkbook,
         removeWorkbookPreviews: removeWorkbookPreviews,
