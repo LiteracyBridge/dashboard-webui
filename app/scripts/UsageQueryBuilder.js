@@ -6,11 +6,31 @@ let UsageQueryBuilder = function () {
 
     let columns = function columns() {
 
+        /**
+         * Takes a possibly incomplete "def" and applies defaults, interpolations, etc.
+         * @param defs With members:
+         *         name  - the name of the column in the sql result
+         *         columnname - effectively a synonym for name
+         *         type - 'string', 'date', 'time', 'number'. Type of data in the column. Default 'string'.
+         *         heading - What to call the column in the spreadsheet. Default name.
+         *         exportHeading - What to call the column in the exported spreadsheet. Default heading.
+         *         aggregation - If present, how this column can be aggregated, 'count'  or 'sum'. Default 'count'.
+         *         render - If present, how to render the cell in the table.
+         *         tooltip - If present, the tooltip that describes the column.
+         *         aggregationDefault - If true, the column will be aggregated by default.
+         *         if aggregation is "truthy":
+         *             aggregateBase - If present, used to build the heading when aggregated. Default heading + 's'.
+         *             aggregateTooltip - A tooltip for the aggregated column. Default like "Count of XYX" or "Sum of ABC"
+         *             aggregateHeading - Heading for the aggregated column. Default like "# Completions" or "Total Time Played"
+         * @returns {{name}}
+         * @constructor
+         */
         function ColumnDef(defs) {
             let result = {name: defs.name};
             result.columnname = defs.columnname || result.name;
             result.type = defs.type || 'string';
             result.heading = defs.heading || result.name;
+            result.exportHeading = defs.exportHeading || result.heading;
             // result.tooltip = defs.tooltip || result.heading;
             if (defs.hasOwnProperty('aggregation')) {
                 if (defs.aggregation) {
@@ -148,6 +168,8 @@ let UsageQueryBuilder = function () {
             heading: 'Duration',
             tooltip: 'Length of the message in seconds.',
             type: 'time',
+            // Be explicit that the value is seconds (displays as mm:ss)
+            exportHeading: 'Duration Seconds',
         }), ColumnDef({
             name: 'position',
             heading: 'Position',
@@ -173,6 +195,8 @@ let UsageQueryBuilder = function () {
             aggregation: 'sum',
             aggregateBase: 'Time Played',
             aggregateTooltip: 'Total time the message was played',
+            // Be explicit that the value is seconds (diaplays as 'N hours' or mm:ss)
+            exportHeading: 'Seconds Played',
         }), ColumnDef({
             name: 'completions',
             heading: 'Completions',
@@ -436,7 +460,8 @@ let UsageQueryBuilder = function () {
             let result = {
                 columnDef: columnDef,
                 tooltip: columnDef.tooltip,
-                heading: columnDef.heading
+                heading: columnDef.heading,
+                exportHeading: columnDef.exportHeading
             };
             if (aggregation) {
                 result.aggregation = validAgg(columnName, aggregation);
@@ -446,9 +471,13 @@ let UsageQueryBuilder = function () {
                     };
                     result.tooltip = columnDef.aggregateTooltip + ' / ' + result.normalization.columnDef.aggregateTooltip;
                     result.heading = columnDef.aggregateBase + ' / ' + result.normalization.columnDef.heading;
+                    let exportBase = columnDef.exportHeading || columnDef.aggregateBase
+                    let exportAgg = result.normalization.columnDef.exportHeading;
+                    result.exportHeading = `${exportBase} / ${exportAgg}`;
                 } else {
                     result.tooltip = columnDef.aggregateTooltip;
                     result.heading = columnDef.aggregateHeading;
+                    result.exportHeading = columnDef.exportHeading;
                 }
             }
             result.type = resultTypeOf(result);

@@ -335,7 +335,7 @@ var UsageDetailsPage = function () {
                 var tip = qs.tooltip;
                 tip = tip ? '<img class="question no-click" src="images/question16.png" title="' + tip + '"/>' : '';
                 var titleText = `<div><span>${name}</span>${tip}</div>`;
-                let col = {data: dataNames[ix], title: titleText};
+                let col = {data: dataNames[ix], title: titleText, exportHeading: qs.exportHeading};
                 if (qs.columnDef.render) { col.render = qs.columnDef.render}
                 return col
             });
@@ -353,13 +353,24 @@ var UsageDetailsPage = function () {
         let usageData = data || [];
         let columns = columnOptions(querySpecs, usageData);
 
-        var buttonMap = []; // will be computed just before export
+        // Will be computed just before export, and will be the query-names of the columns, in the order that they are
+        // at the moment of export. ['deploymentnumber', 'duration_seconds', 'completions_per_languagecode', ...]
+        // These names are the names of the "columns' in the table; the names of the members of the objects that make
+        // up each row.
+        var buttonMap = [];
         let filename = 'DashboardCustom';
         let exportOptions = {
             format: {
                 body: function (data, row, column, node) {
                     let originalData = usageData[row][buttonMap[column]];
-                    return originalData
+                    return originalData;
+                },
+                header: function (data, column, node) {
+                    // Find the column definition for this column.
+                    let columnHeading = buttonMap[column];
+                    let columnDef = columns.find(x=>x.data===columnHeading);
+                    // There really should be one, but if not use the data's name.
+                    return columnDef && columnDef.exportHeading || columnHeading;
                 }
             }
         };
